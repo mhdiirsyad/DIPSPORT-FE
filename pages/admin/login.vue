@@ -461,8 +461,8 @@ const onSubmit = async () => {
 /* Responsive */
 @media (max-width: 480px) {
   .ds-header {
-    gap: 0.05rem;
-    margin-bottom: 0.4rem;
+    gap: 0.1rem;
+    margin-bottom: 1.2rem;
   }
   .ds-logo {
     width: 65px;
