@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { useNuxtApp } from '#app'
+import { $fetch } from 'ofetch'
 
 type NavItem = {
   label: string
@@ -14,7 +14,6 @@ type NavItem = {
 
 const router = useRouter()
 const route = useRoute()
-const { $fetch } = useNuxtApp()
 const logoutLoading = ref(false)
 
 const primaryNav: NavItem[] = [
@@ -195,8 +194,8 @@ const handleAction = async (item: NavItem) => {
             v-else
             type="button"
             class="admin-sidebar__link admin-sidebar__link--button"
-            @click="handleAction(item)"
             :disabled="logoutLoading"
+            @click="handleAction(item)"
           >
             <span class="admin-sidebar__icon">
               <svg

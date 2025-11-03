@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { useFetch } from 'nuxt/app'
+const { data } = await useFetch('/api/auth/me', {
+  credentials: 'include'
+})
 definePageMeta({
   middleware: 'auth-admin',
   layout: 'admin'
 })
-import { useFetch } from 'nuxt/app'
-const { data } = await useFetch('/api/auth/me')
 </script>
 
 <template>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+defineOptions({ name: 'AdminLogin' })
 
 // Form state
 const email = ref('')
@@ -89,8 +88,13 @@ const onSubmit = async () => {
 
     if (!response?.ok) throw new Error('Login gagal')
 
+    console.log('Next route:', resolveNextRoute(route.query.next))
+    await navigateTo(resolveNextRoute('/admin'))
+
     // Redirect ke halaman dashboard
-    await router.push(resolveNextRoute(route.query.next))
+    // if(import.meta.client) {
+    //   await router.push(resolveNextRoute(route.query.next))
+    // }
   } catch (e: any) {
     errorMsg.value = e?.message || 'Login gagal'
     errorField.value = null
@@ -118,7 +122,7 @@ const onSubmit = async () => {
               <div
                 xmlns="http://www.w3.org/1999/xhtml"
                 style="backdrop-filter: blur(2px); clip-path: url(#bgblur_0_24_8_clip_path); height: 100%; width: 100%;"
-              ></div>
+              />
             </foreignObject>
             <g data-figma-bg-blur-radius="4">
               <rect x="28" y="20" width="48" height="48" rx="8" fill="white" fill-opacity="0.2" />
@@ -215,7 +219,6 @@ const onSubmit = async () => {
             <button
               type="button"
               class="ds-password-toggle"
-              @click="togglePasswordVisibility"
               :aria-pressed="passwordFieldType === 'text'"
               :aria-label="
                 passwordFieldType === 'password'
@@ -227,6 +230,7 @@ const onSubmit = async () => {
                   ? 'Show password'
                   : 'Hide password'
               "
+              @click="togglePasswordVisibility"
             >
               <!-- Password Hidden (Eye Open) -->
               <svg
