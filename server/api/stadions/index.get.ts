@@ -1,0 +1,23 @@
+// Jembatan untuk query 'stadions' (semua)
+import { defineEventHandler } from 'h3'
+import { $fetch } from 'ofetch'
+import { QUERY_GET_STADIONS } from '~/graphql/queries/get_stadions'
+
+export default defineEventHandler(async (event) => {
+  const endpoint = process.env.GQL_HTTP_ENDPOINT
+  if (!endpoint) throw createError({ statusCode: 500, statusMessage: 'Missing GQL_HTTP_ENDPOINT' })
+
+  try {
+    const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
+      method: 'POST',
+      body: { 
+        query: QUERY_GET_STADIONS
+      },
+    })
+    
+    if (response.errors) throw new Error(response.errors[0].message)
+    return response.data.stadions
+  } catch (err: any) {
+    throw createError({ statusCode: 502, statusMessage: err.message })
+  }
+})
