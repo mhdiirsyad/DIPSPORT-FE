@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useFetch } from 'nuxt/app'
+defineOptions({ name: 'AdminLogin' })
 
 // Form state
 const email = ref('')
@@ -13,6 +11,20 @@ const errorField = ref<'email' | 'password' | null>(null)
 const passwordFieldType = ref<'password' | 'text'>('password')
 const router = useRouter()
 const route = useRoute()
+// $fetch is auto-imported in Nuxt 3, no need to import or destructure it
+
+const resolveNextRoute = (rawNext: unknown) => {
+  if (typeof rawNext !== 'string') {
+    return '/admin'
+  }
+
+  const trimmed = rawNext.trim()
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//')) {
+    return '/admin'
+  }
+
+  return trimmed || '/admin'
+}
 
 const togglePasswordVisibility = () => {
   passwordFieldType.value =
@@ -20,65 +32,72 @@ const togglePasswordVisibility = () => {
 }
 
 // Validasi form client-side
-function validateForm(): boolean {
+function validateForm(): string | null {
   errorMsg.value = null
   errorField.value = null
 
+  const trimmedEmail = email.value.trim()
+
   // Email wajib diisi
-  if (!email.value.trim()) {
+  if (!trimmedEmail) {
     errorMsg.value = 'Email harus diisi.'
     errorField.value = 'email'
-    return false
+    return null
   }
 
   // Format email harus valid
   const emailRegex = /^\S+@\S+\.\S+$/
-  if (!emailRegex.test(email.value)) {
+  if (!emailRegex.test(trimmedEmail)) {
     errorMsg.value = 'Format email tidak valid. Contoh: nama@domain.com'
     errorField.value = 'email'
-    return false
+    return null
   }
 
   // Password wajib diisi
   if (!password.value.trim()) {
     errorMsg.value = 'Password harus diisi.'
     errorField.value = 'password'
-    return false
+    return null
   }
 
   // Password minimal 8 karakter
   if (password.value.length < 8) {
     errorMsg.value = 'Password minimal harus 8 karakter.'
     errorField.value = 'password'
-    return false
+    return null
   }
 
-  return true
+  email.value = trimmedEmail
+  return trimmedEmail
 }
 
 // Submit
 const onSubmit = async () => {
-  if (!validateForm()) return
+  const trimmedEmail = validateForm()
+  if (!trimmedEmail) return
+
   loading.value = true
   try {
-    const { data, error } = await useFetch<{ ok: boolean; admin: any }>(
+    const response = await $fetch<{ ok: boolean; admin: any }>(
       '/api/auth/login',
       {
         method: 'POST',
-        body: { email: email.value, password: password.value },
+        body: { email: trimmedEmail, password: password.value },
       }
     )
 
-    if (error.value) {
-      throw new Error((error.value as any).statusMessage || 'Login gagal')
-    }
-    if (!data.value?.ok) throw new Error('Login gagal')
+    if (!response?.ok) throw new Error('Login gagal')
+
+    console.log('Next route:', resolveNextRoute(route.query.next))
+    await navigateTo(resolveNextRoute('/admin'))
 
     // Redirect ke halaman dashboard
-    await router.push((route.query.next as string) || '/admin')
+    // if(import.meta.client) {
+    //   await router.push(resolveNextRoute(route.query.next))
+    // }
   } catch (e: any) {
     errorMsg.value = e?.message || 'Login gagal'
-    errorField.value = 'email'
+    errorField.value = null
   } finally {
     loading.value = false
   }
@@ -103,7 +122,7 @@ const onSubmit = async () => {
               <div
                 xmlns="http://www.w3.org/1999/xhtml"
                 style="backdrop-filter: blur(2px); clip-path: url(#bgblur_0_24_8_clip_path); height: 100%; width: 100%;"
-              ></div>
+              />
             </foreignObject>
             <g data-figma-bg-blur-radius="4">
               <rect x="28" y="20" width="48" height="48" rx="8" fill="white" fill-opacity="0.2" />
@@ -176,6 +195,7 @@ const onSubmit = async () => {
               type="email"
               required
               placeholder="you@example.com"
+              autocomplete="email"
               class="ds-input-field"
             />
           </div>
@@ -193,11 +213,23 @@ const onSubmit = async () => {
               :type="passwordFieldType"
               required
               placeholder="Enter your password"
+              autocomplete="current-password"
               class="ds-input-field"
             />
             <button
               type="button"
               class="ds-password-toggle"
+              :aria-pressed="passwordFieldType === 'text'"
+              :aria-label="
+                passwordFieldType === 'password'
+                  ? 'Show password'
+                  : 'Hide password'
+              "
+              :title="
+                passwordFieldType === 'password'
+                  ? 'Show password'
+                  : 'Hide password'
+              "
               @click="togglePasswordVisibility"
             >
               <!-- Password Hidden (Eye Open) -->
@@ -207,7 +239,7 @@ const onSubmit = async () => {
                 height="18"
                 viewBox="0 0 24 24"
                 fill="none"
-                xmlns="http://www.w3.org///$2000/svg"
+                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9.5C10.62 9.5 9.5 10.62 9.5 12C9.5 13.38 10.62 14.5 12 14.5C13.38 14.5 14.5 13.38 14.5 12C14.5 10.62 13.38 9.5 12 9.5Z"
@@ -234,7 +266,7 @@ const onSubmit = async () => {
 
         <!-- Forgot Password Link -->
         <div class="ds-forgot-password">
-          <a href="#" class="ds-forgot-password-link">Forgot password?</a>
+          <a href="/admin/forgot-password" class="ds-forgot-password-link">Forgot password?</a>
         </div>
 
         <!-- Submit Button -->
