@@ -75,7 +75,7 @@ const onSubmit = async () => {
 
 <template>
   <div class="flex min-h-screen flex-col items-center justify-center bg-ds-gradient-blue px-6">
-    <div class="flex flex-col items-center gap-[0.25rem] mb-6">
+    <div class="flex flex-col items-center mb-3">
       <div class="flex justify-center">
         <img
           src="~/assets/images/logo-dipsport.svg"
