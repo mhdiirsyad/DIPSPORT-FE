@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ds-body: #f2f4f7;
+  --ds-surface: #ffffff;
+  --ds-text: #0f172a;
+  --ds-muted: #6b7280;
+  --ds-border: #e5e7eb;
+  --ds-brand: #0F47AD;
+}
+
+@layer components {
+  .ds-button-primary {
+    @apply inline-flex items-center justify-center gap-2
+           rounded-lg bg-[var(--ds-brand)] px-4 py-2.5
+           text-sm font-semibold text-white shadow-sm
+           transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-offset-2
+           focus:ring-[var(--ds-brand)]
+           hover:bg-[#0c3b8a];
+  }
+
+  .admin-layout {
+    @apply flex min-h-screen bg-[var(--ds-body)];
+  }
+
+  .admin-layout__content {
+    @apply flex-1 p-8 min-w-0;
+  }
+
+  @media (max-width: 768px) {
+    .admin-layout {
+      @apply flex-col;
+    }
+
+    .admin-layout__content {
+      @apply p-4;
+    }
+  }
+}

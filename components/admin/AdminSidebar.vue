@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import { $fetch } from 'ofetch'
 
 type NavItem = {
   label: string
@@ -30,7 +29,6 @@ const secondaryNav: NavItem[] = [
 ]
 
 const normalizePath = (input: string) => input.replace(/\/+$/, '') || '/'
-
 const currentPath = computed(() => normalizePath((route as RouteLocationNormalizedLoaded).path || '/'))
 
 const isActive = (item: NavItem) => {
@@ -59,25 +57,41 @@ const handleAction = async (item: NavItem) => {
 </script>
 
 <template>
-  <aside class="admin-sidebar">
-    <div class="admin-sidebar__brand">
-      <div class="admin-sidebar__avatar" aria-hidden="true">D</div>
+  <aside
+    class="w-full lg:w-60 bg-ds-blue-900 text-[#e5edff] flex flex-col justify-between p-5 lg:p-7 lg:min-h-screen lg:sticky lg:top-0"
+  >
+    <!-- Header Logo -->
+    <div class="flex items-center gap-3 mb-8">
+      <div
+        class="w-11 h-11 rounded-full bg-gradient-to-br from-white/20 to-white/10 grid place-items-center font-bold text-lg flex-shrink-0 text-white"
+      >
+        D
+      </div>
       <div>
-        <p class="admin-sidebar__title">Dipsport</p>
-        <p class="admin-sidebar__subtitle">Admin Panel</p>
+        <p class="font-bold text-base text-white">Dipsport</p>
+        <p class="text-xs text-[#e5edff]/75">Admin Panel</p>
       </div>
     </div>
 
-    <nav class="admin-sidebar__nav" aria-label="Admin utama">
-      <ul>
+    <!-- Primary Navigation - Vertically Centered -->
+    <nav class="flex-1 flex items-center" aria-label="Admin utama">
+      <ul class="grid gap-1 w-full">
         <li v-for="item in primaryNav" :key="item.to">
           <NuxtLink
             :to="item.to"
-            class="admin-sidebar__link"
-            :class="{ 'is-active': isActive(item) }"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors"
+            :class="[
+              isActive(item)
+                ? 'bg-white/10 text-white'
+                : 'hover:bg-white/10'
+            ]"
             :aria-current="isActive(item) ? 'page' : undefined"
           >
-            <span class="admin-sidebar__icon">
+            <span
+              class="w-5 h-5 flex-shrink-0"
+              :class="[isActive(item) ? 'text-white' : 'text-[#e5edff]/85']"
+            >
+              <!-- Dashboard Icon -->
               <svg
                 v-if="item.icon === 'dashboard'"
                 width="18"
@@ -91,6 +105,8 @@ const handleAction = async (item: NavItem) => {
                   fill="currentColor"
                 />
               </svg>
+
+              <!-- Stadium Icon -->
               <svg
                 v-else-if="item.icon === 'stadium'"
                 width="18"
@@ -104,6 +120,8 @@ const handleAction = async (item: NavItem) => {
                   fill="currentColor"
                 />
               </svg>
+
+              <!-- Field Icon -->
               <svg
                 v-else-if="item.icon === 'field'"
                 width="18"
@@ -117,6 +135,8 @@ const handleAction = async (item: NavItem) => {
                   fill="currentColor"
                 />
               </svg>
+
+              <!-- Schedule Icon -->
               <svg
                 v-else-if="item.icon === 'schedule'"
                 width="18"
@@ -130,6 +150,8 @@ const handleAction = async (item: NavItem) => {
                   fill="currentColor"
                 />
               </svg>
+
+              <!-- Booking Icon -->
               <svg
                 v-else-if="item.icon === 'booking'"
                 width="18"
@@ -144,23 +166,32 @@ const handleAction = async (item: NavItem) => {
                 />
               </svg>
             </span>
-            <span class="admin-sidebar__label">{{ item.label }}</span>
+            <span class="flex-1 whitespace-nowrap">{{ item.label }}</span>
           </NuxtLink>
         </li>
       </ul>
     </nav>
 
-    <nav class="admin-sidebar__nav admin-sidebar__nav--secondary" aria-label="Pengaturan akun">
-      <ul>
+    <!-- Secondary Navigation (Bottom) -->
+    <nav class="mt-8 pt-6 border-t border-white/10" aria-label="Pengaturan akun">
+      <ul class="grid gap-1">
         <li v-for="item in secondaryNav" :key="item.label">
+          <!-- Profile Link -->
           <NuxtLink
             v-if="item.to"
             :to="item.to"
-            class="admin-sidebar__link"
-            :class="{ 'is-active': isActive(item) }"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors"
+            :class="[
+              isActive(item)
+                ? 'bg-white/10 text-white'
+                : 'hover:bg-white/10'
+            ]"
             :aria-current="isActive(item) ? 'page' : undefined"
           >
-            <span class="admin-sidebar__icon">
+            <span
+              class="w-5 h-5 flex-shrink-0"
+              :class="[isActive(item) ? 'text-white' : 'text-[#e5edff]/85']"
+            >
               <svg
                 v-if="item.icon === 'profile'"
                 width="18"
@@ -174,31 +205,21 @@ const handleAction = async (item: NavItem) => {
                   fill="currentColor"
                 />
               </svg>
-              <svg
-                v-else
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M16 13V11H8V8L3 12L8 16V13H16ZM20 3H12V5H20V19H12V21H20C21.1 21 22 20.1 22 19V5C22 3.9 21.1 3 20 3Z"
-                  fill="currentColor"
-                />
-              </svg>
             </span>
-            <span class="admin-sidebar__label">{{ item.label }}</span>
+            <span class="flex-1 whitespace-nowrap">{{ item.label }}</span>
           </NuxtLink>
+
+          <!-- Logout Button -->
           <button
             v-else
             type="button"
-            class="admin-sidebar__link admin-sidebar__link--button"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/10 disabled:opacity-60 disabled:cursor-wait"
             :disabled="logoutLoading"
             @click="handleAction(item)"
           >
-            <span class="admin-sidebar__icon">
+            <span class="w-5 h-5 flex-shrink-0 text-[#e5edff]/85">
               <svg
+                v-if="item.icon === 'logout'"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
@@ -211,7 +232,7 @@ const handleAction = async (item: NavItem) => {
                 />
               </svg>
             </span>
-            <span class="admin-sidebar__label">
+            <span class="flex-1 whitespace-nowrap text-left">
               {{ logoutLoading ? 'Logging out...' : item.label }}
             </span>
           </button>
@@ -222,155 +243,4 @@ const handleAction = async (item: NavItem) => {
 </template>
 
 <style scoped>
-.admin-sidebar {
-  width: 240px;
-  background: var(--ds-blue-900);
-  color: #e5edff;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1.75rem 1.25rem;
-  min-height: 100vh;
-  position: sticky;
-  top: 0;
-}
-
-.admin-sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.admin-sidebar__avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
-  color: #0f172a;
-  font-weight: 700;
-  font-size: 1rem;
-  text-transform: uppercase;
-}
-
-.admin-sidebar__title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0;
-  color: #ffffff;
-}
-
-.admin-sidebar__subtitle {
-  margin: 0;
-  font-size: 0.75rem;
-  color: rgba(229, 237, 255, 0.75);
-}
-
-.admin-sidebar__nav ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 0.25rem;
-}
-
-.admin-sidebar__nav--secondary {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(229, 237, 255, 0.12);
-}
-
-.admin-sidebar__link {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--ds-radius-sm);
-  color: inherit;
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.admin-sidebar__link:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.admin-sidebar__link.is-active {
-  background: rgba(69, 109, 255, 0.2);
-  color: #ffffff;
-}
-
-.admin-sidebar__link--button {
-  width: 100%;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  color: inherit;
-  font: inherit;
-}
-
-.admin-sidebar__link--button:disabled {
-  opacity: 0.65;
-  cursor: wait;
-}
-
-.admin-sidebar__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(229, 237, 255, 0.85);
-}
-
-.admin-sidebar__link.is-active .admin-sidebar__icon {
-  color: #ffffff;
-}
-
-.admin-sidebar__label {
-  flex: 1;
-  white-space: nowrap;
-}
-
-@media (max-width: 1024px) {
-  .admin-sidebar {
-    width: 220px;
-    padding: 1.5rem 1rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .admin-sidebar {
-    position: static;
-    width: 100%;
-    min-height: auto;
-    flex-direction: row;
-    padding: 1rem;
-    gap: 1rem;
-  }
-
-  .admin-sidebar__brand {
-    margin-bottom: 0;
-  }
-
-  .admin-sidebar__nav,
-  .admin-sidebar__nav ul {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-  }
-
-  .admin-sidebar__link {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .admin-sidebar__nav--secondary {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
-  }
-}
 </style>
