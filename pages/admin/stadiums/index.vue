@@ -3,6 +3,7 @@
 import { ref } from 'vue'
 definePageMeta({
   middleware: 'auth-admin',
+  layout: 'admin'
 })
 
 interface StadionRow {
@@ -45,7 +46,7 @@ async function handleDelete(id: number) {
     <div class="flex justify-between items-center mb-4">
       <h1 class="text-2xl font-semibold">Manajemen Stadion</h1>
       <NuxtLink
-        to="/admin/stadion/create"
+        to="/admin/stadiums/create"
         class="ds-button-primary is-filled"
       >
         + Tambah Stadion

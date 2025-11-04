@@ -1,27 +1,22 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+// nuxt.config.ts
 import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  css: ['@/assets/css/main.css'],
-  
+  css: [
+    '@/assets/css/tailwind.css' 
+  ],
+
   modules: [
     '@nuxt/content',
     '@nuxt/image',
     '@nuxt/eslint',
-    '@nuxt/ui',
+    '@nuxtjs/tailwindcss'
   ],
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,
-    public: {
-      gqlHttpEndpoint: process.env.GQL_HTTP_ENDPOINT
-    }
+    public: { gqlHttpEndpoint: process.env.GQL_HTTP_ENDPOINT },
   },
-  
-  typescript: {
-    strict: true,
-    typeCheck: true,
-    shim: true
-  }
+  typescript: { strict: true, typeCheck: true, shim: true },
 })
