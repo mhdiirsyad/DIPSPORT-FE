@@ -552,7 +552,7 @@ const submitDelete = async () => {
           Jam Operasional Stadion
         </h1>
         <p class="mt-2 text-sm text-gray-600 sm:text-base">
-          Tinjau dan kelola jendela operasional harian untuk setiap venue dipSport.
+          Tinjau dan kelola jendela operasional harian untuk setiap venue DIPSPORT.
         </p>
       </div>
       <button
