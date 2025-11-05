@@ -94,10 +94,9 @@ const onSubmit = async () => {
         Please enter your credentials to continue.
       </p>
 
-      <form class="ds-login-form" @submit.prevent="onSubmit">
-        <!-- Email -->
-        <label class="ds-form-label">
-          <span class="ds-form-label-text">Email</span>
+      <form @submit.prevent="onSubmit" class="grid gap-4 w-full text-left">
+        <label class="grid gap-1">
+          <span class="text-sm font-medium text-ds-text">Email</span>
           <div
             :class="[
               'relative flex items-center rounded-sm border px-3 h-10 transition-all',
@@ -112,8 +111,8 @@ const onSubmit = async () => {
               required
               placeholder="you@example.com"
               autocomplete="email"
-              class="ds-input-field"
-            >
+              class="flex-1 bg-transparent text-sm text-ds-text placeholder:text-ds-muted outline-none"
+            />
           </div>
         </label>
 
@@ -133,8 +132,8 @@ const onSubmit = async () => {
               required
               placeholder="Enter your password"
               autocomplete="current-password"
-              class="ds-input-field"
-            >
+              class="flex-1 bg-transparent text-sm text-ds-text placeholder:text-ds-muted outline-none pr-2"
+            />
             <button
               type="button"
               class="flex items-center justify-center text-ds-muted"
