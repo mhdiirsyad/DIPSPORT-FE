@@ -182,7 +182,7 @@ const onSubmit = async () => {
         Please enter your credentials to continue.
       </p>
 
-      <form @submit.prevent="onSubmit" class="ds-login-form">
+      <form class="ds-login-form" @submit.prevent="onSubmit">
         <!-- Email -->
         <label class="ds-form-label">
           <span class="ds-form-label-text">Email</span>
@@ -197,7 +197,7 @@ const onSubmit = async () => {
               placeholder="you@example.com"
               autocomplete="email"
               class="ds-input-field"
-            />
+            >
           </div>
         </label>
 
@@ -215,7 +215,7 @@ const onSubmit = async () => {
               placeholder="Enter your password"
               autocomplete="current-password"
               class="ds-input-field"
-            />
+            >
             <button
               type="button"
               class="ds-password-toggle"
