@@ -83,13 +83,13 @@ const onSubmit = async () => {
           class="w-20 h-20 sm:w-[80px] sm:h-[82px]"
         />
       </div>
-      <h1 class="text-[2.1rem] font-bold text-ds-surface">DIPSPORT</h1>
+      <h1 class="text-[2.1rem] font-bold text-ds-surface">VENUE UNDIP</h1>
     </div>
 
     <div
       class="flex w-full max-w-[340px] flex-col items-center rounded-md border border-ds-border bg-ds-surface px-6 py-7 text-center shadow-ds-lg"
     >
-      <h2 class="text-[1.3rem] font-bold text-ds-blue-900 mb-1">Admin Login</h2>
+      <h2 class="text-[1.3rem] font-bold text-ds-blue-900 mb-1">ADMIN LOGIN</h2>
       <p class="text-xs text-ds-muted mb-6">
         Please enter your credentials to continue.
       </p>

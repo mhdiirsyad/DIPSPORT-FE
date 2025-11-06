@@ -9,13 +9,12 @@ export default defineEventHandler(async (event) => {
 
   const token = getCookie(event, 'admin_token')
   if (!token) throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
-
   try {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
         query: MUTATION_DELETE_FIELD,
-        variables: { fieldId: Number(fieldId) },
+        variables: { fieldId },
       },
       headers: { 'Authorization': `Bearer ${token}` }
     })

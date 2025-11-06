@@ -61,7 +61,7 @@ async function handleSubmit() {
 
       <NuxtLink
         to="/admin/fields"
-        class="inline-flex items-center gap-2.5 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+        class="inline-flex items-center gap-2.5 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-px sm:px-6"
       >
         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -81,7 +81,6 @@ async function handleSubmit() {
           </div>
 
           <div class="grid grid-cols-1 gap-6 sm:max-w-xl">
-            <!-- Stadion Induk -->
             <label class="block">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Stadion Induk <span class="text-red-500">*</span>
@@ -98,7 +97,6 @@ async function handleSubmit() {
               </select>
             </label>
 
-            <!-- Nama Lapangan -->
             <label class="block">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Nama Lapangan <span class="text-red-500">*</span>
@@ -112,7 +110,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- Deskripsi -->
             <label class="block">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Deskripsi
@@ -121,18 +118,17 @@ async function handleSubmit() {
                 v-model="form.description"
                 rows="4"
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors resize-none"
+                placeholder="Lapangan dengan permukaan lantai yang aman, dilengkapi dengan pencahayaan malam hari."
               />
             </label>
 
-            <!-- Harga per Jam -->
             <label class="block">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Harga per Jam <span class="text-red-500">*</span>
               </span>
               <input
                 v-model.number="form.pricePerHour"
-                type="number"
-                required
+                type="text" inputmode="numeric" pattern="[0-9]*" required
                 min="0"
                 placeholder="100000"
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
@@ -141,12 +137,12 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- Footer Aksi -->
         <div class="flex items-center justify-start gap-3 bg-gray-50/75 px-5 py-4 sm:px-6">
+          
           <button
             type="submit"
             :disabled="loading"
-            class="ds-button-primary"
+            class="inline-flex items-center gap-2.5 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg v-if="loading" class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25" />
@@ -157,7 +153,7 @@ async function handleSubmit() {
 
           <NuxtLink
             to="/admin/fields"
-            class="inline-flex items-center gap-2.5 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+            class="inline-flex items-center gap-2.5 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-px"
           >
             Batal
           </NuxtLink>

@@ -118,7 +118,7 @@ async function handleDelete(id: number) {
           Manajemen Stadion
         </h1>
         <p class="mt-2 text-sm text-gray-600 sm:text-base">
-          Tambah, edit, atau hapus data stadion yang terdaftar di DIPSPORT.
+          Tambah, edit, atau hapus data stadion yang terdaftar di VENUE UNDIP.
         </p>
       </div>
       <NuxtLink

@@ -171,6 +171,7 @@ async function handleSubmit() {
                 v-model="form.description"
                 rows="4"
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors resize-none"
+                placeholder="Lapangan dengan permukaan lantai yang aman, dilengkapi dengan pencahayaan malam hari."
               />
             </label>
 
@@ -181,8 +182,7 @@ async function handleSubmit() {
               </span>
               <input
                 v-model.number="form.pricePerHour"
-                type="number"
-                required
+                type="text" inputmode="numeric" pattern="[0-9]*" required
                 min="0"
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
               />
@@ -195,7 +195,7 @@ async function handleSubmit() {
           <button
             type="submit"
             :disabled="loading"
-            class="ds-button-primary"
+            class="inline-flex items-center gap-2.5 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg v-if="loading" class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25" />
@@ -203,7 +203,6 @@ async function handleSubmit() {
             </svg>
             {{ loading ? 'Memperbarui...' : 'Perbarui Lapangan' }}
           </button>
-
           <NuxtLink
             to="/admin/fields"
             class="inline-flex items-center gap-2.5 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50"

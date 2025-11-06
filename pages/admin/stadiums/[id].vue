@@ -90,7 +90,7 @@ async function handleSubmit() {
           Edit Stadion ID {{ stadionId }}
         </h1>
         <p class="mt-2 text-sm text-gray-600 sm:text-base">
-          Perbarui detail stadion yang sudah terdaftar di DIPSPORT.
+          Perbarui detail stadion yang sudah terdaftar di VENUE UNDIP.
         </p>
       </div>
       <NuxtLink
@@ -149,7 +149,7 @@ async function handleSubmit() {
                 v-model="form.description"
                 rows="4"
                 class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors resize-none"
-                placeholder="Stadion dengan fasilitas lengkap, lapangan rumput sintetis, tribun berkapasitas 5000 penonton..."
+                placeholder="Stadion dengan fasilitas dan perlengkapan olahraga yang lengkap, tribun berkapasitas 5000 penonton."
               />
             </label>
             <!-- URL Google Maps -->
