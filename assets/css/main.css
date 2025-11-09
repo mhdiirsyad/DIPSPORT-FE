@@ -1,17 +1,21 @@
-@tailwind base;
+@import "tailwindcss";
+@import "@nuxt/ui";
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
 
-:root {
+/* Custom styles langsung disini, tidak pakai @import url() */
+
+/* :root {
   --ds-body: #f2f4f7;
   --ds-surface: #ffffff;
   --ds-text: #0f172a;
   --ds-muted: #6b7280;
   --ds-border: #e5e7eb;
   --ds-brand: #0F47AD;
-}
+} */
 
-@layer components {
+/* @layer components {
   .ds-button-primary {
     @apply inline-flex items-center justify-center gap-2
            rounded-lg bg-[var(--ds-brand)] px-4 py-2.5
@@ -39,4 +43,4 @@
       @apply p-4;
     }
   }
-}
+} */

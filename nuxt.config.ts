@@ -5,18 +5,25 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: [
-    '@/assets/css/tailwind.css' 
+    '@/assets/css/main.css' 
   ],
 
   modules: [
     '@nuxt/content',
+    '@nuxt/ui',
     '@nuxt/image',
     '@nuxt/eslint',
-    '@nuxtjs/tailwindcss'
+    // '@nuxtjs/tailwindcss',
   ],
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,
     public: { gqlHttpEndpoint: process.env.GQL_HTTP_ENDPOINT },
   },
   typescript: { strict: true, typeCheck: true, shim: true },
+  postcss: {
+    plugins: {
+      '@tailwindcss/postcss': {},
+      'autoprefixer': {},
+    }
+  }
 })
