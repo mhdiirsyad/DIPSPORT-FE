@@ -1,5 +1,5 @@
 // @ts-check
-import withNuxt from './.nuxt/eslint.config.mjs'
+const { default: withNuxt } = await import('./.nuxt/eslint.config.mjs')
 
 export default withNuxt(
 

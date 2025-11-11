@@ -1,21 +1,9 @@
 export const MUTATION_UPDATE_OPERATING_HOUR = `
-  mutation UpdateOperatingHour(
-    $id: Int!,
-    $day: DayofWeek!,
-    $open: DateTime!,
-    $close: DateTime!
-  ) {
-    updateOperatingHour(
-      id: $id,
-      day: $day,
-      openTime: $open,
-      closeTime: $close
-    ) {
+  mutation UpdateOperatingHour($openHour: Int!, $closeHour: Int!) {
+    updateOperatingHour(openHour: $openHour, closeHour: $closeHour) {
       id
-      stadionId
-      day
-      openTime
-      closeTime
+      openHour
+      closeHour
     }
   }
 `

@@ -3,11 +3,11 @@ import { $fetch } from 'ofetch'
 import { MUTATION_UPDATE_OPERATING_HOUR } from '~/graphql/mutations/update_operating_hour'
 
 type UpdateOperatingHourBody = {
-  id: number
-  day: string
-  open: string
-  close: string
+  openHour: number
+  closeHour: number
 }
+
+const isValidHour = (value: number) => Number.isInteger(value) && value >= 0 && value <= 24
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<UpdateOperatingHourBody>(event)
@@ -22,22 +22,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
   }
 
-  if (!body || !body.day || !body.open || !body.close) {
+  if (body?.openHour === undefined || body?.closeHour === undefined) {
     throw createError({ statusCode: 400, statusMessage: 'Incomplete payload' })
   }
 
-  const id = Number(body.id)
-  if (!Number.isFinite(id)) {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid identifier' })
+  const openHour = Number(body.openHour)
+  const closeHour = Number(body.closeHour)
+
+  if (!isValidHour(openHour) || !isValidHour(closeHour)) {
+    throw createError({ statusCode: 400, statusMessage: 'Jam harus berada antara 0-24' })
+  }
+
+  if (closeHour <= openHour) {
+    throw createError({ statusCode: 400, statusMessage: 'Jam tutup harus lebih besar daripada jam buka' })
   }
 
   try {
-    console.debug('[operating-hours/update] payload', {
-      id,
-      day: body.day,
-      open: body.open,
-      close: body.close,
-    })
     const response = await $fetch<{
       data?: { updateOperatingHour?: any }
       errors?: Array<{ message?: string }>
@@ -50,10 +50,8 @@ export default defineEventHandler(async (event) => {
       body: {
         query: MUTATION_UPDATE_OPERATING_HOUR,
         variables: {
-          id,
-          day: body.day,
-          open: body.open,
-          close: body.close,
+          openHour,
+          closeHour,
         },
       },
     })
