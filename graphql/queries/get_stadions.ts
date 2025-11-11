@@ -4,6 +4,9 @@ export const QUERY_GET_STADIONS = `
       id
       name
       mapUrl
+      images {
+        imageUrl
+      }
     }
   }
 `

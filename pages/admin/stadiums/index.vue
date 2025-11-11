@@ -70,7 +70,7 @@ const paginationSummary = computed(() => {
   if (totalItems.value === 0) return 'Tidak ada data'
   const start = (currentPage.value - 1) * itemsPerPage + 1
   const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}–${end} dari ${totalItems.value} hasil`
+  return `Menampilkan ${start}-${end} dari ${totalItems.value} hasil`
 })
 
 // Navigasi halaman

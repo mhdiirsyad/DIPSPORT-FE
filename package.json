@@ -13,6 +13,7 @@
     "@nuxt/content": "^3.7.1",
     "@nuxt/eslint": "^1.10.0",
     "@nuxt/image": "^1.11.0",
+    "@vueuse/core": "^14.0.0",
     "better-sqlite3": "^12.4.1",
     "dotenv": "^17.2.3",
     "eslint": "^9.38.0",
