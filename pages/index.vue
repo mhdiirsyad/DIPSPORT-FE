@@ -1,11 +1,22 @@
-<script setup lang="ts">
-const venues = [
+﻿<script setup lang="ts">
+type VenueCard = {
+  id: number
+  name: string
+  city: string
+  rating: number
+  sport: string
+  price: number
+  image: string
+}
+
+const venues: VenueCard[] = [
   {
     id: 1,
-    name: 'Padel Co.',
-    city: 'Kota Bandung',
-    rating: 4.13,
+    name: 'Dua Bola Padel',
+    city: 'Kota Pekanbaru, Riau',
+    rating: 4.9,
     sport: 'Padel',
+    price: 250000,
     image:
       'https://images.unsplash.com/photo-1530543787849-128d94430c6b?auto=format&fit=crop&w=1200&q=80',
   },
@@ -15,6 +26,7 @@ const venues = [
     city: 'Kota Bandung',
     rating: 4.87,
     sport: 'Padel',
+    price: 220000,
     image:
       'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80',
   },
@@ -24,37 +36,15 @@ const venues = [
     city: 'Kota Yogyakarta',
     rating: 4.9,
     sport: 'Padel',
-    image:
-      'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 4,
-    name: 'Glasshaus Court',
-    city: 'Jakarta Selatan',
-    rating: 4.9,
-    sport: 'Basket',
-    image:
-      'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 5,
-    name: 'Astina Padel Garage',
-    city: 'Jakarta Timur',
-    rating: 4.8,
-    sport: 'Padel',
-    image:
-      'https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 6,
-    name: 'Ambassador Tennis',
-    city: 'Jakarta Selatan',
-    rating: 4.8,
-    sport: 'Tenis',
+    price: 240000,
     image:
       'https://images.unsplash.com/photo-1446463969211-28bf6e20f1c4?auto=format&fit=crop&w=1200&q=80',
   },
 ]
+
+const goToDetail = (venueId: number) => {
+  navigateTo(`/venues/${venueId}`)
+}
 </script>
 
 <template>
@@ -63,10 +53,12 @@ const venues = [
       <header class="flex flex-wrap items-center justify-between gap-4">
         <div class="text-xl font-semibold tracking-wide text-[#1f2a56]">DIPSPORTS</div>
         <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
-          <a href="#" class="hover:text-[#1f2a56]">Beranda</a>
-          <a href="#" class="hover:text-[#1f2a56]">Venue</a>
-          <a href="#" class="hover:text-[#1f2a56]">Tentang Kami</a>
-          <NuxtLink to="/admin/login" class="rounded-full bg-[#1f2a56] px-4 py-2 text-white shadow-sm hover:bg-[#1b244c] transition-colors">Masuk Admin</NuxtLink>
+          <NuxtLink
+            to="/admin/login"
+            class="rounded-full bg-[#1f2a56] px-4 py-2 text-white shadow-sm transition-colors hover:bg-[#1b244c]"
+          >
+            Masuk Admin
+          </NuxtLink>
         </nav>
       </header>
 
@@ -117,7 +109,8 @@ const venues = [
         <article
           v-for="venue in venues"
           :key="venue.id"
-          class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-lg"
+          class="cursor-pointer overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-lg"
+          @click="goToDetail(venue.id)"
         >
           <img :src="venue.image" :alt="venue.name" class="h-44 w-full object-cover" />
           <div class="space-y-3 p-5">
@@ -125,14 +118,22 @@ const venues = [
             <h3 class="text-lg font-semibold text-gray-900">{{ venue.name }}</h3>
             <div class="flex items-center gap-2 text-sm text-gray-500">
               <span class="font-semibold text-yellow-500">★ {{ venue.rating.toFixed(2) }}</span>
-              <span>• {{ venue.city }}</span>
+              <span>•</span>
+              <span>{{ venue.city }}</span>
             </div>
             <div class="flex items-center gap-2 text-xs text-gray-500">
               <span class="rounded-full bg-gray-100 px-3 py-1">{{ venue.sport }}</span>
+              <span class="rounded-full bg-green-50 px-3 py-1 text-green-700">
+                Rp {{ venue.price.toLocaleString('id-ID') }}
+              </span>
             </div>
           </div>
         </article>
       </section>
     </div>
+
   </main>
 </template>
+
+<style scoped>
+</style>
