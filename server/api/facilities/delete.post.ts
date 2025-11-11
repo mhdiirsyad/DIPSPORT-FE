@@ -1,40 +1,25 @@
 import { defineEventHandler, readBody, getCookie } from 'h3'
 import { $fetch } from 'ofetch'
-import { MUTATION_UPDATE_FIELD } from '~/graphql/mutations/update_field'
+import { MUTATION_DELETE_FACILITY } from '~/graphql/mutations/delete_facility'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
+  const { facilityId } = await readBody(event)
   const endpoint = process.env.GQL_HTTP_ENDPOINT
   if (!endpoint) throw createError({ statusCode: 500, statusMessage: 'Missing GQL_HTTP_ENDPOINT' })
-
   const token = getCookie(event, 'admin_token')
   if (!token) throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
-
   try {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
-        query: MUTATION_UPDATE_FIELD,
-        variables: {
-          fieldId: String(body.fieldId),
-          stadionId: Number(body.stadionId),
-          name: body.name,
-          description: body.description,
-          pricePerHour: Number(body.pricePerHour),
-          status: body.status,
-          images: body.images,
-        },
+        query: MUTATION_DELETE_FACILITY,
+        variables: { facilityId },
       },
       headers: { 'Authorization': `Bearer ${token}` }
     })
-
-    if (response.errors) {
-      const msg = response.errors[0].message
-      throw createError({ statusCode: 400, statusMessage: msg })
-    }
-    return response.data.updateField
+    if (response.errors) throw new Error(response.errors[0].message)
+    return response.data.deleteFacility
   } catch (err: any) {
-    if (err.statusCode) throw err
     throw createError({ statusCode: 502, statusMessage: err.message })
   }
 })

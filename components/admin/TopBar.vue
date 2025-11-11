@@ -37,7 +37,6 @@ const breadcrumbs = computed(() => {
   return crumbs
 })
 
-// Dropdown refs
 const profileMenu = ref<HTMLDetailsElement | null>(null)
 const notifyMenu = ref<HTMLDetailsElement | null>(null)
 
@@ -48,7 +47,6 @@ const onNotifyToggle = () => {
   if (notifyMenu.value?.open && profileMenu.value?.open) profileMenu.value.open = false
 }
 
-// Auto-close click di luar & Esc
 const handleGlobalPointerDown = (e: Event) => {
   const target = e.target as Node
   if (profileMenu.value && profileMenu.value.open && !profileMenu.value.contains(target)) {
@@ -73,7 +71,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
 })
 
-// Logout top bar (sama seperti sidebar)
 const topbarLogoutLoading = ref(false)
 const handleTopbarLogout = async () => {
   if (topbarLogoutLoading.value) return
@@ -93,8 +90,7 @@ const handleTopbarLogout = async () => {
 <template>
   <header class="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-sm">
     <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-      
-      <!-- Left: Hamburger + Breadcrumbs -->
+
       <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
         <!-- Hamburger -->
         <button
@@ -112,7 +108,6 @@ const handleTopbarLogout = async () => {
           </div>
         </button>
 
-        <!-- Breadcrumbs -->
         <nav class="hidden lg:flex items-center text-sm font-medium min-w-0" aria-label="Breadcrumb">
           <ol class="flex items-center gap-1.5 text-gray-600 min-w-0">
             <li v-for="(crumb, index) in breadcrumbs" :key="crumb.to" class="flex items-center gap-1.5 min-w-0">
@@ -135,7 +130,6 @@ const handleTopbarLogout = async () => {
           </ol>
         </nav>
 
-        <!-- Mobile Breadcrumb (last only) -->
         <div class="lg:hidden flex items-center min-w-0">
           <span class="text-sm font-semibold text-gray-900 truncate">
             {{ breadcrumbs[breadcrumbs.length - 1]?.name }}
@@ -143,7 +137,6 @@ const handleTopbarLogout = async () => {
         </div>
       </div>
 
-      <!-- Right: Notifications + Profile -->
       <div class="flex items-center gap-2 sm:gap-3">
         <!-- Notifications -->
         <details ref="notifyMenu" @toggle="onNotifyToggle" class="relative">
@@ -180,7 +173,6 @@ const handleTopbarLogout = async () => {
           </div>
         </details>
 
-        <!-- Divider -->
         <div class="hidden sm:block h-6 w-px bg-gray-200"></div>
 
         <!-- Profile -->
@@ -196,7 +188,7 @@ const handleTopbarLogout = async () => {
               </span>
               <span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white"></span>
             </div>
-            <!-- Nama & email singkat (≥sm) -->
+            <!-- Nama & email -->
             <div class="hidden sm:flex flex-col leading-tight min-w-0">
               <span class="text-xs font-semibold text-gray-900 truncate max-w-[10rem]">{{ adminName }}</span>
               <span class="text-[10px] text-gray-500 truncate max-w-[10rem]">{{ adminEmail }}</span>
@@ -206,7 +198,6 @@ const handleTopbarLogout = async () => {
             </svg>
           </summary>
 
-          <!-- Dropdown -->
           <div class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white shadow-xl border border-gray-200/80 z-30 animate-in slide-in-from-top-2 fade-in duration-200">
             <!-- Header -->
             <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -221,7 +212,6 @@ const handleTopbarLogout = async () => {
               </div>
             </div>
 
-            <!-- Items -->
             <div class="p-2">
               <NuxtLink
                 to="/admin/profile"

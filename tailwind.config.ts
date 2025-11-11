@@ -1,5 +1,9 @@
-/** @type {import('tailwindcss').Config} */
-export default {
+// tailwind.config.ts
+import type { Config } from 'tailwindcss'
+import { addDynamicIconSelectors } from '@iconify/tailwind'
+import { VALID_FACILITY_ICONS } from './utils/validIconList'
+
+export default <Config>{
   content: [
     './components/**/*.{js,vue,ts}',
     './layouts/**/*.vue',
@@ -8,6 +12,7 @@ export default {
     './nuxt.config.{js,ts}',
     './app.vue',
   ],
+
   theme: {
     extend: {
       colors: {
@@ -20,13 +25,8 @@ export default {
         'ds-muted': '#6b7280',
         'ds-text': '#0f172a',
       },
-      borderRadius: {
-        sm: '0.5rem',
-        md: '1rem',
-      },
-      boxShadow: {
-        'ds-lg': '0 20px 45px rgba(15, 23, 42, 0.12)',
-      },
+      borderRadius: { sm: '0.5rem', md: '1rem' },
+      boxShadow: { 'ds-lg': '0 20px 45px rgba(15, 23, 42, 0.12)' },
       backgroundImage: {
         'ds-gradient-blue':
           'radial-gradient(circle at top, #244f9e 0%, #162953 40%, #122145 85%)',
@@ -34,4 +34,4 @@ export default {
     },
   },
   plugins: [],
-};
+} satisfies Config

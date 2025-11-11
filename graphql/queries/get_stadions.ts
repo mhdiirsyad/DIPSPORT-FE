@@ -4,6 +4,10 @@ export const QUERY_GET_STADIONS = `
       id
       name
       mapUrl
+      status
+      fields {
+        id
+      }
     }
   }
 `

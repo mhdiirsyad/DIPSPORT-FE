@@ -6,6 +6,7 @@ export const MUTATION_UPDATE_FIELD = `
     $description: String
     $pricePerHour: Int!
     $images: [FieldImageInput!]
+    $status: Status
   ) {
     updateField(
       fieldId: $fieldId
@@ -14,12 +15,14 @@ export const MUTATION_UPDATE_FIELD = `
       description: $description
       pricePerHour: $pricePerHour
       images: $images
+      status: $status
     ) {
       id
       stadionId
       name
       description
       pricePerHour
+      status
       images {
         id
         imageUrl

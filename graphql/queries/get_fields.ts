@@ -7,6 +7,7 @@ export const QUERY_GET_FIELDS = `
       name
       description
       pricePerHour
+      status
       images { id imageUrl }
       Stadion { id name }
     }

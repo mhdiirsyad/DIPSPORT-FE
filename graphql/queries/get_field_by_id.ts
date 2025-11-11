@@ -6,6 +6,7 @@ export const QUERY_GET_FIELD_BY_ID = `
       name
       description
       pricePerHour
+      status
       images { id imageUrl }
       Stadion { id name }
     }
