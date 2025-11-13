@@ -1,50 +1,65 @@
-﻿<script setup lang="ts">
-type VenueCard = {
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
+
+definePageMeta({
+  middleware: 'auth-admin',
+  layout: 'admin'
+})
+
+// -------------------------------------------------------------------
+// Types
+// -------------------------------------------------------------------
+interface Images {
+  imageUrl: string
+}
+
+interface StadionRow {
   id: number
   name: string
-  city: string
-  rating: number
-  sport: string
-  price: number
-  image: string
+  images?: Images[]
+  _count?: { fields: number }
 }
 
-const venues: VenueCard[] = [
-  {
-    id: 1,
-    name: 'Dua Bola Padel',
-    city: 'Kota Pekanbaru, Riau',
-    rating: 4.9,
-    sport: 'Padel',
-    price: 250000,
-    image:
-      'https://images.unsplash.com/photo-1530543787849-128d94430c6b?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 2,
-    name: 'Papadelulu Padel Club',
-    city: 'Kota Bandung',
-    rating: 4.87,
-    sport: 'Padel',
-    price: 220000,
-    image:
-      'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 3,
-    name: 'Joglo Padel Club',
-    city: 'Kota Yogyakarta',
-    rating: 4.9,
-    sport: 'Padel',
-    price: 240000,
-    image:
-      'https://images.unsplash.com/photo-1446463969211-28bf6e20f1c4?auto=format&fit=crop&w=1200&q=80',
-  },
-]
+// -------------------------------------------------------------------
+// Data Fetching
+// -------------------------------------------------------------------
+const { data: stadions, pending, error, refresh } = await useAsyncData(
+  'stadionsList',
+  () => $fetch<StadionRow[]>('/api/stadions')
+)
+// console.log(stadions.value)
+// -------------------------------------------------------------------
+// Search (dengan debounce)
+// -------------------------------------------------------------------
+const searchQuery = ref('')
+const debouncedSearch = ref('')
 
-const goToDetail = (venueId: number) => {
-  navigateTo(`/venues/${venueId}`)
-}
+const applyDebounce = useDebounceFn(() => {
+  debouncedSearch.value = searchQuery.value.trim().toLowerCase()
+}, 400)
+
+watch(searchQuery, applyDebounce)
+
+const filteredStadions = computed(() => {
+  if (!stadions.value) return []
+  if (!debouncedSearch.value) return stadions.value
+  return stadions.value.filter(stadion =>
+    stadion.name.toLowerCase().includes(debouncedSearch.value)
+  )
+})
+
+// -------------------------------------------------------------------
+// Pagination (opsional bisa dihapus jika ingin infinite scroll)
+// -------------------------------------------------------------------
+const currentPage = ref(1)
+const itemsPerPage = 8
+
+const totalPages = computed(() => Math.ceil(filteredStadions.value.length / itemsPerPage))
+const paginatedStadions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  return filteredStadions.value.slice(start, start + itemsPerPage)
+})
 </script>
 
 <template>
@@ -53,12 +68,12 @@ const goToDetail = (venueId: number) => {
       <header class="flex flex-wrap items-center justify-between gap-4">
         <div class="text-xl font-semibold tracking-wide text-[#1f2a56]">DIPSPORTS</div>
         <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
-          <NuxtLink
+          <!-- <NuxtLink
             to="/admin/login"
             class="rounded-full bg-[#1f2a56] px-4 py-2 text-white shadow-sm transition-colors hover:bg-[#1b244c]"
           >
             Masuk Admin
-          </NuxtLink>
+          </NuxtLink> -->
         </nav>
       </header>
 
@@ -68,6 +83,7 @@ const goToDetail = (venueId: number) => {
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.35-3.15A6 6 0 109 15a6 6 0 009-1.5z" />
           </svg>
           <input
+            v-model="searchQuery"
             type="text"
             placeholder="Cari venue"
             class="w-full border-none text-gray-700 placeholder:text-gray-400 focus:outline-none"
@@ -92,7 +108,7 @@ const goToDetail = (venueId: number) => {
         </button>
       </section>
 
-      <section class="rounded-3xl bg-[#1f2a56] px-10 py-12 text-white shadow-lg">
+      <!-- <section class="rounded-3xl bg-[#1f2a56] px-10 py-12 text-white shadow-lg">
         <div class="max-w-2xl space-y-4">
           <h2 class="text-3xl font-semibold leading-tight">Temukan Lapangan sesuai dengan jadwal anda</h2>
           <p class="text-sm text-blue-100">
@@ -103,20 +119,20 @@ const goToDetail = (venueId: number) => {
             Booking Sekarang
           </button>
         </div>
-      </section>
+      </section> -->
 
       <section class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <article
-          v-for="venue in venues"
+          v-for="venue in paginatedStadions"
           :key="venue.id"
           class="cursor-pointer overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-lg"
-          @click="goToDetail(venue.id)"
+          @click="navigateTo(`/admin/bookings/${venue.id}`)"
         >
-          <img :src="venue.image" :alt="venue.name" class="h-44 w-full object-cover" >
+          <img :src="venue.images?.[0]?.imageUrl" :alt="venue.name" class="h-44 w-full object-cover" >
           <div class="space-y-3 p-5">
             <div class="text-xs font-semibold uppercase tracking-wide text-gray-400">Venue</div>
             <h3 class="text-lg font-semibold text-gray-900">{{ venue.name }}</h3>
-            <div class="flex items-center gap-2 text-sm text-gray-500">
+            <!-- <div class="flex items-center gap-2 text-sm text-gray-500">
               <span class="font-semibold text-yellow-500">★ {{ venue.rating.toFixed(2) }}</span>
               <span>•</span>
               <span>{{ venue.city }}</span>
@@ -126,14 +142,31 @@ const goToDetail = (venueId: number) => {
               <span class="rounded-full bg-green-50 px-3 py-1 text-green-700">
                 Rp {{ venue.price.toLocaleString('id-ID') }}
               </span>
-            </div>
+            </div> -->
           </div>
         </article>
       </section>
+          <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex justify-center items-center gap-3 mt-6">
+      <button
+      :disabled="currentPage === 1"
+      class="px-4 py-2 border rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+      @click="currentPage = Math.max(currentPage - 1, 1)"
+      >
+        Prev
+      </button>
+      <span class="text-sm text-gray-600">
+        Halaman <span class="font-semibold">{{ currentPage }}</span> / {{ totalPages }}
+      </span>
+      <button
+      :disabled="currentPage === totalPages"
+      class="px-4 py-2 border rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+      @click="currentPage = Math.min(currentPage + 1, totalPages)"
+      >
+        Next
+      </button>
+    </div>
     </div>
 
   </main>
 </template>
-
-<style scoped>
-</style>
