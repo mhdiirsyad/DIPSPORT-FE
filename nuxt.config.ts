@@ -12,7 +12,7 @@ export default defineNuxtConfig({
     '@nuxt/content',
     '@nuxt/image',
     '@nuxt/eslint',
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
   ],
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,

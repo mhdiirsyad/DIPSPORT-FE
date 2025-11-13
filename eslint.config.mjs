@@ -2,5 +2,5 @@
 const { default: withNuxt } = await import('./.nuxt/eslint.config.mjs')
 
 export default withNuxt(
-  // Your custom configs here
+
 )

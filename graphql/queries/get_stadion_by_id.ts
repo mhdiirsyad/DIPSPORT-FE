@@ -5,6 +5,12 @@ export const QUERY_GET_STADION_BY_ID = `
       name
       description
       mapUrl
+      status
+      facilities {
+        Facility {
+          id
+        }
+      }
     }
   }
 `

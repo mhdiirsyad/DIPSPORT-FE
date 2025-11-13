@@ -19,7 +19,9 @@ export default defineEventHandler(async (event) => {
           name: body.name,
           description: body.description,
           stadionId: Number(body.stadionId),
-          pricePerHour: Number(body.pricePerHour)
+          pricePerHour: Number(body.pricePerHour),
+          status: body.status,
+          images: body.images,
         },
       },
       headers: { 'Authorization': `Bearer ${token}` }

@@ -1,22 +1,32 @@
 export const MUTATION_UPDATE_FIELD = `
   mutation UpdateField(
-    $fieldId: Int!, 
-    $stadionId: Int!, 
-    $name: String!, 
-    $description: String, 
+    $fieldId: ID!
+    $stadionId: Int!
+    $name: String!
+    $description: String
     $pricePerHour: Int!
-    # $images: [FieldImageInput!]
+    $images: [FieldImageInput!]
+    $status: Status
   ) {
     updateField(
-      fieldId: $fieldId, 
-      stadionId: $stadionId, 
-      name: $name, 
-      description: $description, 
+      fieldId: $fieldId
+      stadionId: $stadionId
+      name: $name
+      description: $description
       pricePerHour: $pricePerHour
-      # images: $images
+      images: $images
+      status: $status
     ) {
       id
+      stadionId
       name
+      description
+      pricePerHour
+      status
+      images {
+        id
+        imageUrl
+      }
     }
   }
 `
