@@ -9,6 +9,11 @@ export const QUERY_GET_STADION_BY_ID = `
         id
         name
         pricePerHour
+      status
+      facilities {
+        Facility {
+          id
+        }
       }
     }
   }

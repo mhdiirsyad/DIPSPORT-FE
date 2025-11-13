@@ -1,87 +1,85 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { availableIcons, VALID_FACILITY_ICONS } from '~/utils/validIconList'
+import { Icon } from '@iconify/vue'
 
 definePageMeta({
   middleware: 'auth-admin',
   layout: 'admin',
 })
 
-// === TIPE DATA LENGKAP ===
-interface StadionRow {
+// === TIPE DATA ===
+interface FacilityRow {
   id: number
   name: string
-  status: 'ACTIVE' | 'INACTIVE'
-  fields: any[]
+  icon: string | null
 }
 
-// === FETCH DATA ===
-const { data: rawStadions, pending, error, refresh } = await useAsyncData(
-  'stadionsList',
-  () => $fetch<StadionRow[]>('/api/stadions')
+// === Data Fetching ===
+const { data: facilities, pending, error, refresh } = await useAsyncData(
+  'facilitiesList',
+  () => $fetch<FacilityRow[]>('/api/facilities')
 )
 
 const loadingDelete = ref(false)
 const errorMsg = ref<string | null>(null)
 
-// === SEARCH ===
+// === Search ===
 const searchQuery = ref('')
-const filteredStadions = computed(() => {
-  if (!rawStadions.value) return []
-  if (!searchQuery.value.trim()) return rawStadions.value
+const filteredFacilities = computed(() => {
+  if (!facilities.value) return []
+  if (!searchQuery.value.trim()) return facilities.value
+
   const query = searchQuery.value.toLowerCase().trim()
-  return rawStadions.value.filter((stadion) =>
-    stadion.name.toLowerCase().includes(query) ||
-    String(stadion.id).includes(query)
+  return facilities.value.filter(
+    f => f.name.toLowerCase().includes(query) || String(f.id).includes(query)
   )
 })
 
-// === PAGINATION ===
+// === Pagination ===
 const currentPage = ref(1)
 const itemsPerPage = 10
 watch(searchQuery, () => { currentPage.value = 1 })
 
-const totalItems = computed(() => filteredStadions.value.length)
+const totalItems = computed(() => filteredFacilities.value.length)
 const totalPages = computed(() => Math.max(Math.ceil(totalItems.value / itemsPerPage), 1))
-const paginatedStadions = computed(() => {
+
+const paginatedFacilities = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
   const end = start + itemsPerPage
-  return filteredStadions.value.slice(start, end)
+  return filteredFacilities.value.slice(start, end)
 })
+
 const paginationSummary = computed(() => {
   if (totalItems.value === 0) return 'Tidak ada data'
   const start = (currentPage.value - 1) * itemsPerPage + 1
   const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}-${end} dari ${totalItems.value} hasil`
+  return `Menampilkan ${start}–${end} dari ${totalItems.value} hasil`
 })
+
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
-// === DELETE ===
+// === Delete ===
 async function handleDelete(id: number) {
-  if (!confirm('Anda yakin ingin menghapus stadion ini? Ini akan menghapus semua data terkait.')) return
+  if (!confirm('Anda yakin ingin menghapus fasilitas ini? Ini akan menghapusnya dari semua stadion.')) return
+
   loadingDelete.value = true
   errorMsg.value = null
   try {
-    await $fetch('/api/stadions/delete', {
+    await $fetch('/api/facilities/delete', {
       method: 'POST',
-      body: { stadionId: id },
+      body: { facilityId: id },
     })
     await refresh()
-    if (paginatedStadions.value.length === 0 && currentPage.value > 1) {
+    if (paginatedFacilities.value.length === 0 && currentPage.value > 1) {
       currentPage.value--
     }
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || err.message || 'Gagal menghapus stadion.'
+    errorMsg.value = err.data?.statusMessage || err.message || 'Gagal menghapus fasilitas'
   } finally {
     loadingDelete.value = false
   }
-}
-
-// === BADGE STATUS ===
-const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
-  return status === 'ACTIVE'
-    ? 'bg-green-100 text-green-700'
-    : 'bg-red-100 text-red-700'
 }
 </script>
 
@@ -91,33 +89,27 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
     <header class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-4">
       <div class="w-full sm:w-auto">
         <h1 class="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">
-          Manajemen Stadion
+          Manajemen Fasilitas
         </h1>
         <p class="mt-1.5 sm:mt-2 text-xs text-gray-600 sm:text-sm lg:text-base">
-          Tambah, edit, atau hapus data stadion yang terdaftar di VENUE UNDIP.
+          Kelola master data fasilitas (mis: Toilet, Kantin, WiFi).
         </p>
       </div>
 
       <NuxtLink
-        to="/admin/stadiums/create"
+        to="/admin/facilities/create"
         class="w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-2.5 rounded-lg bg-blue-600 px-4 py-2.5 sm:px-5 sm:py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-px"
       >
         <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 5V19M19 12H5"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+          <path d="M12 5V19M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-        <span>Tambah Stadion</span>
+        <span>Tambah Fasilitas</span>
       </NuxtLink>
     </header>
 
     <!-- Table Card -->
     <div class="overflow-hidden rounded-lg sm:rounded-xl border border-gray-200 bg-white shadow-sm">
-      <!-- Search -->
+      <!-- Search Bar -->
       <div class="border-b border-gray-200 p-4 sm:p-5 lg:p-6">
         <label class="relative flex items-center gap-2 sm:gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-3.5 sm:py-2.5">
           <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none">
@@ -132,13 +124,13 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
           <input
             v-model="searchQuery"
             type="search"
+            placeholder="Cari fasilitas atau ID..."
             class="w-full border-0 bg-transparent text-sm text-gray-900 placeholder-gray-500 outline-none focus:ring-0"
-            placeholder="Cari nama stadion atau ID..."
           />
         </label>
       </div>
 
-      <!-- Content -->
+      <!-- Table Content -->
       <div class="flex flex-col">
         <!-- Error -->
         <div
@@ -146,9 +138,7 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
           class="m-4 sm:m-5 lg:m-6 rounded-lg border border-red-300 bg-red-50 px-3.5 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-semibold text-red-700"
         >
           {{ error?.message || errorMsg }}
-          <button v-if="error" @click="refresh()" class="ml-2 font-bold underline">
-            Coba lagi
-          </button>
+          <button v-if="error" @click="refresh()" class="ml-2 font-bold underline">Coba lagi</button>
         </div>
 
         <!-- Loading -->
@@ -156,59 +146,62 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
           v-else-if="pending"
           class="m-4 sm:m-5 lg:m-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 py-5 sm:py-6 text-center text-xs sm:text-sm font-medium text-gray-600"
         >
-          Memuat data stadion...
+          Memuat data fasilitas...
         </div>
 
-        <!-- Empty -->
+        <!-- Empty State -->
         <div
-          v-else-if="filteredStadions.length === 0"
+          v-else-if="filteredFacilities.length === 0"
           class="px-4 py-8 sm:px-5 sm:py-10 text-center text-xs sm:text-sm text-gray-500"
         >
-          <span v-if="searchQuery">Stadion tidak ditemukan.</span>
-          <span v-else>Belum ada data stadion.</span>
+          <span v-if="searchQuery">Fasilitas tidak ditemukan.</span>
+          <span v-else>Belum ada data fasilitas.</span>
         </div>
 
         <!-- Data Table -->
         <template v-else>
-          <!-- Desktop -->
+          <!-- Desktop Table -->
           <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full border-collapse">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Nama Stadion</th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 text-center">Jumlah Lapangan</th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Status</th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">Aksi</th>
+                  <!-- ID column removed -->
+                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Nama Fasilitas
+                  </th>
+                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Ikon
+                  </th>
+                  <th class="border-b border-gray-200 px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 bg-white">
                 <tr
-                  v-for="stadion in paginatedStadions"
-                  :key="stadion.id"
+                  v-for="facility in paginatedFacilities"
+                  :key="facility.id"
                   class="transition-colors hover:bg-blue-50/50 cursor-pointer"
-                  @click="navigateTo(`/admin/stadiums/${stadion.id}`)"
+                  @click="navigateTo(`/admin/facilities/${facility.id}`)"
                 >
-                  <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900">{{ stadion.name }}</td>
-                  <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-900 text-center">{{ stadion.fields?.length ?? 0 }}</td>
+                  <!-- ID cell removed -->
+                  <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900">{{ facility.name }}</td>
                   <td class="whitespace-nowrap px-5 py-4">
-                    <span
-                      class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
-                      :class="getStatusClasses(stadion.status)"
-                    >
-                      {{ stadion.status === 'ACTIVE' ? 'Aktif' : 'Non-Aktif' }}
-                    </span>
+                    <Icon
+                      v-if="facility.icon"
+                      :icon="facility.icon"
+                      class="h-5 w-5 text-gray-700"
+                    />
+                    <span v-else class="text-gray-400 text-xs">—</span>
                   </td>
                   <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-medium space-x-4" @click.stop>
-                    <NuxtLink
-                      :to="`/admin/stadiums/${stadion.id}`"
-                      class="text-blue-600 hover:text-blue-800 transition-colors"
-                    >
+                    <NuxtLink :to="`/admin/facilities/${facility.id}`" class="text-blue-600 hover:text-blue-800">
                       Edit
                     </NuxtLink>
                     <button
-                      @click.stop="handleDelete(stadion.id)"
+                      @click.stop="handleDelete(facility.id)"
                       :disabled="loadingDelete"
-                      class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {{ loadingDelete ? '...' : 'Delete' }}
                     </button>
@@ -218,43 +211,45 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
             </table>
           </div>
 
-          <!-- Mobile -->
+          <!-- Mobile Cards -->
           <div class="md:hidden divide-y divide-gray-100">
             <div
-              v-for="stadion in paginatedStadions"
-              :key="stadion.id"
+              v-for="facility in paginatedFacilities"
+              :key="facility.id"
               class="p-4 hover:bg-blue-50/50 transition-colors cursor-pointer"
-              @click="navigateTo(`/admin/stadiums/${stadion.id}`)"
+              @click="navigateTo(`/admin/facilities/${facility.id}`)"
             >
-              <div class="flex flex-col gap-2 mb-3">
-                <h3 class="text-sm font-semibold text-gray-900 truncate">{{ stadion.name }}</h3>
-                <div class="flex flex-wrap gap-x-4 text-xs text-gray-500">
-                  <span>ID: {{ stadion.id }}</span>
-                  <span>Lapangan: {{ stadion.fields?.length ?? 0 }}</span>
-                  <span>
-                    Status:
-                    <span
-                      class="font-medium"
-                      :class="stadion.status === 'ACTIVE' ? 'text-green-700' : 'text-red-700'"
-                    >
-                      {{ stadion.status === 'ACTIVE' ? 'Aktif' : 'Non-Aktif' }}
-                    </span>
-                  </span>
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-semibold text-gray-900 truncate">{{ facility.name }}</h3>
+                  <!-- ID line removed -->
                 </div>
+                <Icon
+                  v-if="facility.icon"
+                  :icon="facility.icon"
+                  class="h-6 w-6 text-gray-700 flex-shrink-0"
+                />
+                <span v-else class="text-gray-400 text-xs">—</span>
               </div>
 
               <div class="flex items-center gap-3 pt-2 border-t border-gray-100" @click.stop>
                 <NuxtLink
-                  :to="`/admin/stadiums/${stadion.id}`"
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-blue-600 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100"
+                  :to="`/admin/facilities/${facility.id}`"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-blue-600 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100"
                 >
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
                   Edit
                 </NuxtLink>
                 <button
-                  @click.stop="handleDelete(stadion.id)"
+                  @click.stop="handleDelete(facility.id)"
                   :disabled="loadingDelete"
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-600 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-600 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                   {{ loadingDelete ? '...' : 'Delete' }}
                 </button>
               </div>
@@ -275,7 +270,7 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
             <button
               @click="prevPage"
               :disabled="currentPage === 1"
-              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -291,7 +286,7 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
             <button
               @click="nextPage"
               :disabled="currentPage === totalPages"
-              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span class="hidden sm:inline">Next</span>
               <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

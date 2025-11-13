@@ -6,6 +6,9 @@ export const QUERY_GET_STADIONS = `
       mapUrl
       images {
         imageUrl
+      status
+      fields {
+        id
       }
     }
   }

@@ -20,6 +20,10 @@ export default defineEventHandler(async (event) => {
           name: body.name,
           description: body.description,
           mapUrl: body.mapUrl,
+          status: body.status,
+          facilityIds: Array.isArray(body.facilityIds) && body.facilityIds.length > 0
+            ? body.facilityIds.map(Number)
+            : null,
         },
       },
       headers: { 'Authorization': `Bearer ${token}` }

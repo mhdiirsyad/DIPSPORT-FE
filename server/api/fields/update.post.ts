@@ -16,11 +16,13 @@ export default defineEventHandler(async (event) => {
       body: {
         query: MUTATION_UPDATE_FIELD,
         variables: {
-          fieldId: Number(body.fieldId),
+          fieldId: String(body.fieldId),
           stadionId: Number(body.stadionId),
           name: body.name,
           description: body.description,
-          pricePerHour: Number(body.pricePerHour)
+          pricePerHour: Number(body.pricePerHour),
+          status: body.status,
+          images: body.images,
         },
       },
       headers: { 'Authorization': `Bearer ${token}` }
