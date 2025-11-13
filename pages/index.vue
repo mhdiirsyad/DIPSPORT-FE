@@ -71,7 +71,7 @@ const goToDetail = (venueId: number) => {
             type="text"
             placeholder="Cari venue"
             class="w-full border-none text-gray-700 placeholder:text-gray-400 focus:outline-none"
-          />
+          >
         </div>
         <div class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-500">
           <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -112,7 +112,7 @@ const goToDetail = (venueId: number) => {
           class="cursor-pointer overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-lg"
           @click="goToDetail(venue.id)"
         >
-          <img :src="venue.image" :alt="venue.name" class="h-44 w-full object-cover" />
+          <img :src="venue.image" :alt="venue.name" class="h-44 w-full object-cover" >
           <div class="space-y-3 p-5">
             <div class="text-xs font-semibold uppercase tracking-wide text-gray-400">Venue</div>
             <h3 class="text-lg font-semibold text-gray-900">{{ venue.name }}</h3>

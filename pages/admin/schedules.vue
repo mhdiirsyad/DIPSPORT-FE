@@ -171,7 +171,7 @@ const handleSubmit = async () => {
       <p class="font-semibold">
         Gagal memuat data: {{ error.message }}
       </p>
-      <button class="mt-3 font-semibold underline" @click="refresh">
+      <button class="mt-3 font-semibold underline" @click="refresh()">
         Coba lagi
       </button>
     </div>

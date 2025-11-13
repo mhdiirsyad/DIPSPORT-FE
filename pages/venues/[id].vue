@@ -180,24 +180,24 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
       <div class="grid gap-5 lg:grid-cols-[minmax(0,2.3fr)_minmax(320px,1fr)]">
         <div class="relative overflow-hidden rounded-[32px] border border-white/70 bg-white shadow-md">
           <img
-            :src="venue.gallery[0]"
-            :alt="venue.name"
+            :src="venue?.gallery[0]"
+            :alt="venue?.name"
             class="aspect-[16/9] w-full object-cover transition-transform duration-500 hover:scale-[1.01]"
-          />
+          >
         </div>
         <div class="flex flex-col gap-4">
           <div class="grid gap-4">
             <img
-              :src="venue.gallery[1]"
-              :alt="`${venue.name} preview 1`"
+              :src="venue?.gallery[1]"
+              :alt="`${venue?.name} preview 1`"
               class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44"
-            />
+            >
             <div class="relative">
               <img
-                :src="venue.gallery[2]"
-                :alt="`${venue.name} preview 2`"
+                :src="venue?.gallery[2]"
+                :alt="`${venue?.name} preview 2`"
                 class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44"
-              />
+              >
               <button
                 class="absolute inset-x-4 bottom-4 rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-black"
               >
@@ -208,7 +208,7 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
           <div class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
             <p class="text-sm text-gray-500">Mulai dari</p>
             <p class="text-3xl font-bold text-gray-900">
-              Rp {{ venue.price.toLocaleString('id-ID') }}
+              Rp {{ venue?.price.toLocaleString('id-ID') }}
               <span class="text-sm font-medium text-gray-500">/ sesi</span>
             </p>
             <button class="mt-4 w-full rounded-xl bg-[#1f2a56] py-3 text-sm font-semibold text-white hover:bg-[#162347]">
@@ -221,26 +221,26 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
       <div class="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div class="space-y-6 rounded-3xl bg-white p-6 shadow-sm">
           <div class="space-y-2">
-            <h1 class="text-3xl font-bold text-gray-900">{{ venue.name }}</h1>
+            <h1 class="text-3xl font-bold text-gray-900">{{ venue?.name }}</h1>
             <p class="flex items-center gap-2 text-sm text-gray-500">
-              <span class="font-semibold text-yellow-500">★ {{ venue.rating.toFixed(1) }}</span>
+              <span class="font-semibold text-yellow-500">★ {{ venue?.rating.toFixed(1) }}</span>
               <span>•</span>
-              <span>{{ venue.city }}</span>
+              <span>{{ venue?.city }}</span>
             </p>
             <span class="inline-flex rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
-              {{ venue.sport }}
+              {{ venue?.sport }}
             </span>
           </div>
 
           <div class="space-y-3 text-sm text-gray-600">
             <h2 class="text-lg font-semibold text-gray-900">Deskripsi</h2>
             <p class="whitespace-pre-line">
-              {{ venue.description }}
+              {{ venue?.description }}
             </p>
             <div class="rounded-2xl bg-gray-50 p-4">
               <p class="text-sm font-semibold text-gray-900">Lokasi Venue</p>
               <div class="mt-1 flex items-center justify-between">
-                <span>{{ venue.location }}</span>
+                <span>{{ venue?.location }}</span>
                 <button class="text-sm font-semibold text-[#1f2a56] hover:underline">Buka Peta</button>
               </div>
             </div>
@@ -249,7 +249,7 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
           <div class="space-y-3">
             <h2 class="text-lg font-semibold text-gray-900">Fasilitas</h2>
             <ul class="grid gap-3 text-gray-600 sm:grid-cols-2">
-              <li v-for="facility in venue.facilities" :key="facility" class="flex items-center gap-2">
+              <li v-for="facility in venue?.facilities" :key="facility" class="flex items-center gap-2">
                 <span>•</span> {{ facility }}
               </li>
             </ul>
@@ -260,7 +260,7 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
       <section class="rounded-3xl border border-gray-100 bg-white shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-6 py-4">
           <div class="flex items-center gap-2">
-            <span class="h-2.5 w-2.5 rounded-full bg-[#1f2a56]"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-[#1f2a56]" />
             <h3 class="text-xl font-semibold text-gray-900">Pilih Lapangan</h3>
           </div>
           <div class="flex gap-3 text-sm">
@@ -275,7 +275,7 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
 
         <div class="flex flex-wrap gap-3 px-6 py-4">
           <button
-            v-for="(day, index) in venue.scheduleDays"
+            v-for="(day, index) in venue?.scheduleDays"
             :key="day.label"
             class="rounded-2xl px-4 py-3 text-sm font-semibold transition-all"
             :class="
@@ -295,13 +295,13 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
         </div>
 
         <div
-          v-for="court in venue.courts"
+          v-for="court in venue?.courts"
           :key="court.id"
           class="space-y-4 border-t border-gray-100 px-6 py-5"
         >
           <div class="flex flex-col gap-5 rounded-3xl border border-gray-200 p-5 lg:flex-row">
             <div class="relative w-full overflow-hidden rounded-[28px] border border-white shadow lg:w-[420px]">
-              <img :src="court.image" :alt="court.name" class="h-56 w-full object-cover" />
+              <img :src="court.image" :alt="court.name" class="h-56 w-full object-cover" >
               <span class="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
                 Lihat semua foto
               </span>
@@ -317,7 +317,7 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
                   {{ court.status === 'Ready' ? 'Ready' : 'Maintenance' }}
                 </p>
                 <div class="flex flex-wrap gap-4 text-sm text-gray-500">
-                  <span>Cabang: {{ venue.sport }}</span>
+                  <span>Cabang: {{ venue?.sport }}</span>
                   <span>Tipe: {{ court.type }}</span>
                   <span>Permukaan: {{ court.surface }}</span>
                 </div>
