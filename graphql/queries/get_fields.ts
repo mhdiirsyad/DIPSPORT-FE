@@ -1,6 +1,5 @@
-// graphql/queries/get_fields.ts
 export const QUERY_GET_FIELDS = `
-  query GetFields($stadionId: ID) {
+  query FieldsDashboard($stadionId: ID) {
     fields(stadionId: $stadionId) {
       id
       stadionId
@@ -8,8 +7,20 @@ export const QUERY_GET_FIELDS = `
       description
       pricePerHour
       status
-      images { id imageUrl }
-      Stadion { id name }
+      Stadion {
+        id
+        name
+      }
+      images {
+        id
+        imageUrl
+      }
+      bookingDetails {
+        id
+        bookingDate
+        startHour
+        subtotal
+      }
     }
   }
 `

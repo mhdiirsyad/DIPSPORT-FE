@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { QUERY_GET_FIELD_BY_ID } from '~/graphql/queries/get_field_by_id'
 

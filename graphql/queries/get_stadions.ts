@@ -1,14 +1,35 @@
 export const QUERY_GET_STADIONS = `
-  query GetStadions {
+  query StadionsWithDetails {
     stadions {
       id
       name
-      mapUrl
-      images {
-        imageUrl
       status
+      description
+      mapUrl
+      operatingHours {
+        openHour
+        closeHour
+      }
+      facilities {
+        Facility {
+          id
+          name
+          icon
+        }
+      }
+      images {
+        id
+        imageUrl
+      }
       fields {
         id
+        name
+        pricePerHour
+        status
+        images {
+          id
+          imageUrl
+        }
       }
     }
   }

@@ -18,8 +18,10 @@ interface Field {
 }
 
 interface OperatingHour {
-  closeTime: string
-  openTime: string
+  openHour?: number
+  closeHour?: number
+  openTime?: string
+  closeTime?: string
 }
 
 
@@ -54,19 +56,23 @@ const days = getNext7Days();
 console.log(days)
 const selectedDate = ref(days[0]?.value)
 
-function extractOperatingHours(operatingHours: OperatingHour[]) {
-  if (!operatingHours || operatingHours.length === 0)
+function hourFrom(entry: OperatingHour | undefined, key: 'open' | 'close') {
+  if (!entry) return key === 'open' ? 8 : 22
+  const direct = key === 'open' ? entry.openHour : entry.closeHour
+  if (typeof direct === 'number') return direct
+  const time = key === 'open' ? entry.openTime : entry.closeTime
+  if (time) return new Date(time).getUTCHours()
+  return key === 'open' ? 8 : 22
+}
+
+function extractOperatingHours(operatingHours?: OperatingHour | OperatingHour[] | null) {
+  if (!operatingHours || (Array.isArray(operatingHours) && operatingHours.length === 0)) {
     return { openHour: 8, closeHour: 22 }
+  }
 
-  const openHours = operatingHours.map(h =>
-    new Date(h.openTime).getUTCHours()
-  )
-  const closeHours = operatingHours.map(h =>
-    new Date(h.closeTime).getUTCHours()
-  )
-
-  const openHour = Math.min(...openHours)
-  const closeHour = Math.max(...closeHours)
+  const entries = Array.isArray(operatingHours) ? operatingHours : [operatingHours]
+  const openHour = Math.min(...entries.map((entry) => hourFrom(entry, 'open')))
+  const closeHour = Math.max(...entries.map((entry) => hourFrom(entry, 'close')))
 
   return { openHour, closeHour }
 }
@@ -235,18 +241,18 @@ function handleSlotClick(fieldId: number, startHour: number) {
             </p>
             <div class="rounded-2xl bg-gray-50 p-4">
               <p class="text-sm font-semibold text-gray-900">Lokasi Stadion</p>
-              <div class="mt-1 flex items-center justify-between">
-                <span>{{ stadion?.mapUrl || 'Tidak diketahui' }}</span>
-                <div class="rounded-2xl bg-gray-50 p-4">
-                  <p class="text-sm font-semibold text-gray-900">Lokasi Venue</p>
-                  <div class="mt-1 flex items-center justify-between">
-                    <a 
-                      :href="stadion?.mapUrl" target="_blank" rel="noopener noreferrer"
-                      class="text-sm font-semibold text-[#1f2a56] hover:underline">
-                      Buka Peta
-                    </a>
-                  </div>
-                </div>
+              <div class="mt-1 flex items-center justify-between gap-4">
+                <span class="text-sm text-gray-600">{{ stadion?.mapUrl || 'Tidak diketahui' }}</span>
+                <a
+                  v-if="stadion?.mapUrl"
+                  :href="stadion.mapUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-sm font-semibold text-[#1f2a56] hover:underline"
+                >
+                  Buka Peta
+                </a>
+                <span v-else class="text-sm text-gray-400">Peta belum tersedia</span>
               </div>
             </div>
           </div>
