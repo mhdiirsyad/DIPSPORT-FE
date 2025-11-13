@@ -1,5 +1,5 @@
 // Jembatan untuk createStadion
-import { defineEventHandler, readBody, getCookie } from 'h3'
+import { defineEventHandler, readBody, getCookie, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { MUTATION_CREATE_STADION } from '~/graphql/mutations/create_stadion'
 

@@ -11,8 +11,12 @@ interface FieldRow {
   id: number
   name: string
   pricePerHour: number
-  status: 'ACTIVE' | 'INACTIVE' 
-  Stadion: {
+  status?: 'ACTIVE' | 'INACTIVE'
+  Stadion?: {
+    id: number
+    name: string
+  } | null
+  stadion?: {
     id: number
     name: string
   } | null
@@ -35,12 +39,15 @@ const filteredFields = computed(() => {
   if (!searchQuery.value.trim()) return fields.value
 
   const query = searchQuery.value.toLowerCase().trim()
-  return fields.value.filter(
-    (field) =>
+  return fields.value.filter((field) => {
+    const stadionName =
+      field.Stadion?.name?.toLowerCase() || field.stadion?.name?.toLowerCase() || ''
+    return (
       field.name.toLowerCase().includes(query) ||
-      (field.Stadion?.name?.toLowerCase().includes(query) ?? false) ||
+      stadionName.includes(query) ||
       String(field.id).includes(query)
-  )
+    )
+  })
 })
 
 // === PAGINATION LOGIC ===
@@ -208,96 +215,56 @@ async function handleDelete(id: number) {
           <span v-else>Belum ada data lapangan.</span>
         </div>
 
-        <!-- DATA TABLE -->
-        <template v-else>
-          <!-- DESKTOP TABLE -->
-          <div class="hidden md:block overflow-x-auto">
-            <table class="min-w-full border-collapse">
-              <thead class="bg-gray-50">
-                <tr>
-                  <!-- ID column removed -->
-                  <th
-                    class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                  >
-                    Nama Lapangan
-                  </th>
-                  <th
-                    class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                  >
-                    Status
-                  </th>
-                  <th
-                    class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                  >
-                    Stadion Induk
-                  </th>
-                  <th
-                    class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                  >
-                    Harga/Jam
-                  </th>
-                  <th
-                    class="border-b border-gray-200 px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600"
-                  >
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody class="divide-y divide-gray-100 bg-white">
-                <tr
-                  v-for="field in paginatedFields"
-                  :key="field.id"
-                  class="transition-colors hover:bg-blue-50/50 cursor-pointer"
-                  @click="navigateTo(`/admin/fields/${field.id}`)"
+        <div v-else class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nama Lapangan
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Stadion Induk
+              </th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Aksi
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <tr
+              v-for="field in paginatedFields"
+              :key="field.id"
+              class="transition-colors hover:bg-blue-50/50 cursor-pointer"
+              @click="navigateTo(`/admin/fields/${field.id}`)"
+            >
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ field.name }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-600">{{ field.Stadion?.name || field.stadion?.name || 'N/A' }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3" @click.stop>
+                <NuxtLink
+                  :to="`/admin/fields/${field.id}`"
+                  class="text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  <!-- ID cell removed -->
-                  <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900">
-                    {{ field.name }}
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4 text-sm">
-                    <span
-                      :class="[
-                        'inline-block rounded-full px-3 py-1 text-xs font-semibold leading-tight',
-                        field.status === 'ACTIVE'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800',
-                      ]"
-                    >
-                      {{ field.status === 'ACTIVE' ? 'Aktif' : 'Non-Aktif' }}
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-600">
-                    {{ field.Stadion?.name || 'N/A' }}
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-900">
-                    Rp {{ field.pricePerHour.toLocaleString('id-ID') }}
-                  </td>
-                  <td
-                    class="whitespace-nowrap px-5 py-4 text-right text-sm font-medium space-x-4"
-                    @click.stop
-                  >
-                    <NuxtLink
-                      :to="`/admin/fields/${field.id}`"
-                      class="text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      Edit
-                    </NuxtLink>
-                    <button
-                      @click.stop="handleDelete(field.id)"
-                      :disabled="loadingDelete"
-                      class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {{ loadingDelete ? '...' : 'Delete' }}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  Edit
+                </NuxtLink>
+                <button
+                  @click.stop="handleDelete(field.id)"
+                  :disabled="loadingDelete"
+                  class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {{ loadingDelete ? '...' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-          <!-- MOBILE CARD -->
-          <div class="md:hidden divide-y divide-gray-100">
+        <div class="md:hidden divide-y divide-gray-100">
             <div
               v-for="field in paginatedFields"
               :key="field.id"
@@ -312,7 +279,7 @@ async function handleDelete(id: number) {
                   class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500"
                 >
                   <!-- ID row removed -->
-                  <span>Stadion: {{ field.Stadion?.name || 'N/A' }}</span>
+                  <span>Stadion: {{ field.Stadion?.name || field.stadion?.name || 'N/A' }}</span>
                   <span
                     :class="[
                       'inline-block rounded-full px-2 py-0.5 font-semibold leading-tight',
@@ -375,7 +342,8 @@ async function handleDelete(id: number) {
               </div>
             </div>
           </div>
-        </template>
+        </div>
+      </div>
 
         <!-- PAGINATION -->
         <nav
@@ -439,7 +407,10 @@ async function handleDelete(id: number) {
             </button>
           </div>
         </nav>
-      </div>
     </div>
   </section>
 </template>
+
+
+
+
