@@ -34,7 +34,7 @@ const goToDetail = (stadionId: number) => {
   <main class="min-h-screen bg-[#f5f7fb]">
     <div class="mx-auto max-w-6xl px-6 py-10 space-y-10">
       <header class="flex flex-wrap items-center justify-between gap-4">
-        <div class="text-xl font-semibold tracking-wide text-[#1f2a56]">DIPSPORTS</div>
+        <div class="text-xl font-semibold tracking-wide text-[#1f2a56]">VENUE UNDIP</div>
         <NuxtLink
           to="/admin/login"
           class="rounded-full bg-[#1f2a56] px-4 py-2 text-white shadow-sm transition-colors hover:bg-[#1b244c]"
@@ -115,21 +115,14 @@ const goToDetail = (stadionId: number) => {
               class="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </div>
-          <div class="flex flex-1 flex-col space-y-3 p-5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Stadion</p>
-            <h3 class="text-lg font-semibold text-gray-900">{{ stadion.name }}</h3>
-            <div class="flex items-center gap-2 text-xs font-semibold text-[#1f2a56]">
-              <span
-                class="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-[#1f2a56]"
-              >
-                Status: {{ stadion.status || 'Tidak diketahui' }}
-              </span>
+            <div class="flex flex-1 flex-col space-y-3 p-5">
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Stadion</p>
+              <h3 class="text-lg font-semibold text-gray-900">{{ stadion.name }}</h3>
+              <div class="mt-auto text-sm text-gray-500">
+                Total Lapangan:&nbsp;
+                <span class="font-semibold text-gray-900">{{ stadion.fields?.length ?? 0 }}</span>
+              </div>
             </div>
-            <div class="mt-auto text-sm text-gray-500">
-              Total Lapangan:&nbsp;
-              <span class="font-semibold text-gray-900">{{ stadion.fields?.length ?? 0 }}</span>
-            </div>
-          </div>
         </article>
       </section>
     </div>

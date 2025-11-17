@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 
 
@@ -39,6 +39,24 @@ type Court = {
   image: string
 
   slots: Slot[]
+
+}
+
+
+
+type SelectedSlot = {
+
+  key: string
+
+  courtId: number
+
+  courtName: string
+
+  range: string
+
+  price: number
+
+  dateLabel: string
 
 }
 
@@ -148,7 +166,7 @@ const createFallbackVenue = (): VenueDetail => ({
 
   id: 0,
 
-  name: 'Stadion DipSport',
+  name: 'Stadion Venue Undip',
 
   city: 'Lokasi belum tersedia',
 
@@ -344,6 +362,10 @@ const selectedDayIndex = ref(0)
 
 const expandedCourts = ref<Record<number, boolean>>({})
 
+const selectedSlots = ref<SelectedSlot[]>([])
+
+const isDrawerOpen = ref(false)
+
 
 
 const toggleCourt = (courtId: number) => {
@@ -364,6 +386,85 @@ const isCourtExpanded = (courtId: number) => expandedCourts.value[courtId] ?? fa
 
 const availableCount = (court: Court) => court.slots.filter((slot) => slot.status === 'Available').length
 
+const selectedDayLabel = computed(() => venue.value?.scheduleDays[selectedDayIndex.value]?.label ?? '')
+
+const selectedSlotCount = computed(() => selectedSlots.value.length)
+
+const slotKey = (courtId: number, range: string) => `${courtId}-${range}-${selectedDayLabel.value}`
+
+const isSlotSelected = (courtId: number, range: string) =>
+  selectedSlots.value.some(slot => slot.key === slotKey(courtId, range))
+
+const toggleSlotSelection = (court: Court, slot: Slot) => {
+
+  if (slot.status === 'Booked') return
+
+  const key = slotKey(court.id, slot.range)
+
+  const exists = selectedSlots.value.some(selected => selected.key === key)
+
+  if (exists) {
+
+    selectedSlots.value = selectedSlots.value.filter(selected => selected.key !== key)
+
+    return
+
+  }
+
+  selectedSlots.value = [
+
+    ...selectedSlots.value,
+
+    {
+
+      key,
+
+      courtId: court.id,
+
+      courtName: court.name,
+
+      range: slot.range,
+
+      price: slot.price ?? 0,
+
+      dateLabel: selectedDayLabel.value,
+
+    },
+
+  ]
+
+  isDrawerOpen.value = true
+
+}
+
+const removeSelectedSlot = (key: string) => {
+
+  selectedSlots.value = selectedSlots.value.filter(slot => slot.key !== key)
+
+}
+
+const openDrawer = () => {
+
+  if (selectedSlots.value.length) {
+
+    isDrawerOpen.value = true
+
+  }
+
+}
+
+const closeDrawer = () => {
+
+  isDrawerOpen.value = false
+
+}
+
+watch(selectedDayIndex, () => {
+
+  selectedSlots.value = []
+
+})
+
 </script>
 
 
@@ -376,7 +477,20 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
 
       <NuxtLink to="/" class="text-sm font-semibold text-[#1f2a56] hover:underline">&larr; Kembali</NuxtLink>
 
-      <span />
+      <button
+        type="button"
+        class="relative inline-flex items-center gap-2 rounded-full border border-[#1f2a56] px-4 py-2 text-sm font-semibold text-[#1f2a56] transition disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400"
+        :disabled="!selectedSlotCount"
+        @click="openDrawer"
+      >
+        Jadwal Dipilih
+        <span
+          v-if="selectedSlotCount"
+          class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#1f2a56] px-1 text-xs text-white"
+        >
+          {{ selectedSlotCount }}
+        </span>
+      </button>
 
     </header>
 
@@ -674,37 +788,87 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
 
             >
 
-              <div
+              <button
 
                 v-for="slot in court.slots"
 
                 :key="slot.range"
 
-                class="rounded-3xl border px-4 py-3 text-center"
+                type="button"
 
-                :class="
+                class="relative rounded-xl border px-4 py-3 text-left shadow-sm transition-colors"
 
-                  slot.status === 'Available'
+                :disabled="slot.status === 'Booked'"
 
-                    ? slot.highlight
+                :class="[
 
-                      ? 'border-[#1f2a56]/30 bg-[#1f2a56]/10 shadow-sm'
+                  slot.status === 'Booked'
 
-                      : 'border-gray-200 bg-white'
+                    ? 'bg-white text-gray-400 border-gray-200 cursor-not-allowed'
 
-                    : 'border-transparent text-gray-400'
+                    : isSlotSelected(court.id, slot.range)
 
-                "
+                      ? 'bg-[#1f2a56] text-white border-[#1f2a56]'
+
+                      : 'bg-gray-50 text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-white cursor-pointer'
+
+                ]"
+
+                @click="toggleSlotSelection(court, slot)"
 
               >
 
-                <p class="text-xs uppercase text-gray-400">60 Menit</p>
+                <p
 
-                <p class="text-base font-semibold text-gray-900">{{ slot.range }}</p>
+                  class="text-[0.65rem] uppercase tracking-wide font-semibold"
 
-                <p v-if="slot.status === 'Booked'" class="text-sm font-medium text-gray-400">Booked</p>
+                  :class="isSlotSelected(court.id, slot.range) ? 'text-white/80' : 'text-gray-400'"
 
-                <div v-else class="text-sm text-gray-600">
+                >
+
+                  60 Menit
+
+                </p>
+
+                <p
+
+                  class="text-base font-semibold"
+
+                  :class="[
+
+                    slot.status === 'Booked'
+
+                      ? 'text-gray-500'
+
+                      : isSlotSelected(court.id, slot.range)
+
+                        ? 'text-white'
+
+                        : 'text-[#1f2a56]'
+
+                  ]"
+
+                >
+
+                  {{ slot.range }}
+
+                </p>
+
+                <p v-if="slot.status === 'Booked'" class="text-sm font-semibold text-gray-400">
+
+                  Booked
+
+                </p>
+
+                <div
+
+                  v-else
+
+                  class="text-sm"
+
+                  :class="isSlotSelected(court.id, slot.range) ? 'text-white/90' : 'text-gray-700'"
+
+                >
 
                   <p v-if="slot.previousPrice" class="text-xs text-gray-400 line-through">
 
@@ -712,7 +876,7 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
 
                   </p>
 
-                  <p class="font-semibold text-gray-900">
+                  <p class="font-semibold">
 
                     Rp{{ slot.price!.toLocaleString('id-ID') }}
 
@@ -720,7 +884,23 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
 
                 </div>
 
-              </div>
+                <span
+
+                  v-if="isSlotSelected(court.id, slot.range)"
+
+                  class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full border border-white/50 bg-white/10"
+
+                >
+
+                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3">
+
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+
+                  </svg>
+
+                </span>
+
+              </button>
 
             </div>
 
@@ -733,6 +913,63 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
     </section>
 
   </main>
+
+  <Teleport to="body">
+    <transition name="fade">
+      <div v-if="isDrawerOpen" class="fixed inset-0 z-40">
+        <div class="absolute inset-0 bg-black/40" @click="closeDrawer"></div>
+        <div class="absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
+          <header class="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.4em] text-[#1f2a56]">Jadwal Dipilih</p>
+              <p class="text-sm text-gray-500">{{ selectedDayLabel }}</p>
+            </div>
+            <button class="text-gray-500 hover:text-gray-800" @click="closeDrawer">
+              <span class="sr-only">Tutup</span>
+              <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </header>
+
+          <section class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <p v-if="!selectedSlots.length" class="text-sm text-gray-500">
+              Belum ada jadwal yang dipilih. Silakan pilih slot tersedia.
+            </p>
+
+            <article
+              v-for="item in selectedSlots"
+              :key="item.key"
+              class="flex items-start justify-between rounded-xl border border-gray-200 bg-[#f4f6fc] px-4 py-3 text-sm text-[#1f2a56]"
+            >
+              <div>
+                <p class="text-sm font-semibold">{{ item.courtName }}</p>
+                <p>{{ item.dateLabel }} &bull; {{ item.range }}</p>
+                <p class="mt-1 font-semibold">Rp{{ item.price.toLocaleString('id-ID') }}</p>
+              </div>
+              <button class="text-[#b91c1c] hover:text-red-700" @click="removeSelectedSlot(item.key)">
+                <span class="sr-only">Hapus slot</span>
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M10 11v6m4-6v6M9 7l.867-1.8A1 1 0 0 1 10.79 5h2.42a1 1 0 0 1 .923.2L15 7" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V7" />
+                </svg>
+              </button>
+            </article>
+          </section>
+
+          <footer class="border-t border-gray-100 px-6 py-4">
+            <button
+              type="button"
+              class="w-full rounded-xl bg-[#1f2a56] px-4 py-3 text-sm font-semibold text-white shadow hover:bg-[#162347] disabled:cursor-not-allowed disabled:bg-gray-300"
+              :disabled="!selectedSlots.length"
+            >
+              Selanjutnya
+            </button>
+          </footer>
+        </div>
+      </div>
+    </transition>
+  </Teleport>
 
 </template>
 
@@ -759,12 +996,6 @@ const availableCount = (court: Court) => court.slots.filter((slot) => slot.statu
 }
 
 </style>
-
-
-
-
-
-
 
 
 
