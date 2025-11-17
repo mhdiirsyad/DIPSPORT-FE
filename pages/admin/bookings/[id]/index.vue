@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { generateTimeSlots, type Slot } from '~/utils/generateTimeSlots'
 
 definePageMeta({
@@ -53,8 +53,17 @@ interface BookingsResult {
 }
 
 const days = getNext7Days();
-console.log(days)
 const selectedDate = ref(days[0]?.value)
+const toLocalDateKey = (value?: string | null) => {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+const selectedDateKey = computed(() => toLocalDateKey(selectedDate.value))
 
 function hourFrom(entry: OperatingHour | undefined, key: 'open' | 'close') {
   if (!entry) return key === 'open' ? 8 : 22
@@ -101,15 +110,16 @@ const { data: stadion, pending, error } = await useAsyncData(
 )
 
 const { data: bookingsResult } = await useAsyncData(
-  `bookings-${stadionId}-${selectedDate.value}`,
+  () => `bookings-${stadionId}-${selectedDateKey.value ?? 'none'}`,
   () => $fetch<BookingsResult[]>('/api/bookings', {
-    query: { stadionId, date: selectedDate.value }
+    query: {
+      stadionId,
+      ...(selectedDateKey.value ? { date: `${selectedDateKey.value}T00:00:00.000Z` } : {})
+    }
   }), {
-    watch: [selectedDate]
+    watch: [selectedDateKey]
   }
 )
-
-console.log(bookingsResult.value)
 
 // -------------------------------------------------------------------
 // State & Methods
@@ -126,25 +136,27 @@ function isFieldExpanded(id: number) {
 
 function isSlotBooked(fieldId: number, startHour: number) {
   if (!bookingsResult.value) return false
+  const selectedKey = selectedDateKey.value
+  if (!selectedKey) return false
 
   return bookingsResult.value.some((booking) =>
     booking.details.some(
       (detail) =>
         detail.fieldId === fieldId &&
-        detail.bookingDate.split('T')[0] === selectedDate.value?.split('T')[0] &&
+        toLocalDateKey(detail.bookingDate) === selectedKey &&
         detail.startHour === startHour        
     )
   )
 }
 
-console.log(isSlotBooked(2, 9))
-
 function getBookingCode(fieldId: number, startHour: number) {
+  const selectedKey = selectedDateKey.value
+  if (!selectedKey) return undefined
   const booking = bookingsResult.value?.find((b) =>
     b.details.some(
       (d) =>
         d.fieldId === fieldId &&
-        d.bookingDate.split('T')[0] === selectedDate.value?.split('T')[0] &&
+        toLocalDateKey(d.bookingDate) === selectedKey &&
         d.startHour === startHour
     )
   )
@@ -319,21 +331,31 @@ function handleSlotClick(fieldId: number, startHour: number) {
             <div
               v-if="isFieldExpanded(Number(field.id))"
               class="grid gap-4 px-2 pb-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              <div 
+              <div
                 v-for="slot in field.slots" :key="slot.start"
-                class="rounded-3xl border px-4 py-3 text-center cursor-pointer transition" 
+                class="rounded-xl border px-4 py-3 text-center shadow-sm transition-colors"
                 :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
-                  ? 'bg-red-500 text-white border-red-600 hover:bg-red-600'
-                  : 'bg-green-100 text-gray-900 border-green-300 hover:bg-green-200'"
-                @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]))"    
+                  ? 'bg-white text-gray-400 border-red-200 cursor-pointer hover:bg-red-50'
+                  : 'bg-gray-50 text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
+                @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]))"
               >
-                <p 
-                  class="text-xs uppercase"
-                  :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-white/80' : 'text-gray-500'">
-                  60 Menit</p>
-                <!-- <p>{{isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))}}</p> -->
-                <p class="text-base font-semibold">{{ slot.start }} - {{ slot.end }}</p>
-                <p class="font-semibold">Rp {{ slot.price.toLocaleString('id-ID') }}</p>
+                <p
+                  class="text-[0.65rem] font-semibold uppercase tracking-wide"
+                  :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-400' : 'text-gray-500'">
+                  60 Menit
+                </p>
+                <p
+                  class="text-base font-semibold"
+                  :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-500' : 'text-[#1f2a56]'"
+                >
+                  {{ slot.start }} - {{ slot.end }}
+                </p>
+                <p
+                  class="font-semibold"
+                  :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-400' : 'text-gray-700'"
+                >
+                  {{ isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'Booked' : `Rp ${slot.price.toLocaleString('id-ID')}` }}
+                </p>
               </div>
 
             </div>
