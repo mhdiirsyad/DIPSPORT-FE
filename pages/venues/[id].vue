@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 
 
 
@@ -9,17 +9,12 @@ definePageMeta({ layout: false })
 
 
 type Slot = {
-
+  start: string
   range: string
-
   status: 'Booked' | 'Available'
-
   price?: number
-
   previousPrice?: number
-
   highlight?: boolean
-
 }
 
 
@@ -58,6 +53,19 @@ type SelectedSlot = {
 
   dateLabel: string
 
+  dateKey: string
+
+}
+
+type BookingDetailRecord = {
+  fieldId: number
+  bookingDate: string
+  startHour: number
+}
+
+type BookingRecord = {
+  bookingCode: string
+  details: BookingDetailRecord[]
 }
 
 
@@ -84,7 +92,7 @@ type VenueDetail = {
 
   facilities: string[]
 
-  scheduleDays: Array<{ label: string }>
+  scheduleDays: Array<{ label: string; value: string }>
 
   courts: Court[]
 
@@ -110,11 +118,7 @@ const fallbackOperatingHours = { open: 6, close: 22 }
 
 
 
-const formatDayLabel = (offset: number) => {
-
-  const date = new Date()
-
-  date.setDate(date.getDate() + offset)
+const formatDayLabel = (date: Date) => {
 
   return new Intl.DateTimeFormat('id-ID', {
 
@@ -130,7 +134,24 @@ const formatDayLabel = (offset: number) => {
 
 
 
-const buildScheduleDays = () => Array.from({ length: 7 }, (_, idx) => ({ label: formatDayLabel(idx) }))
+const buildScheduleDays = () =>
+
+  Array.from({ length: 7 }, (_, idx) => {
+
+    const date = new Date()
+
+    date.setDate(date.getDate() + idx)
+
+    return { label: formatDayLabel(date), value: date.toISOString() }
+
+  })
+
+const toDateKey = (value?: string | null) => {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString().slice(0, 10)
+}
 
 
 
@@ -217,25 +238,18 @@ const buildSlotsForField = (field: any, hours: { open: number; close: number }):
 
 
   for (let hour = openHour; hour < closeHour; hour++) {
-
     const next = hour + 1
-
-    const range = `${padHour(hour)}:00 - ${padHour(next)}:00`
-
+    const startTime = `${padHour(hour)}:00`
+    const range = `${startTime} - ${padHour(next)}:00`
     const isBooked = booked.has(hour)
 
     slots.push({
-
+      start: startTime,
       range,
-
       status: isBooked ? 'Booked' : 'Available',
-
       price: !isBooked && field?.pricePerHour ? Number(field.pricePerHour) : undefined,
-
       highlight: !isBooked && hour === openHour,
-
     })
-
   }
 
 
@@ -366,6 +380,14 @@ const selectedSlots = ref<SelectedSlot[]>([])
 
 const isDrawerOpen = ref(false)
 
+const router = useRouter()
+
+const bookingCart = useState('booking-cart', () => ({
+  stadionId: null as number | null,
+  stadionName: '',
+  slots: [] as SelectedSlot[],
+}))
+
 
 
 const toggleCourt = (courtId: number) => {
@@ -386,18 +408,60 @@ const isCourtExpanded = (courtId: number) => expandedCourts.value[courtId] ?? fa
 
 const availableCount = (court: Court) => court.slots.filter((slot) => slot.status === 'Available').length
 
+const selectedDayValue = computed(() => venue.value?.scheduleDays[selectedDayIndex.value]?.value ?? null)
+
 const selectedDayLabel = computed(() => venue.value?.scheduleDays[selectedDayIndex.value]?.label ?? '')
+
+const selectedDayKey = computed(() => toDateKey(selectedDayValue.value))
 
 const selectedSlotCount = computed(() => selectedSlots.value.length)
 
-const slotKey = (courtId: number, range: string) => `${courtId}-${range}-${selectedDayLabel.value}`
+const slotKey = (courtId: number, range: string) => `${courtId}-${range}-${selectedDayKey.value ?? 'none'}`
 
 const isSlotSelected = (courtId: number, range: string) =>
   selectedSlots.value.some(slot => slot.key === slotKey(courtId, range))
 
+const publicBookings = ref<BookingRecord[]>([])
+const loadPublicBookings = async () => {
+  if (!stadionId || !selectedDayKey.value) {
+    publicBookings.value = []
+    return
+  }
+  try {
+    publicBookings.value = await $fetch<BookingRecord[]>('/api/public-bookings', {
+      query: { stadionId, date: `${selectedDayKey.value}T00:00:00.000Z` },
+    })
+  } catch (error) {
+    console.error('Failed to load bookings', error)
+    publicBookings.value = []
+  }
+}
+
+onMounted(loadPublicBookings)
+watch(selectedDayKey, () => loadPublicBookings())
+
+const isSlotBookedFromServer = (fieldId: number, startHour: number) => {
+  if (!publicBookings.value || !selectedDayKey.value) return false
+  return publicBookings.value.some((booking) =>
+    booking.details?.some(
+      detail =>
+        detail.fieldId === fieldId &&
+        toDateKey(detail.bookingDate) === selectedDayKey.value &&
+        detail.startHour === startHour
+    )
+  )
+}
+
 const toggleSlotSelection = (court: Court, slot: Slot) => {
 
   if (slot.status === 'Booked') return
+
+  const startHour = Number(slot.start.split(':')[0])
+  if (isSlotBookedFromServer(court.id, Number.isNaN(startHour) ? 0 : startHour)) return
+
+  const dateKey = selectedDayKey.value
+
+  if (!dateKey) return
 
   const key = slotKey(court.id, slot.range)
 
@@ -429,6 +493,8 @@ const toggleSlotSelection = (court: Court, slot: Slot) => {
 
       dateLabel: selectedDayLabel.value,
 
+      dateKey,
+
     },
 
   ]
@@ -459,9 +525,21 @@ const closeDrawer = () => {
 
 }
 
+const proceedToOrder = () => {
+  if (!selectedSlots.value.length || !venue.value) return
+  bookingCart.value = {
+    stadionId: venue.value.id,
+    stadionName: venue.value.name,
+    slots: selectedSlots.value.map(slot => ({ ...slot })),
+  }
+  isDrawerOpen.value = false
+  router.push('/booking/order')
+}
+
 watch(selectedDayIndex, () => {
 
   selectedSlots.value = []
+  isDrawerOpen.value = false
 
 })
 
@@ -798,11 +876,11 @@ watch(selectedDayIndex, () => {
 
                 class="relative rounded-xl border px-4 py-3 text-left shadow-sm transition-colors"
 
-                :disabled="slot.status === 'Booked'"
+                :disabled="slot.status === 'Booked' || isSlotBookedFromServer(court.id, Number(slot.start.split(':')[0]))"
 
                 :class="[
 
-                  slot.status === 'Booked'
+                  slot.status === 'Booked' || isSlotBookedFromServer(court.id, Number(slot.start.split(':')[0]))
 
                     ? 'bg-white text-gray-400 border-gray-200 cursor-not-allowed'
 
@@ -836,7 +914,7 @@ watch(selectedDayIndex, () => {
 
                   :class="[
 
-                    slot.status === 'Booked'
+                    slot.status === 'Booked' || isSlotBookedFromServer(court.id, Number(slot.start.split(':')[0]))
 
                       ? 'text-gray-500'
 
@@ -854,7 +932,10 @@ watch(selectedDayIndex, () => {
 
                 </p>
 
-                <p v-if="slot.status === 'Booked'" class="text-sm font-semibold text-gray-400">
+                <p
+                  v-if="slot.status === 'Booked' || isSlotBookedFromServer(court.id, Number(slot.start.split(':')[0]))"
+                  class="text-sm font-semibold text-gray-400"
+                >
 
                   Booked
 
@@ -962,6 +1043,7 @@ watch(selectedDayIndex, () => {
               type="button"
               class="w-full rounded-xl bg-[#1f2a56] px-4 py-3 text-sm font-semibold text-white shadow hover:bg-[#162347] disabled:cursor-not-allowed disabled:bg-gray-300"
               :disabled="!selectedSlots.length"
+              @click="proceedToOrder"
             >
               Selanjutnya
             </button>
@@ -996,27 +1078,6 @@ watch(selectedDayIndex, () => {
 }
 
 </style>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
