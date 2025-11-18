@@ -15,10 +15,12 @@ export const QUERY_GET_BOOKING = gql`
       paymentStatus,
       createdAt,
       details {
-        fieldId,
         bookingDate,
         startHour,
         subtotal,
+        Field {
+          name
+        }
       }
     }
   }
