@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 definePageMeta({
@@ -7,10 +7,11 @@ definePageMeta({
   layout: 'admin',
 })
 
-// Tipe data
+// Tipe data 
 interface StadionSelect {
   id: number
   name: string
+  status: 'ACTIVE' | 'INACTIVE'
 }
 
 interface FieldData {
@@ -19,6 +20,7 @@ interface FieldData {
   description: string | null
   pricePerHour: number
   stadionId: number
+  status: 'ACTIVE' | 'INACTIVE'
 }
 
 interface FetchErrorData {
@@ -29,41 +31,52 @@ const router = useRouter()
 const route = useRoute()
 const fieldId = route.params.id as string
 
-// State
+// Form ditambah status
 const form = ref({
   stadionId: 0,
   name: '',
   description: '',
   pricePerHour: 0,
+  status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE', 
 })
 
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 
-// Ambil daftar stadion untuk dropdown
+// API stadion harus mengembalikan status
 const { data: stadions } = await useAsyncData(
   'stadionListForSelect',
   () => $fetch<StadionSelect[]>('/api/stadions')
 )
 
-// Ambil data lapangan saat ini
 const { data: field, error: fetchError, pending: pagePending } = await useAsyncData(
   `field-${fieldId}`,
   () => $fetch<FieldData>(`/api/fields/${fieldId}`)
 )
 
-// Isi form jika data berhasil dimuat
+// Isi form termasuk status
 if (field.value) {
   form.value.stadionId = field.value.stadionId
   form.value.name = field.value.name
   form.value.description = field.value.description || ''
   form.value.pricePerHour = field.value.pricePerHour
+  form.value.status = field.value.status 
 } else if (fetchError.value) {
   const typedError = fetchError.value as FetchErrorData
   errorMsg.value = typedError.data?.statusMessage || 'Gagal memuat data lapangan.'
 }
 
-// Fungsi submit update
+const selectedStadion = computed(() => {
+  if (!form.value.stadionId || !stadions.value) return null
+  return stadions.value.find(s => s.id === form.value.stadionId)
+})
+
+function onStadionChange() {
+  if (selectedStadion.value?.status === 'INACTIVE') {
+    form.value.status = 'INACTIVE'
+  }
+}
+
 async function handleSubmit() {
   loading.value = true
   errorMsg.value = null
@@ -74,6 +87,9 @@ async function handleSubmit() {
       body: {
         fieldId,
         ...form.value,
+        stadionId: Number(form.value.stadionId),
+        pricePerHour: Number(form.value.pricePerHour),
+        description: form.value.description || undefined,
       },
     })
 
@@ -122,7 +138,7 @@ async function handleSubmit() {
     <!-- Form Edit -->
     <div v-else class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <form @submit.prevent="handleSubmit" class="divide-y divide-gray-200">
-        <div class="p-5 sm:p-6">
+        <div class="p-5 sm:p-8">
           <!-- Error Submit -->
           <div
             v-if="errorMsg"
@@ -131,26 +147,27 @@ async function handleSubmit() {
             {{ errorMsg }}
           </div>
 
-          <div class="grid grid-cols-1 gap-6 sm:max-w-xl">
+          <div class="grid grid-cols-1 gap-8">
             <!-- Stadion Induk -->
-            <label class="block">
+            <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Stadion Induk <span class="text-red-500">*</span>
               </span>
               <select
                 v-model="form.stadionId"
                 required
-                class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                @change="onStadionChange"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors"
               >
                 <option value="" disabled>Pilih stadion</option>
                 <option v-for="stadion in stadions" :key="stadion.id" :value="stadion.id">
-                  {{ stadion.name }} (ID: {{ stadion.id }})
+                  {{ stadion.name }} (Status: {{ stadion.status }})
                 </option>
               </select>
             </label>
 
             <!-- Nama Lapangan -->
-            <label class="block">
+            <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Nama Lapangan <span class="text-red-500">*</span>
               </span>
@@ -158,44 +175,66 @@ async function handleSubmit() {
                 v-model="form.name"
                 type="text"
                 required
-                class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors"
               />
             </label>
 
             <!-- Deskripsi -->
-            <label class="block">
+            <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Deskripsi
               </span>
               <textarea
                 v-model="form.description"
                 rows="4"
-                class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors resize-none"
+                placeholder="Lapangan dengan permukaan lantai yang aman, dilengkapi dengan pencahayaan malam hari."
+                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors resize-none"
               />
             </label>
 
             <!-- Harga per Jam -->
-            <label class="block">
+            <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Harga per Jam <span class="text-red-500">*</span>
               </span>
               <input
                 v-model.number="form.pricePerHour"
-                type="number"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
                 required
                 min="0"
-                class="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors"
               />
+            </label>
+
+            <!-- Status -->
+            <label class="block mb-6">
+              <span class="block text-sm font-medium text-gray-700 mb-1.5">
+                Status <span class="text-red-500">*</span>
+              </span>
+              <select
+                v-model="form.status"
+                required
+                :disabled="selectedStadion?.status === 'INACTIVE'"
+                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors"
+              >
+                <option value="ACTIVE">Aktif</option>
+                <option value="INACTIVE">Non-Aktif</option>
+              </select>
+              <p v-if="selectedStadion?.status === 'INACTIVE'" class="mt-1.5 text-xs text-yellow-700">
+                Stadion induk non-aktif, lapangan harus non-aktif.
+              </p>
             </label>
           </div>
         </div>
 
-        <!-- Footer Aksi -->
-        <div class="flex items-center justify-start gap-3 bg-gray-50/75 px-5 py-4 sm:px-6">
+        <!-- Footer -->
+        <div class="flex items-center justify-start gap-3 bg-gray-50/80 px-6 py-5 sm:px-8">
           <button
             type="submit"
             :disabled="loading"
-            class="ds-button-primary"
+            class="inline-flex items-center gap-2.5 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 disabled:opacity-50 transition-all"
           >
             <svg v-if="loading" class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25" />
@@ -203,10 +242,9 @@ async function handleSubmit() {
             </svg>
             {{ loading ? 'Memperbarui...' : 'Perbarui Lapangan' }}
           </button>
-
           <NuxtLink
             to="/admin/fields"
-            class="inline-flex items-center gap-2.5 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+            class="inline-flex items-center gap-2.5 rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
           >
             Batal
           </NuxtLink>

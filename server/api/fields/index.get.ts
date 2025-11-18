@@ -1,0 +1,26 @@
+import { defineEventHandler, createError } from "h3"
+import { $fetch } from "ofetch"
+import { QUERY_GET_FIELDS } from "~/graphql/queries/get_fields"
+
+export default defineEventHandler(async (event) => {
+  const endpoint = process.env.GQL_HTTP_ENDPOINT
+  if (!endpoint) throw createError({ statusCode: 500, statusMessage: "Missing GQL_HTTP_ENDPOINT" })
+  const queryParams = getQuery(event)
+  const stadionId = queryParams.stadionId ? String(queryParams.stadionId) : undefined
+  try {
+    const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
+      method: "POST",
+      body: {
+        query: QUERY_GET_FIELDS,
+        variables: {
+          stadionId: stadionId
+        }
+      },
+    })
+
+    if (response.errors) throw new Error(response.errors[0].message)
+    return response.data.fields
+  } catch (err: any) {
+    throw createError({ statusCode: 502, statusMessage: err.message })
+  }
+})
