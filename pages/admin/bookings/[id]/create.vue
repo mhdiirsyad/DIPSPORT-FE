@@ -77,65 +77,96 @@ async function handleSubmit(){
       subtotal: price,
     }
   })
+  const vars: any = {
+    name: bookingForm.name,
+    contact: bookingForm.contact,
+    email: bookingForm.email,
+    institution: bookingForm.isAcademic ? bookingForm.institution : undefined,
+    isAcademic: bookingForm.isAcademic,
+    details,
+  }
+
+  // only include suratFile variable when a file is actually attached
+  if (bookingForm.suratFile) vars.suratFile = null
 
   const operations = {
     query: print(MUTATION_CREATE_BOOKING),
-    variables: {
-      name: bookingForm.name,
-      contact: bookingForm.contact,
-      email: bookingForm.email,
-      institution: bookingForm.isAcademic ? bookingForm.institution : null,
-      isAcademic: bookingForm.isAcademic,
-      details,
-      suratFile: null,
-    }
+    variables: vars
   }
 
-  const map = { '0': ['variables.suratFile'] }
-
-  const fd = new FormData()
-  fd.append('operations', JSON.stringify(operations))
-  fd.append('map', JSON.stringify(map))
-  if (bookingForm.suratFile) fd.append('0', bookingForm.suratFile, bookingForm.suratFile.name)
-
+  // If there's a file attached, send multipart/form-data (GraphQL multipart spec).
+  // Otherwise send a plain JSON POST to the server (avoids sending an empty multipart without `map`).
   try {
-    await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      xhr.open('POST', '/api/bookings/create')
-      xhr.withCredentials = true
+    if (bookingForm.suratFile) {
+      const fd = new FormData()
+      fd.append('operations', JSON.stringify(operations))
+      const map = { '0': ['variables.suratFile'] }
+      fd.append('map', JSON.stringify(map))
+      fd.append('0', bookingForm.suratFile, bookingForm.suratFile.name)
 
-      xhr.upload.onprogress = (ev) => {
-        if (ev.lengthComputable) uploadProgress.value = Math.round((ev.loaded / ev.total) * 100)
-      }
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', '/api/bookings/create')
+        xhr.withCredentials = true
 
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const json = JSON.parse(xhr.responseText)
-            const bookingCode = json?.bookingCode || json?.createBooking?.bookingCode
-            if (!bookingCode) return reject(new Error('Server tidak mengembalikan booking code'))
-            resolve(bookingCode)
-          } catch (e) {
-            reject(e)
-          }
-        } else {
-          let msg = xhr.statusText || `HTTP ${xhr.status}`
-          try { const body = JSON.parse(xhr.responseText); msg = body?.statusMessage || body?.error || msg } catch {}
-          reject(new Error(msg))
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) uploadProgress.value = Math.round((ev.loaded / ev.total) * 100)
         }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const json = JSON.parse(xhr.responseText)
+              const bookingCode = json?.bookingCode || json?.createBooking?.bookingCode
+              if (!bookingCode) return reject(new Error('Server tidak mengembalikan booking code'))
+              resolve(bookingCode)
+            } catch (e) {
+              reject(e)
+            }
+          } else {
+            let msg = xhr.statusText || `HTTP ${xhr.status}`
+            try { const body = JSON.parse(xhr.responseText); msg = body?.statusMessage || body?.error || msg } catch {}
+            reject(new Error(msg))
+          }
+        }
+
+        xhr.onerror = () => reject(new Error('Network error saat mengirim request'))
+        xhr.send(fd)
+      }).then((bookingCode: any) => {
+        navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
+      })
+    } else {
+      // JSON path — server expects plain JSON for non-file submissions
+      const payload = {
+        name: bookingForm.name,
+        contact: bookingForm.contact,
+        email: bookingForm.email,
+        institution: bookingForm.isAcademic ? bookingForm.institution : undefined,
+        isAcademic: bookingForm.isAcademic,
+        details,
       }
 
-      xhr.onerror = () => reject(new Error('Network error saat mengirim request'))
-      xhr.send(fd)
-    }).then((bookingCode: any) => {
+      const resp = await $fetch('/api/bookings/create', {
+        method: 'POST',
+        body: payload,
+        credentials: 'include',
+      })
+
+      const bookingCode = resp?.bookingCode || resp?.createBooking?.bookingCode
+      if (!bookingCode) throw new Error('Server tidak mengembalikan booking code')
       navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
-    })
+    }
   } catch (err: any) {
     errorMsg.value = err?.message || 'Gagal membuat booking.'
   } finally {
     uploadProgress.value = null
   }
 }
+
+// clear uploaded file if user toggles off academic booking
+watch(() => bookingForm.isAcademic, (val) => {
+  if (!val) bookingForm.suratFile = null
+})
 </script>
 
 <template>
