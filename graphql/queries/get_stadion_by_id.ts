@@ -1,20 +1,20 @@
-export const QUERY_GET_STADION_BY_ID = `
+import gql from "graphql-tag";
+
+export const QUERY_GET_STADION_BY_ID = gql`
   query GetStadionById($stadionId: ID!) {
     stadion(stadionId: $stadionId) {
       id
       name
-      status
       description
       mapUrl
       operatingHours {
-        openHour
-        closeHour
+        openTime
+        closeTime
       }
       facilities {
         Facility {
           id
           name
-          icon
         }
       }
       images {
@@ -24,18 +24,10 @@ export const QUERY_GET_STADION_BY_ID = `
       fields {
         id
         name
-        status
-        description
         pricePerHour
         images {
           id
           imageUrl
-        }
-        bookingDetails {
-          id
-          bookingDate
-          startHour
-          subtotal
         }
       }
     }

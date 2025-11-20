@@ -1,4 +1,5 @@
 // Jembatan untuk query 'stadion' (satu)
+import { print } from 'graphql'
 import { defineEventHandler, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { QUERY_GET_STADION_BY_ID } from '~/graphql/queries/get_stadion_by_id'
@@ -11,7 +12,7 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
-        query: QUERY_GET_STADION_BY_ID,
+        query: print(QUERY_GET_STADION_BY_ID),
         variables: { stadionId },
       },
     })

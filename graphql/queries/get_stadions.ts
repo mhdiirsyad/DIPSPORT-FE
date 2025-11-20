@@ -1,20 +1,20 @@
-export const QUERY_GET_STADIONS = `
+import gql from "graphql-tag";
+
+export const QUERY_GET_STADIONS = gql`
   query StadionsWithDetails {
     stadions {
       id
       name
-      status
       description
       mapUrl
       operatingHours {
-        openHour
-        closeHour
+        openTime
+        closeTime
       }
       facilities {
         Facility {
           id
           name
-          icon
         }
       }
       images {
@@ -25,7 +25,6 @@ export const QUERY_GET_STADIONS = `
         id
         name
         pricePerHour
-        status
         images {
           id
           imageUrl
