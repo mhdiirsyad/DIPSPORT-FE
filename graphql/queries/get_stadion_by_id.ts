@@ -3,18 +3,16 @@ export const QUERY_GET_STADION_BY_ID = `
     stadion(stadionId: $stadionId) {
       id
       name
-      status
       description
       mapUrl
       operatingHours {
-        openHour
-        closeHour
+        openTime
+        closeTime
       }
       facilities {
         Facility {
           id
           name
-          icon
         }
       }
       images {
@@ -24,7 +22,6 @@ export const QUERY_GET_STADION_BY_ID = `
       fields {
         id
         name
-        status
         description
         pricePerHour
         images {

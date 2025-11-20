@@ -368,7 +368,7 @@ function makeBooking() {
                 :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
                   ? 'bg-white text-gray-400 border-red-200 cursor-pointer hover:bg-red-50'
                   : 'bg-gray-50 text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
-                @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]))"
+                @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]), Number(slot.price), field.name)"
               >
                 <p
                   class="text-[0.65rem] font-semibold uppercase tracking-wide"

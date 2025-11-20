@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { print } from 'graphql'
 import { $fetch } from 'ofetch'
+import { MUTATION_CREATE_BOOKING } from '~/graphql/mutations/create_booking'
 definePageMeta({
   layout: 'admin',
   middleware: 'auth-admin'
@@ -15,7 +17,7 @@ try {
   selectedSlots.value = []
 }
 
-const form = reactive({
+const bookingForm = reactive({
   name: '',
   contact: '',
   email: '',
@@ -25,14 +27,15 @@ const form = reactive({
 })
 
 const errorMsg = ref<string | null>(null)
+const uploadProgress = ref<number | null>(null)
 
 function handleFileUpload(e: Event){
   const input = e.target as HTMLInputElement
-  form.suratFile = input.files?.[0] || null
+  bookingForm.suratFile = input.files?.[0] || null
 }
 
 const totalPrice = computed(() => {
-  if(form.isAcademic) {
+  if(bookingForm.isAcademic) {
     return 0
   }
 
@@ -40,38 +43,97 @@ const totalPrice = computed(() => {
 })
 
 async function handleSubmit(){
-  const formData = new FormData()
-  
-  Object.entries(form).forEach(([key, value]) => {
-    if(value !== null || value !== undefined && key !== 'suratFile') {
-      formData.append(key, String(value))
+  errorMsg.value = null
+  uploadProgress.value = null
+
+  // Basic validations
+  if (!bookingForm.name || !bookingForm.contact || !bookingForm.email) {
+    errorMsg.value = 'Nama, kontak, dan email wajib diisi.'
+    return
+  }
+
+  if (selectedSlots.value.length === 0) {
+    errorMsg.value = 'Pilih minimal satu slot.'
+    return
+  }
+
+  if (bookingForm.isAcademic && !bookingForm.institution) {
+    errorMsg.value = 'Institusi harus diisi untuk booking akademik.'
+    return
+  }
+
+  if (bookingForm.isAcademic && !bookingForm.suratFile) {
+    errorMsg.value = 'Upload surat pengantar (PDF) diperlukan untuk booking akademik.'
+    return
+  }
+
+  const details = selectedSlots.value.map((slot) => {
+    const price = bookingForm.isAcademic ? 0 : (slot.pricePerHour || 0)
+    return {
+      fieldId: Number(slot.fieldId),
+      bookingDate: slot.date,
+      startHour: Number(slot.startHour),
+      pricePerHour: price,
+      subtotal: price,
     }
   })
 
-  if(form.suratFile) {
-    formData.append('suratFile', form.suratFile)
+  const operations = {
+    query: print(MUTATION_CREATE_BOOKING),
+    variables: {
+      name: bookingForm.name,
+      contact: bookingForm.contact,
+      email: bookingForm.email,
+      institution: bookingForm.isAcademic ? bookingForm.institution : null,
+      isAcademic: bookingForm.isAcademic,
+      details,
+      suratFile: null,
+    }
   }
 
-  formData.append('selelctions', JSON.stringify(selectedSlots.value))
+  const map = { '0': ['variables.suratFile'] }
+
+  const fd = new FormData()
+  fd.append('operations', JSON.stringify(operations))
+  fd.append('map', JSON.stringify(map))
+  if (bookingForm.suratFile) fd.append('0', bookingForm.suratFile, bookingForm.suratFile.name)
 
   try {
-    const response = await $fetch('/api/bookings/create', {
-      method: 'POST',
-      body: formData
-    })
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', '/api/bookings/create')
+      xhr.withCredentials = true
 
-    // if (form.isAcademic && form.suratFile) {
-    //   const uploadUrl = `/api/bookings/${response.createBooking.bookingCode}/upload`
-    //   const uploadForm = new FormData()
-    //   uploadForm.append('file', form.suratFile)
-    //   await $fetch(uploadUrl, {
-    //     method: 'POST',
-    //     body: uploadForm
-    //   })
-    // }
-    navigateTo(`/admin/bookings/${stadionId}/${response.createBooking.bookingCode}`)
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) uploadProgress.value = Math.round((ev.loaded / ev.total) * 100)
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const json = JSON.parse(xhr.responseText)
+            const bookingCode = json?.bookingCode || json?.createBooking?.bookingCode
+            if (!bookingCode) return reject(new Error('Server tidak mengembalikan booking code'))
+            resolve(bookingCode)
+          } catch (e) {
+            reject(e)
+          }
+        } else {
+          let msg = xhr.statusText || `HTTP ${xhr.status}`
+          try { const body = JSON.parse(xhr.responseText); msg = body?.statusMessage || body?.error || msg } catch {}
+          reject(new Error(msg))
+        }
+      }
+
+      xhr.onerror = () => reject(new Error('Network error saat mengirim request'))
+      xhr.send(fd)
+    }).then((bookingCode: any) => {
+      navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
+    })
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || err.message || 'Gagal membuat booking.'
+    errorMsg.value = err?.message || 'Gagal membuat booking.'
+  } finally {
+    uploadProgress.value = null
   }
 }
 </script>
@@ -79,6 +141,8 @@ async function handleSubmit(){
 <template>
   <main class="max-w-3xl mx-auto p-6 space-y-8">
     <h1 class="text-2xl font-bold">Data Pemesan</h1>
+
+    <div v-if="errorMsg" class="text-red-600 bg-red-50 p-3 rounded">{{ errorMsg }}</div>
 
     <!-- ===================== SELECTED SLOTS ===================== -->
     <section class="border rounded-xl p-4 bg-gray-50">
@@ -120,33 +184,39 @@ async function handleSubmit(){
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <div>
         <label class="block text-sm font-medium">Nama</label>
-        <input v-model="form.name" type="text" class="input" required />
+        <input v-model="bookingForm.name" type="text" class="input" required />
       </div>
 
       <div>
         <label class="block text-sm font-medium">Kontak</label>
-        <input v-model="form.contact" type="text" class="input" required />
+        <input v-model="bookingForm.contact" type="text" class="input" required />
       </div>
 
       <div>
         <label class="block text-sm font-medium">Email</label>
-        <input v-model="form.email" type="email" class="input" required />
+        <input v-model="bookingForm.email" type="email" class="input" required />
       </div>
 
       <div class="flex items-center gap-2">
-        <input id="academic" type="checkbox" v-model="form.isAcademic" />
+        <input id="academic" type="checkbox" v-model="bookingForm.isAcademic" />
         <label for="academic">Booking Akademik? (harga jadi 0)</label>
       </div>
 
-      <div v-if="form.isAcademic" class="space-y-3">
+      <div v-if="bookingForm.isAcademic" class="space-y-3">
         <div>
           <label class="block text-sm font-medium">Institusi</label>
-          <input v-model="form.institution" type="text" class="input" required />
+          <input v-model="bookingForm.institution" type="text" class="input" required />
         </div>
 
         <div>
           <label class="block text-sm font-medium">Upload Surat (PDF)</label>
           <input type="file" accept="application/pdf" @change="handleFileUpload" />
+          <div v-if="uploadProgress !== null" class="mt-2">
+            <div class="w-full bg-gray-200 rounded h-2">
+              <div :style="{ width: uploadProgress + '%' }" class="bg-blue-600 h-2 rounded"></div>
+            </div>
+            <div class="text-sm text-gray-600 mt-1">Uploading: {{ uploadProgress }}%</div>
+          </div>
         </div>
       </div>
 
