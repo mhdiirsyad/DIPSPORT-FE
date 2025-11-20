@@ -3,12 +3,16 @@ definePageMeta({
   middleware: 'auth-admin',
   layout: 'admin'
 })
+interface Field {
+  name: string
+}
 
 interface BookingDetail {
   fieldId: number
   bookingDate: string,
   startHour: number,
-  subtotal: number
+  subtotal: number,
+  Field: Field
 }
 
 interface BookingResult {
@@ -33,10 +37,6 @@ const { data: booking, pending, error} = await useAsyncData(
   `booking-${bookingCode}`,
   () => $fetch<BookingResult>(`/api/bookings/${bookingCode}`)
 )
-
-// const {data} = await useAsyncData(
-//   `field-${booking.value?.details.}`
-// )
 </script>
 
 <template>
@@ -93,7 +93,7 @@ const { data: booking, pending, error} = await useAsyncData(
             </thead>
             <tbody>
               <tr v-for="(d, i) in booking?.details" :key="i">
-                <td class="border px-3 py-2">{{ d.fieldId }}</td>
+                <td class="border px-3 py-2">{{ d.Field.name }}</td>
                 <td class="border px-3 py-2">{{ new Date(d.bookingDate).toLocaleDateString('id-ID') }}</td>
                 <td class="border px-3 py-2">{{ d.startHour }}:00 - {{ d.startHour+1 }}:00</td>
                 <td class="border px-3 py-2 text-right">
