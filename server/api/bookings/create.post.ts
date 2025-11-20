@@ -1,4 +1,5 @@
-import { defineEventHandler, readBody, createError } from 'h3'
+import { print } from 'graphql'
+import { defineEventHandler, readBody, createError, getCookie } from 'h3'
 import { $fetch } from 'ofetch'
 import { MUTATION_CREATE_BOOKING } from '~/graphql/mutations/create_booking'
 
@@ -20,19 +21,51 @@ interface BookingPayload {
 }
 
 export default defineEventHandler(async (event) => {
+  const endpoint = process.env.GQL_HTTP_ENDPOINT
+  if (!endpoint) throw createError({ statusCode: 500, statusMessage: 'Missing GQL_HTTP_ENDPOINT' })
+
+  const contentType = (event.node.req.headers['content-type'] || '') as string
+
+  // If the request is multipart (file upload from client), proxy the raw stream to the GraphQL endpoint
+  if (contentType.includes('multipart/form-data')) {
+    const token = getCookie(event, 'admin_token')
+    const headers: Record<string, string> = {
+      // satisfy Apollo CSRF protection
+      'apollo-require-preflight': 'true',
+      'content-type': contentType,
+    }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    try {
+      // Node's fetch requires `duplex: 'half'` when forwarding a request stream
+      // cast to any to avoid TypeScript issues with the extra option
+      const res = await (fetch as any)(endpoint, { method: 'POST', headers, body: event.node.req, duplex: 'half' })
+      const json = await res.json()
+      if (json.errors?.length) {
+        throw createError({ statusCode: 400, statusMessage: json.errors[0]?.message || 'Failed to create booking' })
+      }
+      return json.data?.createBooking
+    } catch (err: any) {
+      if (err?.statusCode) throw err
+      throw createError({ statusCode: 502, statusMessage: err?.message || 'Booking service unreachable' })
+    }
+  }
+
+  // Otherwise expect JSON body
   const body = await readBody<BookingPayload>(event)
   if (!body?.name || !body?.contact || !body?.email || !Array.isArray(body.details) || body.details.length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'Incomplete booking payload' })
   }
 
-  const endpoint = process.env.GQL_HTTP_ENDPOINT
-  if (!endpoint) throw createError({ statusCode: 500, statusMessage: 'Missing GQL_HTTP_ENDPOINT' })
-
   try {
+    const token = getCookie(event, 'admin_token')
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
-        query: MUTATION_CREATE_BOOKING,
+        query: print(MUTATION_CREATE_BOOKING),
         variables: {
           name: body.name,
           contact: body.contact,
@@ -43,7 +76,7 @@ export default defineEventHandler(async (event) => {
           details: body.details,
         },
       },
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     })
 
     if (response.errors?.length) {

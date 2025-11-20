@@ -25,9 +25,11 @@ if (!bookingCart.value.stadionId || bookingCart.value.slots.length === 0) {
 const stadionId = bookingCart.value.stadionId
 
 const { data: stadion, pending } = await useAsyncData(
-  `booking-stadion-${stadionId}`,
-  () => $fetch<any>(`/api/stadions/${stadionId}`),
-  { immediate: !!stadionId }
+  () => (stadionId ? `booking-stadion-${stadionId}` : ""),
+  () => $fetch(`/api/stadions/:id`, {
+    params: { id: stadionId },
+  }),
+  { immediate: Boolean(stadionId) }
 )
 
 const orderSlots = computed(() => bookingCart.value.slots)
