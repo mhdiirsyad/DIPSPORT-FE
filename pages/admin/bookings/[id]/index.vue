@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { generateTimeSlots, type Slot } from '~/utils/generateTimeSlots'
 
 definePageMeta({
@@ -18,8 +18,10 @@ interface Field {
 }
 
 interface OperatingHour {
-  closeTime: string
-  openTime: string
+  openHour?: number
+  closeHour?: number
+  openTime?: string
+  closeTime?: string
 }
 
 interface Images {
@@ -50,22 +52,35 @@ interface BookingsResult {
 }
 
 const days = getNext7Days();
-console.log(days)
 const selectedDate = ref(days[0]?.value)
+const toLocalDateKey = (value?: string | null) => {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+const selectedDateKey = computed(() => toLocalDateKey(selectedDate.value))
 
-function extractOperatingHours(operatingHours: OperatingHour[]) {
-  if (!operatingHours || operatingHours.length === 0)
+function hourFrom(entry: OperatingHour | undefined, key: 'open' | 'close') {
+  if (!entry) return key === 'open' ? 8 : 22
+  const direct = key === 'open' ? entry.openHour : entry.closeHour
+  if (typeof direct === 'number') return direct
+  const time = key === 'open' ? entry.openTime : entry.closeTime
+  if (time) return new Date(time).getUTCHours()
+  return key === 'open' ? 8 : 22
+}
+
+function extractOperatingHours(operatingHours?: OperatingHour | OperatingHour[] | null) {
+  if (!operatingHours || (Array.isArray(operatingHours) && operatingHours.length === 0)) {
     return { openHour: 8, closeHour: 22 }
+  }
 
-  const openHours = operatingHours.map(h =>
-    new Date(h.openTime).getUTCHours()
-  )
-  const closeHours = operatingHours.map(h =>
-    new Date(h.closeTime).getUTCHours()
-  )
-
-  const openHour = Math.min(...openHours)
-  const closeHour = Math.max(...closeHours)
+  const entries = Array.isArray(operatingHours) ? operatingHours : [operatingHours]
+  const openHour = Math.min(...entries.map((entry) => hourFrom(entry, 'open')))
+  const closeHour = Math.max(...entries.map((entry) => hourFrom(entry, 'close')))
 
   return { openHour, closeHour }
 }
@@ -94,15 +109,16 @@ const { data: stadion, pending, error } = await useAsyncData(
 )
 
 const { data: bookingsResult } = await useAsyncData(
-  `bookings-${stadionId}-${selectedDate.value}`,
+  () => `bookings-${stadionId}-${selectedDateKey.value ?? 'none'}`,
   () => $fetch<BookingsResult[]>('/api/bookings', {
-    query: { stadionId, date: selectedDate.value }
+    query: {
+      stadionId,
+      ...(selectedDateKey.value ? { date: `${selectedDateKey.value}T00:00:00.000Z` } : {})
+    }
   }), {
-    watch: [selectedDate]
+    watch: [selectedDateKey]
   }
 )
-
-console.log(bookingsResult.value)
 
 // -------------------------------------------------------------------
 // State & Methods
@@ -119,25 +135,27 @@ function isFieldExpanded(id: number) {
 
 function isSlotBooked(fieldId: number, startHour: number) {
   if (!bookingsResult.value) return false
+  const selectedKey = selectedDateKey.value
+  if (!selectedKey) return false
 
   return bookingsResult.value.some((booking) =>
     booking.details.some(
       (detail) =>
         detail.fieldId === fieldId &&
-        detail.bookingDate.split('T')[0] === selectedDate.value?.split('T')[0] &&
+        toLocalDateKey(detail.bookingDate) === selectedKey &&
         detail.startHour === startHour        
     )
   )
 }
 
-console.log(isSlotBooked(2, 9))
-
 function getBookingCode(fieldId: number, startHour: number) {
+  const selectedKey = selectedDateKey.value
+  if (!selectedKey) return undefined
   const booking = bookingsResult.value?.find((b) =>
     b.details.some(
       (d) =>
         d.fieldId === fieldId &&
-        d.bookingDate.split('T')[0] === selectedDate.value?.split('T')[0] &&
+        toLocalDateKey(d.bookingDate) === selectedKey &&
         d.startHour === startHour
     )
   )
@@ -259,30 +277,30 @@ function makeBooking() {
               </span>
             </div>
 
-            <div class="space-y-3 text-sm text-gray-600">
-              <h2 class="text-lg font-semibold text-gray-900">Deskripsi</h2>
-              <p class="whitespace-pre-line">
-                {{ stadion?.description || 'Belum ada deskripsi.' }}
-              </p>
-              <div class="rounded-2xl bg-gray-50 p-4">
-                <p class="text-sm font-semibold text-gray-900">Lokasi Stadion</p>
-                <div class="mt-1 flex items-center justify-between">
-                  <span>{{ stadion?.mapUrl || 'Tidak diketahui' }}</span>
-                  <div class="rounded-2xl bg-gray-50 p-4">
-                    <p class="text-sm font-semibold text-gray-900">Lokasi Venue</p>
-                    <div class="mt-1 flex items-center justify-between">
-                      <a 
-                        :href="stadion?.mapUrl" target="_blank" rel="noopener noreferrer"
-                        class="text-sm font-semibold text-[#1f2a56] hover:underline">
-                        Buka Peta
-                      </a>
-                    </div>
-                  </div>
-                </div>
+          <div class="space-y-3 text-sm text-gray-600">
+            <h2 class="text-lg font-semibold text-gray-900">Deskripsi</h2>
+            <p class="whitespace-pre-line">
+              {{ stadion?.description || 'Belum ada deskripsi.' }}
+            </p>
+            <div class="rounded-2xl bg-gray-50 p-4">
+              <p class="text-sm font-semibold text-gray-900">Lokasi Stadion</p>
+              <div class="mt-1 flex items-center justify-between gap-4">
+                <span class="text-sm text-gray-600">{{ stadion?.mapUrl || 'Tidak diketahui' }}</span>
+                <a
+                  v-if="stadion?.mapUrl"
+                  :href="stadion.mapUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-sm font-semibold text-[#1f2a56] hover:underline"
+                >
+                  Buka Peta
+                </a>
+                <span v-else class="text-sm text-gray-400">Peta belum tersedia</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
         <div class="flex gap-3 overflow-x-auto pb-2">
           <button
@@ -340,30 +358,36 @@ function makeBooking() {
               </div>
             </div>
 
-            <transition name="expand">
+          <transition name="expand">
+            <div
+              v-if="isFieldExpanded(Number(field.id))"
+              class="grid gap-4 px-2 pb-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               <div
-                v-if="isFieldExpanded(Number(field.id))"
-                class="grid gap-4 px-2 pb-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-                <div 
-                  v-for="slot in field.slots" :key="slot.start"
-                  class="rounded-3xl border px-4 py-3 text-center cursor-pointer transition" 
-                  :class="[
-                    isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
-                      ? 'bg-red-500 text-white border-red-600 hover:bg-red-600'
-                      : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0]))
-                        ? 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600'
-                        : 'bg-green-100 text-gray-900 border-green-300 hover:bg-green-200'
-                  ]"
-                  @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]), Number(field.pricePerHour), field.name)"    
+                v-for="slot in field.slots" :key="slot.start"
+                class="rounded-xl border px-4 py-3 text-center shadow-sm transition-colors"
+                :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
+                  ? 'bg-white text-gray-400 border-red-200 cursor-pointer hover:bg-red-50'
+                  : 'bg-gray-50 text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
+                @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]))"
+              >
+                <p
+                  class="text-[0.65rem] font-semibold uppercase tracking-wide"
+                  :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-400' : 'text-gray-500'">
+                  60 Menit
+                </p>
+                <p
+                  class="text-base font-semibold"
+                  :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-500' : 'text-[#1f2a56]'"
                 >
-                  <p 
-                    class="text-xs uppercase"
-                    :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-white/80' : 'text-gray-500'">
-                    60 Menit</p>
-                  <!-- <p>{{isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))}}</p> -->
-                  <p class="text-base font-semibold">{{ slot.start }} - {{ slot.end }}</p>
-                  <p class="font-semibold">Rp {{ slot.price.toLocaleString('id-ID') }}</p>
-                </div>
+                  {{ slot.start }} - {{ slot.end }}
+                </p>
+                <p
+                  class="font-semibold"
+                  :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-400' : 'text-gray-700'"
+                >
+                  {{ isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'Booked' : `Rp ${slot.price.toLocaleString('id-ID')}` }}
+                </p>
+              </div>
 
               </div>
             </transition>

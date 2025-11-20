@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, getCookie } from 'h3'
+import { defineEventHandler, readBody, getCookie, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { MUTATION_UPDATE_FIELD } from '~/graphql/mutations/update_field'
 

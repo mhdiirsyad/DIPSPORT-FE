@@ -16,7 +16,10 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,
-    public: { gqlHttpEndpoint: process.env.GQL_HTTP_ENDPOINT },
+    public: {
+      gqlHttpEndpoint: process.env.GQL_HTTP_ENDPOINT,
+      bookingApiToken: process.env.BOOKING_API_TOKEN,
+    },
   },
   typescript: { strict: true, typeCheck: true, shim: true },
 })
