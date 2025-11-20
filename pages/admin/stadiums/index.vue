@@ -6,7 +6,6 @@ definePageMeta({
   layout: 'admin',
 })
 
-// === TIPE DATA LENGKAP ===
 interface StadionRow {
   id: number
   name: string
@@ -14,7 +13,6 @@ interface StadionRow {
   fields: any[]
 }
 
-// === FETCH DATA ===
 const { data: rawStadions, pending, error, refresh } = await useAsyncData(
   'stadionsList',
   () => $fetch<StadionRow[]>('/api/stadions')
@@ -23,7 +21,6 @@ const { data: rawStadions, pending, error, refresh } = await useAsyncData(
 const loadingDelete = ref(false)
 const errorMsg = ref<string | null>(null)
 
-// === SEARCH ===
 const searchQuery = ref('')
 const filteredStadions = computed(() => {
   if (!rawStadions.value) return []
@@ -35,7 +32,6 @@ const filteredStadions = computed(() => {
   )
 })
 
-// === PAGINATION ===
 const currentPage = ref(1)
 const itemsPerPage = 10
 watch(searchQuery, () => { currentPage.value = 1 })
@@ -56,7 +52,6 @@ const paginationSummary = computed(() => {
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
-// === DELETE ===
 async function handleDelete(id: number) {
   if (!confirm('Anda yakin ingin menghapus stadion ini? Ini akan menghapus semua data terkait.')) return
   loadingDelete.value = true
@@ -77,7 +72,6 @@ async function handleDelete(id: number) {
   }
 }
 
-// === BADGE STATUS ===
 const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
   return status === 'ACTIVE'
     ? 'bg-green-100 text-green-700'
@@ -87,7 +81,6 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
 
 <template>
   <section class="flex w-full flex-col gap-5 sm:gap-7 px-4 sm:px-0">
-    <!-- Header -->
     <header class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-4">
       <div class="w-full sm:w-auto">
         <h1 class="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">
@@ -115,9 +108,7 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
       </NuxtLink>
     </header>
 
-    <!-- Table Card -->
     <div class="overflow-hidden rounded-lg sm:rounded-xl border border-gray-200 bg-white shadow-sm">
-      <!-- Search -->
       <div class="border-b border-gray-200 p-4 sm:p-5 lg:p-6">
         <label class="relative flex items-center gap-2 sm:gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-3.5 sm:py-2.5">
           <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none">
@@ -138,9 +129,7 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
         </label>
       </div>
 
-      <!-- Content -->
       <div class="flex flex-col">
-        <!-- Error -->
         <div
           v-if="error || errorMsg"
           class="m-4 sm:m-5 lg:m-6 rounded-lg border border-red-300 bg-red-50 px-3.5 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-semibold text-red-700"
@@ -151,7 +140,6 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
           </button>
         </div>
 
-        <!-- Loading -->
         <div
           v-else-if="pending"
           class="m-4 sm:m-5 lg:m-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 py-5 sm:py-6 text-center text-xs sm:text-sm font-medium text-gray-600"
@@ -159,7 +147,6 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
           Memuat data stadion...
         </div>
 
-        <!-- Empty -->
         <div
           v-else-if="filteredStadions.length === 0"
           class="px-4 py-8 sm:px-5 sm:py-10 text-center text-xs sm:text-sm text-gray-500"
@@ -168,9 +155,7 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
           <span v-else>Belum ada data stadion.</span>
         </div>
 
-        <!-- Data Table -->
         <template v-else>
-          <!-- Desktop -->
           <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full border-collapse">
               <thead class="bg-gray-50">
@@ -218,7 +203,6 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
             </table>
           </div>
 
-          <!-- Mobile -->
           <div class="md:hidden divide-y divide-gray-100">
             <div
               v-for="stadion in paginatedStadions"
@@ -262,7 +246,6 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
           </div>
         </template>
 
-        <!-- Pagination -->
         <nav
           v-if="!pending && totalPages > 1"
           class="flex flex-col-reverse items-center justify-between gap-3 sm:gap-4 border-t border-gray-200 p-4 sm:flex-row sm:p-5 lg:p-6"
