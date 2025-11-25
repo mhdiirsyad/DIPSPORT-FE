@@ -85,7 +85,6 @@ async function handleSubmit() {
 
 <template>
   <section class="flex w-full flex-col gap-7">
-    <!-- HEADER -->
     <header class="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -112,11 +111,9 @@ async function handleSubmit() {
       </NuxtLink>
     </header>
 
-    <!-- FORM -->
     <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <form @submit.prevent="handleSubmit" class="divide-y divide-gray-200">
         <div class="p-5 sm:p-8">
-          <!-- ERROR MESSAGE -->
           <div
             v-if="errorMsg"
             class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3.5 text-sm font-semibold text-red-700"
@@ -125,7 +122,6 @@ async function handleSubmit() {
           </div>
 
           <div class="grid grid-cols-1 gap-8">
-            <!-- NAMA STADION -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Nama Stadion <span class="text-red-500">*</span>
@@ -139,7 +135,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- DESKRIPSI -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Deskripsi
@@ -152,7 +147,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- URL GOOGLE MAPS -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 URL Google Maps <span class="text-red-500">*</span>
@@ -169,7 +163,6 @@ async function handleSubmit() {
               </p>
             </label>
 
-            <!-- STATUS -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Status <span class="text-red-500">*</span>
@@ -184,7 +177,6 @@ async function handleSubmit() {
               </select>
             </label>
 
-            <!-- FASILITAS -->
             <fieldset>
               <legend class="block text-sm font-medium text-gray-700 mb-4">
                 Fasilitas
@@ -297,7 +289,6 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- ACTION BUTTONS -->
         <div class="flex items-center justify-start gap-3 bg-gray-50/80 px-6 py-5 sm:px-8">
           <button
             type="submit"
