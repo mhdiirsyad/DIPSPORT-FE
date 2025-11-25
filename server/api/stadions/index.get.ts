@@ -1,4 +1,3 @@
-// Jembatan untuk query 'stadions' (semua)
 import { defineEventHandler, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { QUERY_GET_STADIONS } from '~/graphql/queries/get_stadions'
