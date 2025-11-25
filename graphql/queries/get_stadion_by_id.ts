@@ -7,6 +7,7 @@ export const QUERY_GET_STADION_BY_ID = gql`
       name
       description
       mapUrl
+      status
       operatingHours {
         openTime
         closeTime
@@ -24,7 +25,9 @@ export const QUERY_GET_STADION_BY_ID = gql`
       fields {
         id
         name
+        description
         pricePerHour
+        status
         images {
           id
           imageUrl

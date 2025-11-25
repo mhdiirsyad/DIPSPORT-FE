@@ -8,8 +8,6 @@ definePageMeta({
   layout: 'admin',
 })
 
-// Interface Definitions
-
 interface StadionData {
   id: number
   name: string
@@ -33,8 +31,6 @@ interface FetchErrorData {
   }
 }
 
-// ⚙️ State & Router
-
 const router = useRouter()
 const route = useRoute()
 const stadionId = route.params.id as string
@@ -50,9 +46,6 @@ const form = ref({
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 
-//  Data Fetching
-
-// Fetch detail stadion
 const {
   data: stadion,
   error: fetchError,
@@ -61,7 +54,6 @@ const {
   $fetch<StadionData>(`/api/stadions/${stadionId}`)
 )
 
-// Fetch semua fasilitas
 const {
   data: allFacilities,
   error: facilityError,
@@ -76,7 +68,6 @@ async function retryLoadFacilities() {
   await refreshFacilities()
 }
 
-// Prefill form jika data stadion tersedia
 if (stadion.value) {
   form.value.name = stadion.value.name
   form.value.description = stadion.value.description || ''
@@ -94,8 +85,6 @@ if (stadion.value) {
 if (facilityError.value && !errorMsg.value) {
   errorMsg.value = 'Gagal memuat daftar fasilitas. Silakan coba lagi.'
 }
-
-// Form Logic
 
 const isValidUrl = (url: string): boolean => /^https?:\/\//.test(url)
 
@@ -139,9 +128,6 @@ async function handleSubmit() {
 
 <template>
   <section class="flex w-full flex-col gap-7">
-    <!-- ====================== -->
-    <!-- 🔹 HEADER -->
-    <!-- ====================== -->
     <header class="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -175,29 +161,18 @@ async function handleSubmit() {
       </NuxtLink>
     </header>
 
-    <!-- ====================== -->
-    <!-- 🧾 FORM WRAPPER -->
-    <!-- ====================== -->
     <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <!-- LOADING STATE -->
       <div v-if="pagePending" class="p-8 text-center text-sm font-medium text-gray-600">
         Memuat data stadion...
       </div>
-
-      <!-- ERROR STATE -->
       <div
         v-else-if="!stadion"
         class="m-5 sm:m-8 rounded-lg border border-red-300 bg-red-50 px-4 py-3.5 text-sm font-semibold text-red-700"
       >
         Error: Data stadion tidak ditemukan. {{ errorMsg }}
       </div>
-
-      <!-- ====================== -->
-      <!-- ✏️ MAIN FORM -->
-      <!-- ====================== -->
       <form v-else @submit.prevent="handleSubmit" class="divide-y divide-gray-200">
         <div class="p-5 sm:p-8">
-          <!-- GLOBAL ERROR -->
           <div
             v-if="errorMsg"
             class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3.5 text-sm font-semibold text-red-700"
@@ -206,7 +181,6 @@ async function handleSubmit() {
           </div>
 
           <div class="grid grid-cols-1 gap-8">
-            <!-- NAMA STADION -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Nama Stadion <span class="text-red-500">*</span>
@@ -219,8 +193,6 @@ async function handleSubmit() {
                 class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors"
               />
             </label>
-
-            <!-- DESKRIPSI -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">Deskripsi</span>
               <textarea
@@ -230,8 +202,6 @@ async function handleSubmit() {
                 class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-colors resize-none"
               />
             </label>
-
-            <!-- MAP URL -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 URL Google Maps <span class="text-red-500">*</span>
@@ -247,8 +217,6 @@ async function handleSubmit() {
                 Salin URL dari tombol <strong>Share</strong> di Google Maps.
               </p>
             </label>
-
-            <!-- STATUS -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Status <span class="text-red-500">*</span>
@@ -262,8 +230,6 @@ async function handleSubmit() {
                 <option value="INACTIVE">Non-Aktif</option>
               </select>
             </label>
-
-            <!-- FASILITAS -->
             <fieldset>
               <legend class="block text-sm font-medium text-gray-700 mb-4">
                 Fasilitas
@@ -301,8 +267,6 @@ async function handleSubmit() {
                   {{ facilitiesPending ? 'Memuat ulang...' : 'Coba lagi' }}
                 </button>
               </p>
-
-              <!-- GRID FASILITAS -->
               <div v-else-if="allFacilities && allFacilities.length > 0" class="max-w-6xl mx-auto">
                 <div
                   class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4 sm:gap-5"
@@ -377,8 +341,6 @@ async function handleSubmit() {
             </fieldset>
           </div>
         </div>
-
-        <!-- ACTION BUTTONS -->
         <div class="flex items-center justify-start gap-3 bg-gray-50/80 px-6 py-5 sm:px-8">
           <button
             type="submit"

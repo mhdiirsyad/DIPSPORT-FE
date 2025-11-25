@@ -7,7 +7,6 @@ definePageMeta({
   layout: 'admin',
 })
 
-// Tipe data 
 interface StadionSelect {
   id: number
   name: string
@@ -31,7 +30,6 @@ const router = useRouter()
 const route = useRoute()
 const fieldId = route.params.id as string
 
-// Form ditambah status
 const form = ref({
   stadionId: 0,
   name: '',
@@ -43,7 +41,6 @@ const form = ref({
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 
-// API stadion harus mengembalikan status
 const { data: stadions } = await useAsyncData(
   'stadionListForSelect',
   () => $fetch<StadionSelect[]>('/api/stadions')
@@ -54,7 +51,6 @@ const { data: field, error: fetchError, pending: pagePending } = await useAsyncD
   () => $fetch<FieldData>(`/api/fields/${fieldId}`)
 )
 
-// Isi form termasuk status
 if (field.value) {
   form.value.stadionId = field.value.stadionId
   form.value.name = field.value.name
@@ -125,21 +121,17 @@ async function handleSubmit() {
       </NuxtLink>
     </header>
 
-    <!-- Loading State -->
     <div v-if="pagePending" class="text-center py-10 bg-white rounded-xl shadow-sm border border-gray-200">
       <p class="text-gray-500">Loading data lapangan...</p>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="!field" class="p-4 text-red-700 bg-red-100 rounded-lg">
       Error: Data lapangan tidak ditemukan. {{ errorMsg }}
     </div>
 
-    <!-- Form Edit -->
     <div v-else class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <form @submit.prevent="handleSubmit" class="divide-y divide-gray-200">
         <div class="p-5 sm:p-8">
-          <!-- Error Submit -->
           <div
             v-if="errorMsg"
             class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3.5 text-sm font-semibold text-red-700"
@@ -148,7 +140,6 @@ async function handleSubmit() {
           </div>
 
           <div class="grid grid-cols-1 gap-8">
-            <!-- Stadion Induk -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Stadion Induk <span class="text-red-500">*</span>
@@ -166,7 +157,6 @@ async function handleSubmit() {
               </select>
             </label>
 
-            <!-- Nama Lapangan -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Nama Lapangan <span class="text-red-500">*</span>
@@ -179,7 +169,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- Deskripsi -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Deskripsi
@@ -192,7 +181,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- Harga per Jam -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Harga per Jam <span class="text-red-500">*</span>
@@ -208,7 +196,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- Status -->
             <label class="block mb-6">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Status <span class="text-red-500">*</span>
@@ -229,7 +216,6 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- Footer -->
         <div class="flex items-center justify-start gap-3 bg-gray-50/80 px-6 py-5 sm:px-8">
           <button
             type="submit"

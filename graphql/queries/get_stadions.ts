@@ -7,6 +7,7 @@ export const QUERY_GET_STADIONS = gql`
       name
       description
       mapUrl
+      status
       operatingHours {
         openTime
         closeTime
