@@ -9,8 +9,8 @@ export const QUERY_GET_STADION_BY_ID = gql`
       mapUrl
       status
       operatingHours {
-        openTime
-        closeTime
+        openHour
+        closeHour
       }
       facilities {
         Facility {
