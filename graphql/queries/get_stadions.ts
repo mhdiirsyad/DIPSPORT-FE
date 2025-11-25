@@ -5,9 +5,10 @@ export const QUERY_GET_STADIONS = `
       name
       description
       mapUrl
+      status
       operatingHours {
-        openTime
-        closeTime
+        openHour
+        closeHour
       }
       facilities {
         Facility {
@@ -23,6 +24,7 @@ export const QUERY_GET_STADIONS = `
         id
         name
         pricePerHour
+        status
         images {
           id
           imageUrl
