@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { availableIcons, VALID_FACILITY_ICONS } from '~/utils/validIconList'
 import { Icon } from '@iconify/vue'
 
 definePageMeta({
@@ -8,14 +7,12 @@ definePageMeta({
   layout: 'admin',
 })
 
-// === TIPE DATA ===
 interface FacilityRow {
   id: number
   name: string
   icon: string | null
 }
 
-// === Data Fetching ===
 const { data: facilities, pending, error, refresh } = await useAsyncData(
   'facilitiesList',
   () => $fetch<FacilityRow[]>('/api/facilities')
@@ -24,7 +21,6 @@ const { data: facilities, pending, error, refresh } = await useAsyncData(
 const loadingDelete = ref(false)
 const errorMsg = ref<string | null>(null)
 
-// === Search ===
 const searchQuery = ref('')
 const filteredFacilities = computed(() => {
   if (!facilities.value) return []
@@ -36,7 +32,6 @@ const filteredFacilities = computed(() => {
   )
 })
 
-// === Pagination ===
 const currentPage = ref(1)
 const itemsPerPage = 10
 watch(searchQuery, () => { currentPage.value = 1 })
@@ -60,7 +55,6 @@ const paginationSummary = computed(() => {
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
-// === Delete ===
 async function handleDelete(id: number) {
   if (!confirm('Anda yakin ingin menghapus fasilitas ini? Ini akan menghapusnya dari semua stadion.')) return
 
@@ -85,7 +79,6 @@ async function handleDelete(id: number) {
 
 <template>
   <section class="flex w-full flex-col gap-5 sm:gap-7 px-4 sm:px-0">
-    <!-- Header -->
     <header class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-4">
       <div class="w-full sm:w-auto">
         <h1 class="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">
@@ -107,9 +100,7 @@ async function handleDelete(id: number) {
       </NuxtLink>
     </header>
 
-    <!-- Table Card -->
     <div class="overflow-hidden rounded-lg sm:rounded-xl border border-gray-200 bg-white shadow-sm">
-      <!-- Search Bar -->
       <div class="border-b border-gray-200 p-4 sm:p-5 lg:p-6">
         <label class="relative flex items-center gap-2 sm:gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-3.5 sm:py-2.5">
           <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none">
@@ -130,9 +121,7 @@ async function handleDelete(id: number) {
         </label>
       </div>
 
-      <!-- Table Content -->
       <div class="flex flex-col">
-        <!-- Error -->
         <div
           v-if="error || errorMsg"
           class="m-4 sm:m-5 lg:m-6 rounded-lg border border-red-300 bg-red-50 px-3.5 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-semibold text-red-700"
@@ -141,7 +130,6 @@ async function handleDelete(id: number) {
           <button v-if="error" @click="refresh()" class="ml-2 font-bold underline">Coba lagi</button>
         </div>
 
-        <!-- Loading -->
         <div
           v-else-if="pending"
           class="m-4 sm:m-5 lg:m-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 py-5 sm:py-6 text-center text-xs sm:text-sm font-medium text-gray-600"
@@ -149,7 +137,6 @@ async function handleDelete(id: number) {
           Memuat data fasilitas...
         </div>
 
-        <!-- Empty State -->
         <div
           v-else-if="filteredFacilities.length === 0"
           class="px-4 py-8 sm:px-5 sm:py-10 text-center text-xs sm:text-sm text-gray-500"
@@ -158,14 +145,11 @@ async function handleDelete(id: number) {
           <span v-else>Belum ada data fasilitas.</span>
         </div>
 
-        <!-- Data Table -->
         <template v-else>
-          <!-- Desktop Table -->
           <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full border-collapse">
               <thead class="bg-gray-50">
                 <tr>
-                  <!-- ID column removed -->
                   <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                     Nama Fasilitas
                   </th>
@@ -184,7 +168,6 @@ async function handleDelete(id: number) {
                   class="transition-colors hover:bg-blue-50/50 cursor-pointer"
                   @click="navigateTo(`/admin/facilities/${facility.id}`)"
                 >
-                  <!-- ID cell removed -->
                   <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900">{{ facility.name }}</td>
                   <td class="whitespace-nowrap px-5 py-4">
                     <Icon
@@ -211,7 +194,6 @@ async function handleDelete(id: number) {
             </table>
           </div>
 
-          <!-- Mobile Cards -->
           <div class="md:hidden divide-y divide-gray-100">
             <div
               v-for="facility in paginatedFacilities"
@@ -222,7 +204,6 @@ async function handleDelete(id: number) {
               <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="flex-1 min-w-0">
                   <h3 class="text-sm font-semibold text-gray-900 truncate">{{ facility.name }}</h3>
-                  <!-- ID line removed -->
                 </div>
                 <Icon
                   v-if="facility.icon"
@@ -257,7 +238,6 @@ async function handleDelete(id: number) {
           </div>
         </template>
 
-        <!-- Pagination -->
         <nav
           v-if="!pending && totalPages > 1"
           class="flex flex-col-reverse items-center justify-between gap-3 sm:gap-4 border-t border-gray-200 p-4 sm:flex-row sm:p-5 lg:p-6"

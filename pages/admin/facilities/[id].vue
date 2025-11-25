@@ -13,7 +13,6 @@ const router = useRouter()
 const route = useRoute()
 const facilityId = Number(route.params.id)
 
-// === Tipe Data ===
 interface FacilityData {
   id: number
   name: string
@@ -24,7 +23,6 @@ interface FetchErrorData {
   data?: { statusMessage: string }
 }
 
-// === State ===
 const form = ref({
   name: '',
   icon: VALID_FACILITY_ICONS[0] as typeof VALID_FACILITY_ICONS[number],
@@ -33,20 +31,17 @@ const form = ref({
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 
-// === Helper ===
 function getValidIcon(icon: string | null | undefined): typeof VALID_FACILITY_ICONS[number] {
   return icon && (VALID_FACILITY_ICONS as readonly string[]).includes(icon)
     ? (icon as any)
     : (VALID_FACILITY_ICONS[0] as typeof VALID_FACILITY_ICONS[number])
 }
 
-// === Fetch Data ===
 const { data: facility, error: fetchError, pending: pagePending } = await useAsyncData(
   `facility-${facilityId}`,
   () => $fetch<FacilityData>(`/api/facilities/${facilityId}`)
 )
 
-// === Isi Form Otomatis ===
 if (facility.value) {
   form.value.name = facility.value.name
   form.value.icon = getValidIcon(facility.value.icon)
@@ -55,7 +50,6 @@ if (facility.value) {
   errorMsg.value = err.data?.statusMessage || 'Gagal memuat data fasilitas.'
 }
 
-// === Submit Update ===
 async function handleSubmit() {
   loading.value = true
   errorMsg.value = null
@@ -79,7 +73,6 @@ async function handleSubmit() {
 
 <template>
   <section class="flex w-full flex-col gap-7">
-    <!-- Header -->
     <header class="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -101,7 +94,6 @@ async function handleSubmit() {
       </NuxtLink>
     </header>
 
-    <!-- Loading -->
     <div
       v-if="pagePending"
       class="flex items-center justify-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm"
@@ -109,7 +101,6 @@ async function handleSubmit() {
       <p class="text-gray-500">Memuat data fasilitas...</p>
     </div>
 
-    <!-- Error -->
     <div
       v-else-if="!facility && !pagePending"
       class="p-5 rounded-xl border border-red-200 bg-red-50 text-sm font-medium text-red-700"
@@ -117,14 +108,12 @@ async function handleSubmit() {
       Data fasilitas tidak ditemukan. {{ errorMsg }}
     </div>
 
-    <!-- Form -->
     <div
       v-else
       class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all"
     >
       <form @submit.prevent="handleSubmit" class="divide-y divide-gray-200">
         <div class="p-5 sm:p-8">
-          <!-- Error Message -->
           <div
             v-if="errorMsg"
             class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3.5 text-sm font-semibold text-red-700"
@@ -132,7 +121,6 @@ async function handleSubmit() {
             {{ errorMsg }}
           </div>
 
-          <!-- Nama Fasilitas -->
           <div class="grid grid-cols-1 gap-8">
             <label class="block">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -147,7 +135,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- Pilih Ikon -->
             <fieldset>
               <legend class="block text-sm font-medium text-gray-700 mb-4">
                 Pilih Ikon <span class="text-red-500">*</span>
@@ -191,7 +178,6 @@ async function handleSubmit() {
                       {{ icon.name }}
                     </span>
 
-                    <!-- Checkmark -->
                     <div
                       v-if="form.icon === icon.value"
                       class="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 shadow-md ring-2 ring-white"
@@ -216,7 +202,6 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- Action Buttons -->
         <div class="flex items-center justify-start gap-3 bg-gray-50/80 px-6 py-5 sm:px-8">
           <button
             type="submit"

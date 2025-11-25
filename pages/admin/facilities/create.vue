@@ -40,7 +40,6 @@ async function handleSubmit() {
 
 <template>
   <section class="flex w-full flex-col gap-7">
-    <!-- Header -->
     <header class="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -62,12 +61,9 @@ async function handleSubmit() {
       </NuxtLink>
     </header>
 
-    <!-- Form Card -->
     <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <form @submit.prevent="handleSubmit" class="divide-y divide-gray-200">
-        <!-- Form Body -->
         <div class="p-5 sm:p-8">
-          <!-- Error Message -->
           <div
             v-if="errorMsg"
             class="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3.5 text-sm font-semibold text-red-700"
@@ -76,7 +72,6 @@ async function handleSubmit() {
           </div>
 
           <div class="grid grid-cols-1 gap-8">
-            <!-- Nama Fasilitas -->
             <label class="block">
               <span class="block text-sm font-medium text-gray-700 mb-1.5">
                 Nama Fasilitas <span class="text-red-500">*</span>
@@ -90,7 +85,6 @@ async function handleSubmit() {
               />
             </label>
 
-            <!-- Pilih Ikon -->
             <fieldset>
               <legend class="block text-sm font-medium text-gray-700 mb-4">
                 Pilih Ikon <span class="text-red-500">*</span>
@@ -134,7 +128,6 @@ async function handleSubmit() {
                       {{ icon.name }}
                     </span>
 
-                    <!-- Checkmark -->
                     <div
                       v-if="form.icon === icon.value"
                       class="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 shadow-md ring-2 ring-white"
@@ -159,7 +152,6 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- Action Buttons (LEFT-ALIGNED) -->
         <div class="flex items-center justify-start gap-3 bg-gray-50/80 px-6 py-5 sm:px-8">
           <button
             type="submit"
