@@ -26,9 +26,7 @@ const stadionId = bookingCart.value.stadionId
 
 const { data: stadion, pending } = await useAsyncData(
   () => (stadionId ? `booking-stadion-${stadionId}` : ""),
-  () => $fetch(`/api/stadions/:id`, {
-    params: { id: stadionId },
-  }),
+  () => (stadionId ? $fetch(`/api/stadions/${stadionId}`) : Promise.resolve(null)),
   { immediate: Boolean(stadionId) }
 )
 
