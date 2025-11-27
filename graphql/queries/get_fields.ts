@@ -12,7 +12,6 @@ export const QUERY_GET_FIELDS = `
         name
       }
       images {
-        id
         imageUrl
       }
       bookingDetails {
