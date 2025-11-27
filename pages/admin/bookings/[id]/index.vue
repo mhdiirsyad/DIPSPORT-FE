@@ -367,7 +367,9 @@ function makeBooking() {
                 class="rounded-xl border px-4 py-3 text-center shadow-sm transition-colors"
                 :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
                   ? 'bg-white text-gray-400 border-red-200 cursor-pointer hover:bg-red-50'
-                  : 'bg-gray-50 text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
+                  : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0])) 
+                  ? 'bg-blue-100 text-blue-900 border-blue-300 hover:border-[#1f2a56] hover:bg-blue cursor-default' 
+                  : 'bg-white-50 text-white-900 border-blue-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
                 @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]), Number(slot.price), field.name)"
               >
                 <p
