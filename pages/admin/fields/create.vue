@@ -32,6 +32,31 @@ const form = ref({
 
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
+const selectedImages = ref<File[]>([])
+const imagePreviews = ref<string[]>([])
+
+function handleImageInput(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  if (files.length + selectedImages.value.length > 10) {
+    errorMsg.value = 'Maksimal 10 gambar per lapangan.'
+    return
+  }
+  files.forEach((f) => {
+    if (!f.type.startsWith('image/')) return
+    selectedImages.value.push(f)
+    const reader = new FileReader()
+    reader.onload = () => {
+      imagePreviews.value.push(String(reader.result))
+    }
+    reader.readAsDataURL(f)
+  })
+}
+
+function removeNewImage(idx: number) {
+  selectedImages.value.splice(idx, 1)
+  imagePreviews.value.splice(idx, 1)
+}
 
 // Computed: stadion yang sedang dipilih
 const selectedStadion = computed(() => {
@@ -52,7 +77,7 @@ async function handleSubmit() {
   errorMsg.value = null
 
   try {
-    await $fetch('/api/fields/create', {
+    const created: any = await $fetch('/api/fields/create', {
       method: 'POST',
       body: {
         ...form.value,
@@ -60,7 +85,35 @@ async function handleSubmit() {
         pricePerHour: Number(form.value.pricePerHour),
         description: form.value.description || undefined,
       },
-    })
+    } as any) as any
+
+    // if images selected, upload them using returned field id
+    if (selectedImages.value.length > 0 && created?.id) {
+      const operations = {
+        query: `mutation($fieldId:Int!,$files:[Upload!]!){ uploadFieldImages(fieldId:$fieldId,files:$files){ count imageUrls } }`,
+        variables: { fieldId: Number(created.id), files: selectedImages.value.map(() => null) },
+      }
+
+      const map: Record<string, string[]> = {}
+      selectedImages.value.forEach((_, i) => { map[String(i)] = [`variables.files.${i}`] })
+
+      const fd = new FormData()
+      fd.append('operations', JSON.stringify(operations))
+      fd.append('map', JSON.stringify(map))
+      selectedImages.value.forEach((file, i) => fd.append(String(i), file, file.name))
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', '/api/fields/upload')
+        xhr.withCredentials = true
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) return resolve(null)
+          try { const body = JSON.parse(xhr.responseText); return reject(new Error(body?.statusMessage || body?.error || xhr.statusText)) } catch(e){ return reject(new Error(xhr.statusText || `HTTP ${xhr.status}`)) }
+        }
+        xhr.onerror = () => reject(new Error('Network error saat mengupload gambar'))
+        xhr.send(fd)
+      })
+    }
 
     await router.push('/admin/fields')
   } catch (err: any) {
@@ -186,6 +239,23 @@ async function handleSubmit() {
                 Stadion induk non-aktif, lapangan harus non-aktif.
               </p>
             </label>
+
+            <!-- Images -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Lapangan (maks 10)</label>
+              <p class="text-sm text-gray-500 mb-3">Tambahkan gambar lapangan untuk ditampilkan pada detail lapangan.</p>
+
+              <div class="flex gap-3 flex-wrap mb-3">
+                <div v-for="(p, i) in imagePreviews" :key="i" class="relative w-32 h-20 rounded overflow-hidden border">
+                  <img :src="p" class="w-full h-full object-cover" :alt="`Preview ${i+1}`" />
+                  <button type="button" @click="removeNewImage(i)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 shadow">✕</button>
+                </div>
+              </div>
+
+              <div>
+                <input type="file" accept="image/*" multiple @change="handleImageInput" />
+              </div>
+            </div>
           </div>
         </div>
 
