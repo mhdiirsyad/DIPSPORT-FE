@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
         statusMessage: response.errors.map((e) => e?.message).join(" | ") || "GraphQL error",
       })
     }
-    const fields = response?.data?.fields ?? []
+    const fields = response?.data?.fields ?? [];
     return fields.map((field: any) => ({
       ...field,
       stadion: field.Stadion ?? field.stadion ?? null,

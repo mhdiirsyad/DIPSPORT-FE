@@ -20,6 +20,7 @@ interface FieldData {
   pricePerHour: number
   stadionId: number
   status: 'ACTIVE' | 'INACTIVE'
+  images?: { id: number; fieldId?: number; imageUrl: string }[]
 }
 
 interface FetchErrorData {
@@ -40,6 +41,10 @@ const form = ref({
 
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
+const existingImages = ref<{ id: number; fieldId?: number; imageUrl: string }[]>([])
+const removedImageIds = ref<number[]>([])
+const selectedImages = ref<File[]>([])
+const imagePreviews = ref<string[]>([])
 
 const { data: stadions } = await useAsyncData(
   'stadionListForSelect',
@@ -57,6 +62,7 @@ if (field.value) {
   form.value.description = field.value.description || ''
   form.value.pricePerHour = field.value.pricePerHour
   form.value.status = field.value.status 
+  existingImages.value = field.value.images ? [...field.value.images] : []
 } else if (fetchError.value) {
   const typedError = fetchError.value as FetchErrorData
   errorMsg.value = typedError.data?.statusMessage || 'Gagal memuat data lapangan.'
@@ -73,12 +79,41 @@ function onStadionChange() {
   }
 }
 
+function handleImageInput(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  const currentExisting = existingImages.value.length
+  if (currentExisting + selectedImages.value.length + files.length > 10) {
+    errorMsg.value = 'Maksimal 10 gambar per lapangan.'
+    return
+  }
+  files.forEach((f) => {
+    if (!f.type.startsWith('image/')) return
+    selectedImages.value.push(f)
+    const reader = new FileReader()
+    reader.onload = () => imagePreviews.value.push(String(reader.result))
+    reader.readAsDataURL(f)
+  })
+}
+
+function removeNewImage(idx: number) {
+  selectedImages.value.splice(idx, 1)
+  imagePreviews.value.splice(idx, 1)
+}
+
+function markRemoveExisting(idx: number) {
+  const item = existingImages.value[idx]
+  if (!item) return
+  removedImageIds.value.push(item.id)
+  existingImages.value.splice(idx, 1)
+}
+
 async function handleSubmit() {
   loading.value = true
   errorMsg.value = null
 
   try {
-    await $fetch('/api/fields/update', {
+    const updated: any = await $fetch('/api/fields/update', {
       method: 'POST',
       body: {
         fieldId,
@@ -87,7 +122,40 @@ async function handleSubmit() {
         pricePerHour: Number(form.value.pricePerHour),
         description: form.value.description || undefined,
       },
-    })
+    } as any) as any
+
+    // delete removed images
+    if (removedImageIds.value.length > 0) {
+      await $fetch('/api/fields/delete-image', { method: 'POST', body: { imageIds: removedImageIds.value } } as any)
+    }
+
+    // upload new images
+    if (selectedImages.value.length > 0 && updated?.id) {
+      const operations = {
+        query: `mutation($fieldId:Int!,$files:[Upload!]!){ uploadFieldImages(fieldId:$fieldId,files:$files){ count imageUrls } }`,
+        variables: { fieldId: Number(updated.id), files: selectedImages.value.map(() => null) },
+      }
+
+      const map: Record<string, string[]> = {}
+      selectedImages.value.forEach((_, i) => { map[String(i)] = [`variables.files.${i}`] })
+
+      const fd = new FormData()
+      fd.append('operations', JSON.stringify(operations))
+      fd.append('map', JSON.stringify(map))
+      selectedImages.value.forEach((file, i) => fd.append(String(i), file, file.name))
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', '/api/fields/upload')
+        xhr.withCredentials = true
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) return resolve(null)
+          try { const body = JSON.parse(xhr.responseText); return reject(new Error(body?.statusMessage || body?.error || xhr.statusText)) } catch(e){ return reject(new Error(xhr.statusText || `HTTP ${xhr.status}`)) }
+        }
+        xhr.onerror = () => reject(new Error('Network error saat mengupload gambar'))
+        xhr.send(fd)
+      })
+    }
 
     await router.push('/admin/fields')
   } catch (err: any) {
@@ -213,6 +281,29 @@ async function handleSubmit() {
                 Stadion induk non-aktif, lapangan harus non-aktif.
               </p>
             </label>
+
+            <!-- Images -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Lapangan</label>
+
+              <p class="text-sm text-gray-500 mb-3">Hapus gambar lama atau tambahkan gambar baru (maks 10 total).</p>
+
+              <div class="flex gap-3 flex-wrap mb-3">
+                <div v-for="(img, idx) in existingImages" :key="img.id" class="relative w-32 h-20 rounded overflow-hidden border">
+                  <img :src="img.imageUrl" class="w-full h-full object-cover" :alt="`Gambar ${idx+1}`" />
+                  <button type="button" @click="markRemoveExisting(idx)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 shadow">✕</button>
+                </div>
+
+                <div v-for="(p, i) in imagePreviews" :key="i" class="relative w-32 h-20 rounded overflow-hidden border">
+                  <img :src="p" class="w-full h-full object-cover" :alt="`Preview ${i+1}`" />
+                  <button type="button" @click="removeNewImage(i)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 shadow">✕</button>
+                </div>
+              </div>
+
+              <div>
+                <input type="file" accept="image/*" multiple @change="handleImageInput" />
+              </div>
+            </div>
           </div>
         </div>
 

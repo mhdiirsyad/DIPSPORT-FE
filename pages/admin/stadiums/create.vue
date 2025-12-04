@@ -26,6 +26,32 @@ const form = ref({
 
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
+const selectedImages = ref<File[]>([])
+const imagePreviews = ref<string[]>([])
+
+function handleImageInput(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  // limit to 10 images
+  if (files.length + selectedImages.value.length > 10) {
+    errorMsg.value = 'Maksimal 10 gambar per stadion.'
+    return
+  }
+  files.forEach((f) => {
+    if (!f.type.startsWith('image/')) return
+    selectedImages.value.push(f)
+    const reader = new FileReader()
+    reader.onload = () => {
+      imagePreviews.value.push(String(reader.result))
+    }
+    reader.readAsDataURL(f)
+  })
+}
+
+function removeImage(idx: number) {
+  selectedImages.value.splice(idx, 1)
+  imagePreviews.value.splice(idx, 1)
+}
 
 const {
   data: facilities,
@@ -63,7 +89,7 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await $fetch('/api/stadions/create', {
+    const created = await $fetch('/api/stadions/create', {
       method: 'POST',
       body: {
         ...form.value,
@@ -72,6 +98,37 @@ async function handleSubmit() {
           form.value.facilityIds.length > 0 ? form.value.facilityIds : null,
       },
     })
+
+    // If images selected, upload them using the stadion id returned
+    if (selectedImages.value.length > 0 && created?.id) {
+      // Build multipart GraphQL operations for uploadStadionImages
+      const operations = {
+        query: `mutation($stadionId:Int!,$files:[Upload!]!){ uploadStadionImages(stadionId:$stadionId,files:$files){ count imageUrls } }`,
+        variables: { stadionId: Number(created.id), files: selectedImages.value.map(() => null) },
+      }
+
+      const map: Record<string, string[]> = {}
+      selectedImages.value.forEach((_, i) => {
+        map[String(i)] = [`variables.files.${i}`]
+      })
+
+      const fd = new FormData()
+      fd.append('operations', JSON.stringify(operations))
+      fd.append('map', JSON.stringify(map))
+      selectedImages.value.forEach((file, i) => fd.append(String(i), file, file.name))
+
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', '/api/stadions/upload')
+        xhr.withCredentials = true
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) return resolve(null)
+          try { const body = JSON.parse(xhr.responseText); return reject(new Error(body?.statusMessage || body?.error || xhr.statusText)) } catch(e){ return reject(new Error(xhr.statusText || `HTTP ${xhr.status}`)) }
+        }
+        xhr.onerror = () => reject(new Error('Network error saat mengupload gambar'))
+        xhr.send(fd)
+      })
+    }
 
     await router.push('/admin/stadiums')
   } catch (err: any) {
@@ -286,6 +343,19 @@ async function handleSubmit() {
                 💡 Ikon diambil dari data fasilitas yang sudah Anda buat.
               </p>
             </fieldset>
+
+            <!-- UPLOAD IMAGES -->
+            <label class="block mb-6">
+              <span class="block text-sm font-medium text-gray-700 mb-1.5">Gambar Stadion (maks 10)</span>
+              <input type="file" accept="image/*" multiple @change="handleImageInput" class="block mt-2" />
+
+              <div v-if="imagePreviews.length" class="mt-4 grid grid-cols-4 gap-3">
+                <div v-for="(src, idx) in imagePreviews" :key="idx" class="relative">
+                  <img :src="src" class="h-24 w-full object-cover rounded-md border" />
+                  <button type="button" @click="removeImage(idx)" class="absolute top-1 right-1 rounded-full bg-white/80 p-1 text-sm">✕</button>
+                </div>
+              </div>
+            </label>
           </div>
         </div>
 

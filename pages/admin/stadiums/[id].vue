@@ -17,6 +17,7 @@ interface StadionData {
   facilities: {
     Facility: { id: number }
   }[]
+  images?: { id: number; stadionId?: number; imageUrl: string }[]
 }
 
 interface FacilitySelect {
@@ -43,6 +44,13 @@ const form = ref({
   facilityIds: [] as number[],
 })
 
+// Images handling (initialized after stadion load)
+interface ImageItem { id: number; stadionId?: number; imageUrl: string }
+const existingImages = ref<ImageItem[]>([])
+const removedImageIds = ref<number[]>([])
+const selectedImages = ref<File[]>([])
+const imagePreviews = ref<string[]>([])
+
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
 
@@ -68,6 +76,39 @@ async function retryLoadFacilities() {
   await refreshFacilities()
 }
 
+function handleImageInput(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  // compute current count: original images - removed + selected
+  const originalCount = stadion.value?.images?.length || 0
+  const currentExisting = originalCount - removedImageIds.value.length
+  if (currentExisting + selectedImages.value.length + files.length > 10) {
+    errorMsg.value = 'Maksimal 10 gambar per stadion.'
+    return
+  }
+  files.forEach((f) => {
+    if (!f.type.startsWith('image/')) return
+    selectedImages.value.push(f)
+    const reader = new FileReader()
+    reader.onload = () => {
+      imagePreviews.value.push(String(reader.result))
+    }
+    reader.readAsDataURL(f)
+  })
+}
+
+function removeNewImage(idx: number) {
+  selectedImages.value.splice(idx, 1)
+  imagePreviews.value.splice(idx, 1)
+}
+
+function markRemoveExisting(idx: number) {
+  const item = existingImages.value[idx]
+  if (!item) return
+  removedImageIds.value.push(item.id)
+  existingImages.value.splice(idx, 1)
+}
+
 if (stadion.value) {
   form.value.name = stadion.value.name
   form.value.description = stadion.value.description || ''
@@ -76,6 +117,8 @@ if (stadion.value) {
   form.value.facilityIds = stadion.value.facilities.map(
     (fac) => fac.Facility.id
   )
+  // initialize image lists from stadion
+  existingImages.value = stadion.value.images ? [...stadion.value.images] : []
 } else if (fetchError.value) {
   const typedError = fetchError.value as FetchErrorData
   errorMsg.value =
@@ -101,6 +144,14 @@ async function handleSubmit() {
     return
   }
 
+  // Validate image total limit
+  const originalCount = stadion.value?.images?.length || 0
+  const currentExisting = originalCount - removedImageIds.value.length
+  if (currentExisting + selectedImages.value.length > 10) {
+    errorMsg.value = 'Total gambar stadion tidak boleh lebih dari 10.'
+    return
+  }
+
   loading.value = true
   try {
     await $fetch('/api/stadions/update', {
@@ -114,7 +165,45 @@ async function handleSubmit() {
         facilityIds:
           form.value.facilityIds.length > 0 ? form.value.facilityIds : null,
       },
-    })
+    } as any)
+
+      // If images were removed, call delete endpoint
+      if (removedImageIds.value.length > 0) {
+        await $fetch('/api/stadions/delete-image', {
+          method: 'POST',
+          body: { imageIds: removedImageIds.value },
+        } as any)
+      }
+
+      // If new images selected, upload them
+      if (selectedImages.value.length > 0) {
+        const operations = {
+          query: `mutation($stadionId:Int!,$files:[Upload!]!){ uploadStadionImages(stadionId:$stadionId,files:$files){ count imageUrls } }`,
+          variables: { stadionId: Number(stadionId), files: selectedImages.value.map(() => null) },
+        }
+
+        const map: Record<string, string[]> = {}
+        selectedImages.value.forEach((_, i) => {
+          map[String(i)] = [`variables.files.${i}`]
+        })
+
+        const fd = new FormData()
+        fd.append('operations', JSON.stringify(operations))
+        fd.append('map', JSON.stringify(map))
+        selectedImages.value.forEach((file, i) => fd.append(String(i), file, file.name))
+
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('POST', '/api/stadions/upload')
+          xhr.withCredentials = true
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) return resolve(null)
+            try { const body = JSON.parse(xhr.responseText); return reject(new Error(body?.statusMessage || body?.error || xhr.statusText)) } catch(e){ return reject(new Error(xhr.statusText || `HTTP ${xhr.status}`)) }
+          }
+          xhr.onerror = () => reject(new Error('Network error saat mengupload gambar'))
+          xhr.send(fd)
+        })
+      }
 
     await router.push('/admin/stadiums')
   } catch (err: any) {
@@ -339,6 +428,30 @@ async function handleSubmit() {
                 💡 Ikon diambil dari data fasilitas yang sudah Anda buat.
               </p>
             </fieldset>
+
+            <!-- IMAGES -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Stadion</label>
+
+              <p class="text-sm text-gray-500 mb-3">Anda dapat menghapus gambar lama atau menambahkan gambar baru (maks 10 total).</p>
+
+              <div class="flex gap-3 flex-wrap mb-3">
+                <div v-for="(img, idx) in existingImages" :key="img.id" class="relative w-32 h-20 rounded overflow-hidden border">
+                  <img :src="img.imageUrl" class="w-full h-full object-cover" :alt="`Gambar ${idx+1}`" />
+                  <button type="button" @click="markRemoveExisting(idx)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 shadow">
+                    ✕
+                  </button>
+                </div>
+                <div v-for="(p, i) in imagePreviews" :key="i" class="relative w-32 h-20 rounded overflow-hidden border">
+                  <img :src="p" class="w-full h-full object-cover" :alt="`Preview ${i+1}`" />
+                  <button type="button" @click="removeNewImage(i)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 shadow">✕</button>
+                </div>
+              </div>
+
+              <div>
+                <input type="file" accept="image/*" multiple @change="handleImageInput" />
+              </div>
+            </div>
           </div>
         </div>
         <div class="flex items-center justify-start gap-3 bg-gray-50/80 px-6 py-5 sm:px-8">
