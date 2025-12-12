@@ -140,118 +140,180 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-7">
-    <header class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-ds-blue-600">
-          Jam Operasional
-        </p>
-        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">
-          Pengaturan Jadwal Operasional
-        </h1>
-      </div>
-      <button
-        type="button"
-        class="ds-button-primary whitespace-nowrap"
-        :disabled="pending || Boolean(error)"
-        @click="startEditing"
-      >
-        {{ hasExistingHours ? 'Ubah Jadwal' : 'Set Jadwal' }}
-      </button>
-    </header>
-
-    <div v-if="pending" class="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
-      Memuat jam operasional terbaru...
-    </div>
-
-    <div
-      v-else-if="error"
-      class="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
-    >
-      <p class="font-semibold">
-        Gagal memuat data: {{ error.message }}
-      </p>
-      <button class="mt-3 font-semibold underline" @click="refresh()">
-        Coba lagi
-      </button>
-    </div>
-
-    <div v-else class="space-y-6">
-      <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="grid gap-6 p-6 sm:grid-cols-2">
-          <div>
-            <p class="text-sm font-medium text-gray-500">Jam Buka</p>
-            <p class="mt-1 text-xl font-semibold text-gray-900">
-              {{ displayHour(operatingHours?.openHour) }}
-            </p>
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-500">Jam Tutup</p>
-            <p class="mt-1 text-xl font-semibold text-gray-900">
-              {{ displayHour(operatingHours?.closeHour) }}
-            </p>
-          </div>
+  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+    
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div class="flex items-start gap-4">
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 shrink-0 hidden sm:flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-800" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 3V5H5C3.9 5 3 5.9 3 7V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V7C21 5.9 20.1 5 19 5H17V3H15V5H9V3H7ZM5 9H19V19H5V9ZM7 11V13H12V11H7ZM13 11V13H17V11H13ZM7 15V17H12V15H7ZM13 15V17H17V15H13Z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl uppercase font-bold text-gray-900 tracking-tight">Manajemen Jadwal</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Atur jam operasional venue untuk membatasi ketersediaan pemesanan.
+          </p>
         </div>
       </div>
 
-      <div
-        v-if="editing"
-        class="rounded-xl border border-ds-border bg-white p-6 shadow-ds-lg transition-all"
+      <button
+        v-if="!editing"
+        type="button"
+        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all active:scale-95"
+        :disabled="pending || Boolean(error)"
+        @click="startEditing"
       >
-        <form class="space-y-5" @submit.prevent="handleSubmit">
-          <div class="grid gap-4 sm:grid-cols-2">
-            <label class="grid gap-1 text-sm font-medium text-ds-text">
-              Jam Buka (WIB)
-              <select
-                v-model="formState.open"
-                class="h-11 rounded-md border border-ds-border px-3 text-sm text-ds-text focus:border-ds-blue-500 focus:outline-none focus:ring-2 focus:ring-ds-blue-500/20"
-                required
-                :disabled="submitting"
-              >
-                <option value="" disabled>Pilih jam buka</option>
-                <option v-for="hour in 24" :key="`open-${hour-1}`" :value="toTimeInputValue(hour - 1)">
-                  {{ padHour(hour - 1) }}:00
-                </option>
-              </select>
-            </label>
-            <label class="grid gap-1 text-sm font-medium text-ds-text">
-              Jam Tutup (WIB)
-              <select
-                v-model="formState.close"
-                class="h-11 rounded-md border border-ds-border px-3 text-sm text-ds-text focus:border-ds-blue-500 focus:outline-none focus:ring-2 focus:ring-ds-blue-500/20"
-                required
-                :disabled="submitting"
-              >
-                <option value="" disabled>Pilih jam tutup</option>
-                <option v-for="hour in 24" :key="`close-${hour}`" :value="toTimeInputValue(hour)">
-                  {{ padHour(hour) }}:00
-                </option>
-              </select>
-            </label>
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        <span>{{ hasExistingHours ? 'Ubah Jadwal Operasional' : 'Set Jadwal Baru' }}</span>
+      </button>
+    </header>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300">
+      
+      <div v-if="pending" class="p-12 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-100 border-t-blue-600 mb-4"></div>
+        <p class="text-sm text-gray-500 font-medium">Memuat data jadwal...</p>
+      </div>
+
+      <div v-else-if="error" class="p-6">
+        <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <p class="font-semibold text-sm">Gagal memuat data: {{ error.message }}</p>
+          <button class="mt-2 text-sm font-bold underline hover:text-red-800" @click="refresh()">Coba lagi</button>
+        </div>
+      </div>
+
+      <div v-else-if="!editing" class="p-6 sm:p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-5 rounded-xl bg-gray-100 border border-gray-200 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Buka</p>
+              <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ displayHour(operatingHours?.openHour) }}</p>
+            </div>
           </div>
 
-          <p v-if="submitError" class="text-sm font-semibold text-red-600">
-            {{ submitError }}
+          <div class="p-5 rounded-xl bg-gray-100 border border-gray-200 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Tutup</p>
+              <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ displayHour(operatingHours?.closeHour) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 text-sm">
+          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <p>
+            Perubahan jadwal ini akan berlaku untuk semua lapangan yang terdaftar di VENUE UNDIP. Pastikan tidak ada jadwal booking aktif yang berkonflik sebelum mengubah jam operasional.
           </p>
+        </div>
+      </div>
 
-          <div class="flex items-center justify-end gap-3">
-            <button
-              type="button"
-              class="text-sm font-semibold text-ds-muted hover:text-ds-text"
-              :disabled="submitting"
-              @click="cancelEditing"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              class="inline-flex h-11 items-center justify-center rounded-md bg-ds-blue-700 px-5 text-sm font-semibold text-white transition-colors hover:bg-ds-blue-800 disabled:cursor-not-allowed disabled:opacity-70"
-              :disabled="submitting"
-            >
-              {{ submitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
+      <!-- BAGIAN EDIT YANG DIPERBAIKI BORDER-NYA -->
+      <div v-else class="p-6 sm:p-8 bg-gray-50/30">
+        <div class="max-w-3xl mx-auto">
+          
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div>
+              <h2 class="text-lg font-bold text-gray-900">Edit Jam Operasional</h2>
+              <p class="text-xs text-gray-500 mt-1">Sesuaikan waktu buka dan tutup venue.</p>
+            </div>
+            <button @click="cancelEditing" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-        </form>
+
+          <div class="mb-6 flex items-start gap-3 p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+            <svg class="w-5 h-5 shrink-0 mt-0.5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <div>
+              <p class="font-semibold">Perhatian:</p>
+              <p>Mengubah jam operasional dapat mempengaruhi slot booking yang tersedia di halaman publik. Pastikan perubahan ini sudah sesuai dengan kebijakan venue.</p>
+            </div>
+          </div>
+
+          <!-- FORM DENGAN BORDER YANG LEBIH TEGAS & PROFESIONAL -->
+          <form @submit.prevent="handleSubmit" class="space-y-6 bg-white p-8 rounded-2xl border border-gray-300 shadow-md ring-1 ring-black/5">
+            <div class="grid gap-6 sm:grid-cols-2">
+              
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Jam Buka (WIB)</label>
+                <div class="relative group">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                  </div>
+                  <select
+                    v-model="formState.open"
+                    class="block w-full rounded-xl border border-gray-300 bg-white py-3 pl-10 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none transition-all cursor-pointer hover:border-gray-400"
+                    required
+                    :disabled="submitting"
+                  >
+                    <option value="" disabled>Pilih jam buka</option>
+                    <option v-for="hour in 24" :key="`open-${hour-1}`" :value="toTimeInputValue(hour - 1)">
+                      {{ padHour(hour - 1) }}:00
+                    </option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Jam Tutup (WIB)</label>
+                <div class="relative group">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  </div>
+                  <select
+                    v-model="formState.close"
+                    class="block w-full rounded-xl border border-gray-300 bg-white py-3 pl-10 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none transition-all cursor-pointer hover:border-gray-400"
+                    required
+                    :disabled="submitting"
+                  >
+                    <option value="" disabled>Pilih jam tutup</option>
+                    <option v-for="hour in 24" :key="`close-${hour}`" :value="toTimeInputValue(hour)">
+                      {{ padHour(hour) }}:00
+                    </option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="submitError" class="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm font-medium flex items-center gap-2 animate-pulse">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {{ submitError }}
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                class="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-300 rounded-xl hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                :disabled="submitting"
+                @click="cancelEditing"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-md hover:shadow-lg focus:ring-4 focus:ring-blue-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed transform active:scale-95"
+                :disabled="submitting"
+              >
+                <svg v-if="submitting" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span v-else>Simpan Perubahan</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </section>

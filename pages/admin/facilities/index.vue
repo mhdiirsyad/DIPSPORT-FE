@@ -18,10 +18,8 @@ const { data: facilities, pending, error, refresh } = await useAsyncData(
   () => $fetch<FacilityRow[]>('/api/facilities')
 )
 
-const loadingDelete = ref(false)
-const errorMsg = ref<string | null>(null)
-
 const searchQuery = ref('')
+
 const filteredFacilities = computed(() => {
   if (!facilities.value) return []
   if (!searchQuery.value.trim()) return facilities.value
@@ -34,6 +32,7 @@ const filteredFacilities = computed(() => {
 
 const currentPage = ref(1)
 const itemsPerPage = 10
+
 watch(searchQuery, () => { currentPage.value = 1 })
 
 const totalItems = computed(() => filteredFacilities.value.length)
@@ -49,233 +48,202 @@ const paginationSummary = computed(() => {
   if (totalItems.value === 0) return 'Tidak ada data'
   const start = (currentPage.value - 1) * itemsPerPage + 1
   const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}–${end} dari ${totalItems.value} hasil`
+  return `Menampilkan ${start}-${end} dari ${totalItems.value} data`
 })
 
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
-
-async function handleDelete(id: number) {
-  if (!confirm('Anda yakin ingin menghapus fasilitas ini? Ini akan menghapusnya dari semua stadion.')) return
-
-  loadingDelete.value = true
-  errorMsg.value = null
-  try {
-    await $fetch('/api/facilities/delete', {
-      method: 'POST',
-      body: { facilityId: id },
-    })
-    await refresh()
-    if (paginatedFacilities.value.length === 0 && currentPage.value > 1) {
-      currentPage.value--
-    }
-  } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || err.message || 'Gagal menghapus fasilitas'
-  } finally {
-    loadingDelete.value = false
-  }
-}
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-5 sm:gap-7 px-4 sm:px-0">
-    <header class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-4">
-      <div class="w-full sm:w-auto">
-        <h1 class="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">
-          Manajemen Fasilitas
-        </h1>
-        <p class="mt-1.5 sm:mt-2 text-xs text-gray-600 sm:text-sm lg:text-base">
-          Kelola master data fasilitas (mis: Toilet, Kantin, WiFi).
-        </p>
+  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+    
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div class="flex items-start gap-4">
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 shrink-0 hidden sm:flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-800" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11 19V17H13V19H11ZM11 15V13H13V15H11ZM7 15V13H9V15H7ZM7 11V9H9V11H7ZM11 11V9H13V11H11ZM15 11V9H17V11H15ZM15 7V5H17V7H15ZM11 7V5H13V7H11ZM5 7V5H7V7H5ZM5 11V9H3V11H5ZM5 15V13H3V15H5ZM5 19V17H3V19H5ZM15 19V17H17V19H15ZM19 19V17H21V19H19ZM19 15V13H21V15H19ZM19 11V9H21V11H19ZM19 7V5H21V7H19ZM15 3V5H9V3H15Z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl uppercase font-bold text-gray-900 tracking-tight">Manajemen Fasilitas</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Kelola master data fasilitas umum seperti toilet, kantin, area parkir, dan lainnya.
+          </p>
+        </div>
       </div>
 
       <NuxtLink
         to="/admin/facilities/create"
-        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-2.5 rounded-lg bg-blue-600 px-4 py-2.5 sm:px-5 sm:py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-px"
+        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all active:scale-95"
       >
-        <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none">
-          <path d="M12 5V19M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
         <span>Tambah Fasilitas</span>
       </NuxtLink>
     </header>
 
-    <div class="overflow-hidden rounded-lg sm:rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 p-4 sm:p-5 lg:p-6">
-        <label class="relative flex items-center gap-2 sm:gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-3.5 sm:py-2.5">
-          <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M21 21L16.65 16.65M18 11C18 14.866 14.866 18 11 18C7.13401 18 4 14.866 4 11C4 7.13401 7.13401 4 11 4C14.866 4 18 7.13401 18 11Z"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+    <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden flex flex-col">
+      
+      <div class="p-5 border-b border-gray-300 bg-gray-50/30 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="relative w-full md:max-w-xs">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
           <input
             v-model="searchQuery"
             type="search"
-            placeholder="Cari fasilitas atau ID..."
-            class="w-full border-0 bg-transparent text-sm text-gray-900 placeholder-gray-500 outline-none focus:ring-0"
+            class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-500 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+            placeholder="Cari fasilitas berdasarkan nama atau ID..."
           />
-        </label>
+        </div>
       </div>
 
-      <div class="flex flex-col">
-        <div
-          v-if="error || errorMsg"
-          class="m-4 sm:m-5 lg:m-6 rounded-lg border border-red-300 bg-red-50 px-3.5 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-semibold text-red-700"
-        >
-          {{ error?.message || errorMsg }}
-          <button v-if="error" @click="refresh()" class="ml-2 font-bold underline">Coba lagi</button>
+      <div v-if="error" class="p-6">
+        <div class="rounded-xl border border-red-200 bg-red-50 p-4 flex items-center gap-3 text-red-700">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div class="text-sm font-medium">
+            {{ error?.message || 'Terjadi kesalahan saat memuat data.' }}
+            <button @click="refresh()" class="underline ml-1 font-bold hover:text-red-800">Coba lagi</button>
+          </div>
         </div>
+      </div>
 
-        <div
-          v-else-if="pending"
-          class="m-4 sm:m-5 lg:m-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 py-5 sm:py-6 text-center text-xs sm:text-sm font-medium text-gray-600"
-        >
-          Memuat data fasilitas...
+      <div v-else-if="pending" class="p-12 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-100 border-t-blue-600 mb-4"></div>
+        <p class="text-sm text-gray-500 font-medium">Memuat data fasilitas...</p>
+      </div>
+
+      <div v-else-if="filteredFacilities.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="p-4 bg-gray-50 rounded-full mb-3">
+          <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
         </div>
+        <h3 class="text-base font-bold text-gray-900">Data tidak ditemukan</h3>
+        <p class="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+          {{ searchQuery ? `Tidak ada hasil untuk "${searchQuery}"` : 'Belum ada fasilitas yang terdaftar.' }}
+        </p>
+        <button v-if="searchQuery" @click="searchQuery = ''" class="mt-4 text-sm font-medium text-blue-600 hover:text-blue-700">
+          Bersihkan Pencarian
+        </button>
+      </div>
 
-        <div
-          v-else-if="filteredFacilities.length === 0"
-          class="px-4 py-8 sm:px-5 sm:py-10 text-center text-xs sm:text-sm text-gray-500"
-        >
-          <span v-if="searchQuery">Fasilitas tidak ditemukan.</span>
-          <span v-else>Belum ada data fasilitas.</span>
-        </div>
-
-        <template v-else>
-          <div class="hidden md:block overflow-x-auto">
-            <table class="min-w-full border-collapse">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Nama Fasilitas
-                  </th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Ikon
-                  </th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 bg-white">
-                <tr
-                  v-for="facility in paginatedFacilities"
-                  :key="facility.id"
-                  class="transition-colors hover:bg-blue-50/50 cursor-pointer"
-                  @click="navigateTo(`/admin/facilities/${facility.id}`)"
-                >
-                  <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900">{{ facility.name }}</td>
-                  <td class="whitespace-nowrap px-5 py-4">
+      <template v-else>
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50/50 border-b border-gray-300">
+                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-left w-2/5">Nama Fasilitas</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center w-1/5">Simbol / Ikon</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center w-1/5">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-300">
+              <tr
+                v-for="facility in paginatedFacilities"
+                :key="facility.id"
+                class="group hover:bg-gray-100 transition-colors duration-200"
+              >
+                <td class="px-6 py-4 align-middle">
+                  <div class="flex flex-col">
+                    <span class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{{ facility.name }}</span>
+                    <span class="text-xs text-gray-400">ID: #{{ facility.id }}</span>
+                  </div>
+                </td>
+                
+                <td class="px-6 py-4 text-center align-middle">
+                  <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 border border-gray-300 text-gray-600">
                     <Icon
                       v-if="facility.icon"
                       :icon="facility.icon"
-                      class="h-5 w-5 text-gray-700"
+                      class="h-5 w-5"
                     />
-                    <span v-else class="text-gray-400 text-xs">—</span>
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-medium space-x-4" @click.stop>
-                    <NuxtLink :to="`/admin/facilities/${facility.id}`" class="text-blue-600 hover:text-blue-800">
-                      Edit
-                    </NuxtLink>
-                    <button
-                      @click.stop="handleDelete(facility.id)"
-                      :disabled="loadingDelete"
-                      class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {{ loadingDelete ? '...' : 'Delete' }}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    <span v-else class="text-xs text-gray-400">-</span>
+                  </div>
+                </td>
+                
+                <td class="px-6 py-4 text-center align-middle">
+                  <NuxtLink
+                    :to="`/admin/facilities/${facility.id}`"
+                    class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline decoration-2 underline-offset-2 transition-all"
+                  >
+                    Edit
+                  </NuxtLink>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <div class="md:hidden divide-y divide-gray-100">
-            <div
-              v-for="facility in paginatedFacilities"
-              :key="facility.id"
-              class="p-4 hover:bg-blue-50/50 transition-colors cursor-pointer"
-              @click="navigateTo(`/admin/facilities/${facility.id}`)"
-            >
-              <div class="flex items-start justify-between gap-3 mb-3">
-                <div class="flex-1 min-w-0">
-                  <h3 class="text-sm font-semibold text-gray-900 truncate">{{ facility.name }}</h3>
-                </div>
+        <div class="md:hidden flex flex-col gap-3 p-4 bg-gray-50 border-t border-gray-300">
+          <div
+            v-for="facility in paginatedFacilities"
+            :key="facility.id"
+            class="bg-white rounded-xl border border-gray-300 p-4 shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            <div class="flex items-center gap-4">
+              <div class="shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-blue-50 border border-blue-100 text-blue-600">
                 <Icon
                   v-if="facility.icon"
                   :icon="facility.icon"
-                  class="h-6 w-6 text-gray-700 flex-shrink-0"
+                  class="h-6 w-6"
                 />
-                <span v-else class="text-gray-400 text-xs">—</span>
+                <span v-else class="text-xs font-bold text-blue-300">?</span>
               </div>
 
-              <div class="flex items-center gap-3 pt-2 border-t border-gray-100" @click.stop>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-bold text-gray-900 truncate">{{ facility.name }}</h3>
+                <p class="text-xs text-gray-500 mt-0.5">System ID: #{{ facility.id }}</p>
+              </div>
+
+              <div class="shrink-0">
                 <NuxtLink
                   :to="`/admin/facilities/${facility.id}`"
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-blue-600 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100"
+                  class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
                   Edit
                 </NuxtLink>
-                <button
-                  @click.stop="handleDelete(facility.id)"
-                  :disabled="loadingDelete"
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-600 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  {{ loadingDelete ? '...' : 'Delete' }}
-                </button>
               </div>
             </div>
           </div>
-        </template>
+        </div>
+      </template>
 
-        <nav
-          v-if="!pending && totalPages > 1"
-          class="flex flex-col-reverse items-center justify-between gap-3 sm:gap-4 border-t border-gray-200 p-4 sm:flex-row sm:p-5 lg:p-6"
-          aria-label="Pagination"
-        >
-          <p class="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-            {{ paginationSummary }}
-          </p>
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
-            <button
-              @click="prevPage"
-              :disabled="currentPage === 1"
-              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              <span class="hidden sm:inline">Prev</span>
-            </button>
+      <nav
+        v-if="!pending && totalPages > 1"
+        class="flex flex-col-reverse items-center justify-between gap-4 border-t border-gray-300 p-5 sm:flex-row bg-gray-50/50"
+      >
+        <span class="text-xs text-gray-500 font-medium">
+          {{ paginationSummary }}
+        </span>
 
-            <span class="text-xs sm:text-sm text-gray-600 px-2">
-              <span class="font-semibold text-gray-900">{{ currentPage }}</span> /
-              <span class="font-semibold text-gray-900">{{ totalPages }}</span>
-            </span>
+        <div class="flex items-center gap-2">
+          <button
+            @click="prevPage"
+            :disabled="currentPage === 1"
+            class="p-2 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
 
-            <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span class="hidden sm:inline">Next</span>
-              <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+          <div class="px-4 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-700 shadow-sm">
+            {{ currentPage }} / {{ totalPages }}
           </div>
-        </nav>
-      </div>
+
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            class="p-2 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </nav>
+
     </div>
   </section>
 </template>

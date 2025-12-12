@@ -21,24 +21,20 @@ interface FieldRow {
   } | null
 }
 
-const { data: fields, pending, error, refresh } = await useAsyncData(
+const { data: rawFields, pending, error, refresh } = await useAsyncData(
   'fieldsList',
   () => $fetch<FieldRow[]>('/api/fields')
 )
 
-const loadingDelete = ref(false)
-const errorMsg = ref<string | null>(null)
-
 const searchQuery = ref('')
 
 const filteredFields = computed(() => {
-  if (!fields.value) return []
-  if (!searchQuery.value.trim()) return fields.value
+  if (!rawFields.value) return []
+  if (!searchQuery.value.trim()) return rawFields.value
 
   const query = searchQuery.value.toLowerCase().trim()
-  return fields.value.filter((field) => {
-    const stadionName =
-      field.Stadion?.name?.toLowerCase() || field.stadion?.name?.toLowerCase() || ''
+  return rawFields.value.filter((field) => {
+    const stadionName = field.Stadion?.name?.toLowerCase() || field.stadion?.name?.toLowerCase() || ''
     return (
       field.name.toLowerCase().includes(query) ||
       stadionName.includes(query) ||
@@ -50,288 +46,240 @@ const filteredFields = computed(() => {
 const currentPage = ref(1)
 const itemsPerPage = 10
 
-watch(searchQuery, () => {
-  currentPage.value = 1
-})
+watch(searchQuery, () => { currentPage.value = 1 })
 
 const totalItems = computed(() => filteredFields.value.length)
-const totalPages = computed(() =>
-  Math.max(Math.ceil(totalItems.value / itemsPerPage), 1)
-)
-
+const totalPages = computed(() => Math.max(Math.ceil(totalItems.value / itemsPerPage), 1))
 const paginatedFields = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
   const end = start + itemsPerPage
   return filteredFields.value.slice(start, end)
 })
-
 const paginationSummary = computed(() => {
   if (totalItems.value === 0) return 'Tidak ada data'
   const start = (currentPage.value - 1) * itemsPerPage + 1
   const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}–${end} dari ${totalItems.value} hasil`
+  return `Menampilkan ${start}-${end} dari ${totalItems.value} data`
 })
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-
-const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--
-}
-
-async function handleDelete(id: number) {
-  if (!confirm('Anda yakin ingin menghapus lapangan ini?')) return
-
-  loadingDelete.value = true
-  errorMsg.value = null
-
-  try {
-    await $fetch('/api/fields/delete', {
-      method: 'POST',
-      body: { fieldId: id },
-    })
-
-    await refresh()
-
-    if (paginatedFields.value.length === 0 && currentPage.value > 1) {
-      currentPage.value--
-    }
-  } catch (err: any) {
-    errorMsg.value =
-      err.data?.statusMessage || err.message || 'Gagal menghapus lapangan'
-  } finally {
-    loadingDelete.value = false
-  }
-}
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
 const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
   return status === 'ACTIVE'
-    ? 'bg-green-100 text-green-700'
-    : 'bg-red-100 text-red-700'
+    ? 'bg-green-50 text-green-700 border border-green-200'
+    : 'bg-red-50 text-red-700 border border-red-200'
 }
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-5 sm:gap-7 px-4 sm:px-0">
-    <header class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-4">
-      <div class="w-full sm:w-auto">
-        <h1 class="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">
-          Manajemen Lapangan
-        </h1>
-        <p class="mt-1.5 sm:mt-2 text-xs text-gray-600 sm:text-sm lg:text-base">
-          Tambah, edit, atau hapus data lapangan di semua stadion yang terdaftar di VENUE UNDIP.
-        </p>
+  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+    
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div class="flex items-start gap-4">
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 shrink-0 hidden sm:flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-800" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 5C2.9 5 2 5.9 2 7V17C2 18.1 2.9 19 4 19H20C21.1 19 22 18.1 22 17V7C22 5.9 21.1 5 20 5H4ZM4 7H11V17H4V7ZM13 7H20V17H13V7ZM9 9C8.45 9 8 9.45 8 10C8 10.55 8.45 11 9 11C9.55 11 10 10.55 10 10C10 9.45 9.55 9 9 9ZM15 9C14.45 9 14 9.45 14 10C14 10.55 14.45 11 15 11C15.55 11 16 10.55 16 10C16 9.45 15.55 9 15 9Z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl uppercase font-bold text-gray-900 tracking-tight">Manajemen Lapangan</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Kelola data lapangan, tarif sewa, dan status ketersediaan.
+          </p>
+        </div>
       </div>
 
       <NuxtLink
         to="/admin/fields/create"
-        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-2.5 rounded-lg bg-blue-600 px-4 py-2.5 sm:px-5 sm:py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:translate-y-px"
+        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all active:scale-95"
       >
-        <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M12 5V19M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
         <span>Tambah Lapangan</span>
       </NuxtLink>
     </header>
 
-    <div class="overflow-hidden rounded-lg sm:rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 p-4 sm:p-5 lg:p-6">
-        <label class="relative flex items-center gap-2 sm:gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-3.5 sm:py-2.5">
-          <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21 21L16.65 16.65M18 11C18 14.866 14.866 18 11 18C7.134 18 4 14.866 4 11C4 7.134 7.134 4 11 4C14.866 4 18 7.134 18 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+    <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden flex flex-col">
+      
+      <div class="p-5 border-b border-gray-300 bg-gray-50/30 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="relative w-full md:max-w-xs">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
           <input
             v-model="searchQuery"
             type="search"
-            class="w-full border-0 bg-transparent text-sm text-gray-900 placeholder-gray-500 outline-none focus:ring-0"
-            placeholder="Cari nama lapangan, stadion, atau ID..."
+            class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-500 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+            placeholder="Cari lapangan atau stadion..."
           />
-        </label>
+        </div>
       </div>
 
-      <div class="flex flex-col">
-        <div
-          v-if="error || errorMsg"
-          class="m-4 sm:m-5 lg:m-6 rounded-lg border border-red-300 bg-red-50 px-3.5 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-semibold text-red-700"
-        >
-          {{ error?.message || errorMsg }}
-          <button v-if="error" @click="refresh()" class="ml-2 font-bold underline">
-            Coba lagi
-          </button>
-        </div>
-
-        <div
-          v-else-if="pending"
-          class="m-4 sm:m-5 lg:m-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 py-5 sm:py-6 text-center text-xs sm:text-sm font-medium text-gray-600"
-        >
-          Memuat data lapangan...
-        </div>
-
-        <div
-          v-else-if="filteredFields.length === 0"
-          class="px-4 py-8 sm:px-5 sm:py-10 text-center text-xs sm:text-sm text-gray-500"
-        >
-          <span v-if="searchQuery">Lapangan tidak ditemukan.</span>
-          <span v-else>Belum ada data lapangan.</span>
-        </div>
-
-        <template v-else>
-          <div class="hidden md:block overflow-x-auto">
-            <table class="min-w-full border-collapse">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Nama Lapangan
-                  </th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Stadion Induk
-                  </th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Harga/Jam
-                  </th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Status
-                  </th>
-                  <th class="border-b border-gray-200 px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 bg-white">
-                <tr
-                  v-for="field in paginatedFields"
-                  :key="field.id"
-                  class="transition-colors hover:bg-blue-50/50 cursor-pointer"
-                  @click="navigateTo(`/admin/fields/${field.id}`)"
-                >
-                  <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900">
-                    {{ field.name }}
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-600">
-                    {{ field.Stadion?.name || field.stadion?.name || 'N/A' }}
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4 text-sm font-medium text-gray-900">
-                    Rp {{ field.pricePerHour.toLocaleString('id-ID') }}
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4">
-                    <span
-                      class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
-                      :class="getStatusClasses(field.status)"
-                    >
-                      {{ field.status === 'ACTIVE' ? 'Aktif' : 'Non-Aktif' }}
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-medium space-x-4" @click.stop>
-                    <NuxtLink
-                      :to="`/admin/fields/${field.id}`"
-                      class="text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      Edit
-                    </NuxtLink>
-                    <button
-                      @click.stop="handleDelete(field.id)"
-                      :disabled="loadingDelete"
-                      class="text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {{ loadingDelete ? '...' : 'Delete' }}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      <div v-if="error" class="p-6">
+        <div class="rounded-xl border border-red-200 bg-red-50 p-4 flex items-center gap-3 text-red-700">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div class="text-sm font-medium">
+            {{ error?.message || 'Terjadi kesalahan saat memuat data.' }}
+            <button @click="refresh()" class="underline ml-1 font-bold hover:text-red-800">Coba lagi</button>
           </div>
+        </div>
+      </div>
 
-          <div class="md:hidden divide-y divide-gray-100">
-            <div
-              v-for="field in paginatedFields"
-              :key="field.id"
-              class="p-4 hover:bg-blue-50/50 transition-colors cursor-pointer"
-              @click="navigateTo(`/admin/fields/${field.id}`)"
-            >
-              <div class="flex flex-col gap-2 mb-3">
-                <h3 class="text-sm font-semibold text-gray-900 truncate">
-                  {{ field.name }}
-                </h3>
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-500">
-                  <span class="truncate">Stadion: {{ field.Stadion?.name || field.stadion?.name || 'N/A' }}</span>
+      <div v-else-if="pending" class="p-12 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-100 border-t-blue-600 mb-4"></div>
+        <p class="text-sm text-gray-500 font-medium">Memuat data lapangan...</p>
+      </div>
+
+      <div v-else-if="filteredFields.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="p-4 bg-gray-50 rounded-full mb-3">
+          <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Data tidak ditemukan</h3>
+        <p class="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+          {{ searchQuery ? `Tidak ada hasil untuk "${searchQuery}"` : 'Belum ada lapangan yang terdaftar.' }}
+        </p>
+        <button v-if="searchQuery" @click="searchQuery = ''" class="mt-4 text-sm font-medium text-blue-600 hover:text-blue-700">
+          Bersihkan Pencarian
+        </button>
+      </div>
+
+      <template v-else>
+        <div class="hidden md:block overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50/50 border-b border-gray-300">
+                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-left">Info Lapangan</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Harga / Jam</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Status</th>
+                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-300">
+              <tr
+                v-for="field in paginatedFields"
+                :key="field.id"
+                class="group hover:bg-gray-100 transition-colors duration-200"
+              >
+                <td class="px-6 py-4 align-middle">
+                  <div class="flex flex-col">
+                    <span class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{{ field.name }}</span>
+                    <div class="flex items-center gap-1.5 mt-1">
+                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      <span class="text-xs text-gray-500 font-medium">{{ field.Stadion?.name || field.stadion?.name || 'Stadion Tidak Diketahui' }}</span>
+                    </div>
+                  </div>
+                </td>
+                
+                <td class="px-6 py-4 text-center align-middle">
+                  <span class="text-sm font-semibold text-gray-900">
+                    Rp {{ field.pricePerHour.toLocaleString('id-ID') }}
+                  </span>
+                </td>
+                
+                <td class="px-6 py-4 text-center align-middle">
                   <span
-                    class="inline-flex items-center rounded-full px-2 py-0.5 font-semibold flex-shrink-0"
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize shadow-sm"
                     :class="getStatusClasses(field.status)"
                   >
+                    <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="field.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'"></span>
                     {{ field.status === 'ACTIVE' ? 'Aktif' : 'Non-Aktif' }}
                   </span>
+                </td>
+                
+                <td class="px-6 py-4 text-center align-middle">
+                  <NuxtLink
+                    :to="`/admin/fields/${field.id}`"
+                    class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline decoration-2 underline-offset-2 transition-all"
+                  >
+                    Edit
+                  </NuxtLink>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="md:hidden flex flex-col gap-3 p-4 bg-gray-50 border-t border-gray-300">
+          <div
+            v-for="field in paginatedFields"
+            :key="field.id"
+            class="bg-white rounded-xl border border-gray-300 p-4 shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            <div class="flex justify-between items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-bold text-gray-900 leading-tight line-clamp-2">{{ field.name }}</h3>
+                <div class="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500">
+                  <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <span class="truncate">{{ field.Stadion?.name || field.stadion?.name || 'N/A' }}</span>
                 </div>
-                <p class="text-sm font-semibold text-gray-900">
-                  Rp {{ field.pricePerHour.toLocaleString('id-ID') }} / jam
-                </p>
+              </div>
+              <span
+                class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold border capitalize"
+                :class="getStatusClasses(field.status)"
+              >
+                {{ field.status === 'ACTIVE' ? 'Aktif' : 'Non-Aktif' }}
+              </span>
+            </div>
+
+            <div class="border-t border-gray-300 my-3"></div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <div class="flex items-baseline gap-1">
+                  <span class="text-sm font-bold text-gray-900">
+                    Rp {{ field.pricePerHour.toLocaleString('id-ID') }}
+                  </span>
+                  <span class="text-xs font-normal text-gray-500">/ jam</span>
+                </div>
               </div>
 
-              <div class="flex items-center gap-3 pt-2 border-t border-gray-100" @click.stop>
-                <NuxtLink
-                  :to="`/admin/fields/${field.id}`"
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-blue-600 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100"
-                >
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </NuxtLink>
-                <button
-                  @click.stop="handleDelete(field.id)"
-                  :disabled="loadingDelete"
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-600 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  {{ loadingDelete ? '...' : 'Delete' }}
-                </button>
-              </div>
+              <NuxtLink
+                :to="`/admin/fields/${field.id}`"
+                class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Edit
+              </NuxtLink>
             </div>
           </div>
-        </template>
+        </div>
+      </template>
 
-        <nav
-          v-if="!pending && totalPages > 1"
-          class="flex flex-col-reverse items-center justify-between gap-3 sm:gap-4 border-t border-gray-200 p-4 sm:flex-row sm:p-5 lg:p-6"
-          aria-label="Pagination"
-        >
-          <p class="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-            {{ paginationSummary }}
-          </p>
+      <nav
+        v-if="!pending && totalPages > 1"
+        class="flex flex-col-reverse items-center justify-between gap-4 border-t border-gray-300 p-5 sm:flex-row bg-gray-50/50"
+      >
+        <span class="text-xs text-gray-500 font-medium">
+          {{ paginationSummary }}
+        </span>
 
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
-            <button
-              @click="prevPage"
-              :disabled="currentPage === 1"
-              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              <span class="hidden sm:inline">Prev</span>
-            </button>
+        <div class="flex items-center gap-2">
+          <button
+            @click="prevPage"
+            :disabled="currentPage === 1"
+            class="p-2 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
 
-            <span class="text-xs sm:text-sm text-gray-600 px-2">
-              <span class="font-semibold text-gray-900">{{ currentPage }}</span>
-              /
-              <span class="font-semibold text-gray-900">{{ totalPages }}</span>
-            </span>
-
-            <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              class="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span class="hidden sm:inline">Next</span>
-              <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+          <div class="px-4 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-700 shadow-sm">
+            {{ currentPage }} / {{ totalPages }}
           </div>
-        </nav>
-      </div>
+
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            class="p-2 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </nav>
+
     </div>
   </section>
 </template>

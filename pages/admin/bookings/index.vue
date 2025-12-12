@@ -7,9 +7,6 @@ definePageMeta({
   layout: 'admin'
 })
 
-// -------------------------------------------------------------------
-// Types
-// -------------------------------------------------------------------
 interface Images {
   imageUrl: string
 }
@@ -18,155 +15,198 @@ interface StadionRow {
   id: number
   name: string
   images?: Images[]
+  fields?: any[] 
   _count?: { fields: number }
 }
 
-// -------------------------------------------------------------------
-// Data Fetching
-// -------------------------------------------------------------------
 const { data: stadions, pending, error, refresh } = await useAsyncData(
   'stadionsList',
   () => $fetch<StadionRow[]>('/api/stadions')
 )
-// console.log(stadions.value)
-// -------------------------------------------------------------------
-// Search (dengan debounce)
-// -------------------------------------------------------------------
+
 const searchQuery = ref('')
 const debouncedSearch = ref('')
 
 const applyDebounce = useDebounceFn(() => {
   debouncedSearch.value = searchQuery.value.trim().toLowerCase()
-}, 400)
+  currentPage.value = 1
+}, 300)
 
 watch(searchQuery, applyDebounce)
 
 const filteredStadions = computed(() => {
   if (!stadions.value) return []
   if (!debouncedSearch.value) return stadions.value
+  
   return stadions.value.filter(stadion =>
     stadion.name.toLowerCase().includes(debouncedSearch.value)
   )
 })
 
-// -------------------------------------------------------------------
-// Pagination (opsional bisa dihapus jika ingin infinite scroll)
-// -------------------------------------------------------------------
 const currentPage = ref(1)
-const itemsPerPage = 8
+const itemsPerPage = 6
 
-const totalPages = computed(() => Math.ceil(filteredStadions.value.length / itemsPerPage))
+const totalItems = computed(() => filteredStadions.value.length)
+const totalPages = computed(() => Math.max(Math.ceil(totalItems.value / itemsPerPage), 1))
+
 const paginatedStadions = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
   return filteredStadions.value.slice(start, start + itemsPerPage)
 })
+
+const paginationSummary = computed(() => {
+  if (totalItems.value === 0) return 'Tidak ada data'
+  const start = (currentPage.value - 1) * itemsPerPage + 1
+  const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
+  return `Menampilkan ${start}-${end} dari ${totalItems.value} venue`
+})
+
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+
+const fallbackImage = 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb253?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#f5f7fb]">
-    <div class="mx-auto max-w-6xl px-6 py-10 space-y-10">
-      <header class="flex flex-wrap items-center justify-between gap-4">
-        <div class="text-xl font-semibold tracking-wide text-[#1f2a56]">DIPSPORTS</div>
-        <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
-          <!-- <NuxtLink
-            to="/admin/login"
-            class="rounded-full bg-[#1f2a56] px-4 py-2 text-white shadow-sm transition-colors hover:bg-[#1b244c]"
-          >
-            Masuk Admin
-          </NuxtLink> -->
-        </nav>
-      </header>
-
-      <section class="flex flex-wrap gap-3 rounded-2xl bg-white p-4 shadow-sm">
-        <div class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-500">
-          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.35-3.15A6 6 0 109 15a6 6 0 009-1.5z" />
+  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+    
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div class="flex items-start gap-4">
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 shrink-0 hidden sm:flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3C4.9 3 4 3.9 4 5V21L12 17L20 21V5C20 3.9 19.1 3 18 3H6ZM6 5H18V17.97L12 15.2L6 17.97V5Z"/>
           </svg>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Cari venue"
-            class="w-full border-none text-gray-700 placeholder:text-gray-400 focus:outline-none"
-          >
         </div>
-        <div class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-500">
-          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-1 9h-8a2 2 0 01-2-2V7h12v11a2 2 0 01-2 2z" />
-          </svg>
-          <select class="w-full border-none bg-transparent text-gray-700 focus:outline-none">
-            <option>Pilih cabang olahraga</option>
-            <option>Padel</option>
-            <option>Basket</option>
-            <option>Tenis</option>
-          </select>
-        </div>
-        <button class="flex items-center gap-2 rounded-xl bg-[#1f2a56] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#1b244c]">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v2H4zm0 6h16v2H4zm0 6h16v2H4z" />
-          </svg>
-          Cari venue
-        </button>
-      </section>
-
-      <!-- <section class="rounded-3xl bg-[#1f2a56] px-10 py-12 text-white shadow-lg">
-        <div class="max-w-2xl space-y-4">
-          <h2 class="text-3xl font-semibold leading-tight">Temukan Lapangan sesuai dengan jadwal anda</h2>
-          <p class="text-sm text-blue-100">
-            Universitas Diponegoro menyediakan sarana dan prasarana olahraga yang dapat mendukung kegiatan akademik,
-            non-akademik, serta rekreasi bagi seluruh civitas akademika.
+        <div>
+          <h1 class="text-2xl uppercase font-bold text-gray-900 tracking-tight">Manajemen Booking</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Pilih stadion untuk melihat jadwal ketersediaan dan mengelola reservasi.
           </p>
-          <button class="rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#1f2a56] shadow-sm hover:bg-blue-50">
-            Booking Sekarang
-          </button>
         </div>
-      </section> -->
+      </div>
+    </header>
 
-      <section class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="flex flex-col gap-6">
+      
+      <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-gray-300 bg-gray-50/30 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div class="relative w-full md:max-w-xs">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              v-model="searchQuery"
+              type="search"
+              class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-500 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+              placeholder="Cari stadion berdasarkan nama..."
+            />
+          </div>
+        </div>
+      </div>
+
+      <div v-if="error" class="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
+        <p class="font-semibold text-sm">Gagal memuat data venue.</p>
+        <button @click="refresh()" class="mt-2 underline font-bold hover:text-red-800">Coba lagi</button>
+      </div>
+
+      <div v-else-if="pending" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+        <div v-for="i in 3" :key="i" class="bg-white rounded-2xl border border-gray-200 h-80 overflow-hidden">
+          <div class="h-48 bg-gray-200 w-full"></div>
+          <div class="p-5 space-y-3">
+            <div class="h-5 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="filteredStadions.length === 0" class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 py-16 text-center">
+        <div class="p-4 bg-white rounded-full inline-block shadow-sm mb-3">
+          <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">Venue tidak ditemukan</h3>
+        <p class="text-sm text-gray-500 mt-1">Coba kata kunci pencarian lain.</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <article
           v-for="venue in paginatedStadions"
           :key="venue.id"
-          class="cursor-pointer overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-lg"
+          class="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 cursor-pointer h-full"
           @click="navigateTo(`/admin/bookings/${venue.id}`)"
         >
-          <img :src="venue.images?.[0]?.imageUrl" :alt="venue.name" class="h-44 w-full object-cover" >
-          <div class="space-y-3 p-5">
-            <div class="text-xs font-semibold uppercase tracking-wide text-gray-400">Venue</div>
-            <h3 class="text-lg font-semibold text-gray-900">{{ venue.name }}</h3>
-            <!-- <div class="flex items-center gap-2 text-sm text-gray-500">
-              <span class="font-semibold text-yellow-500">★ {{ venue.rating.toFixed(2) }}</span>
-              <span>•</span>
-              <span>{{ venue.city }}</span>
+          <div class="relative h-48 w-full overflow-hidden bg-gray-100">
+            <img 
+              :src="venue.images?.[0]?.imageUrl || fallbackImage" 
+              :alt="venue.name" 
+              class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onerror="this.src='https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'"
+            >
+            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60"></div>
+            
+            <div class="absolute bottom-3 left-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              {{ venue._count?.fields ?? venue.fields?.length ?? 0 }} Lapangan
             </div>
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-              <span class="rounded-full bg-gray-100 px-3 py-1">{{ venue.sport }}</span>
-              <span class="rounded-full bg-green-50 px-3 py-1 text-green-700">
-                Rp {{ venue.price.toLocaleString('id-ID') }}
-              </span>
-            </div> -->
+          </div>
+
+          <div class="flex flex-col flex-1 p-5">
+            <div class="flex-1">
+              <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Venue</p>
+              <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors line-clamp-2">
+                {{ venue.name }}
+              </h3>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500">Klik untuk detail</span>
+              <div class="flex items-center gap-1 text-sm font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
+                Lihat Jadwal
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </div>
         </article>
-      </section>
-          <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex justify-center items-center gap-3 mt-6">
-      <button
-      :disabled="currentPage === 1"
-      class="px-4 py-2 border rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-      @click="currentPage = Math.max(currentPage - 1, 1)"
-      >
-        Prev
-      </button>
-      <span class="text-sm text-gray-600">
-        Halaman <span class="font-semibold">{{ currentPage }}</span> / {{ totalPages }}
-      </span>
-      <button
-      :disabled="currentPage === totalPages"
-      class="px-4 py-2 border rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-      @click="currentPage = Math.min(currentPage + 1, totalPages)"
-      >
-        Next
-      </button>
-    </div>
-    </div>
+      </div>
 
-  </main>
+      <nav
+        v-if="!pending && totalPages > 1"
+        class="flex flex-col-reverse items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm sm:flex-row"
+      >
+        <span class="text-xs text-gray-500 font-medium">
+          {{ paginationSummary }}
+        </span>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="prevPage"
+            :disabled="currentPage === 1"
+            class="p-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+
+          <div class="px-4 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-sm">
+            {{ currentPage }} / {{ totalPages }}
+          </div>
+
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            class="p-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </nav>
+
+    </div>
+  </section>
 </template>

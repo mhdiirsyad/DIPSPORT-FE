@@ -36,6 +36,12 @@ export interface OperationalField {
   statusClass: string
 }
 
+dayjs.extend(isBetween)
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+dayjs.tz.setDefault("Asia/Jakarta")
+
 export interface DashboardCardItem {
   id: string
   name: string
@@ -48,12 +54,6 @@ export interface DashboardCardItem {
   statusLabel: string
   statusColor: string
 }
-
-dayjs.extend(isBetween)
-dayjs.extend(utc)
-dayjs.extend(timezone)
-
-dayjs.tz.setDefault("Asia/Jakarta")
 
 export const useDashboardLogic = () => {
   
@@ -79,7 +79,6 @@ export const useDashboardLogic = () => {
         b.details.forEach(d => {
             const dbDate = dayjs(d.bookingDate).tz("Asia/Jakarta").format('YYYY-MM-DD')
 
-            // Cek ID & Tanggal
             if (String(d.fieldId) === String(field.id) && dbDate === targetDate) {
                 bookedCount++
             }

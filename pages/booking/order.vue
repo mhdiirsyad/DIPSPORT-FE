@@ -3,6 +3,13 @@ import { computed, ref } from 'vue'
 
 definePageMeta({ layout: false })
 
+interface StadionDetail {
+  id: number
+  name: string
+  mapUrl?: string
+  description?: string
+}
+
 const router = useRouter()
 const bookingCart = useState('booking-cart', () => ({
   stadionId: null as number | null,
@@ -24,9 +31,14 @@ if (!bookingCart.value.stadionId || bookingCart.value.slots.length === 0) {
 
 const stadionId = bookingCart.value.stadionId
 
-const { data: stadion, pending } = await useAsyncData(
+const { data: stadion, pending } = await useAsyncData<StadionDetail | null>(
   () => (stadionId ? `booking-stadion-${stadionId}` : ""),
-  () => (stadionId ? $fetch(`/api/stadions/${stadionId}`) : Promise.resolve(null)),
+
+  async () => {
+    if (!stadionId) return null
+    return await $fetch<StadionDetail>(`/api/stadions/${stadionId}` as string)
+  },
+  
   { immediate: Boolean(stadionId) }
 )
 
@@ -97,7 +109,7 @@ const createBooking = async () => {
     }
   })
   try {
-    const result = await $fetch('/api/bookings/create', {
+    const result = await $fetch<{ bookingCode: string }>('/api/bookings/create', {
       method: 'POST',
       body: {
         name: customerName.value,
