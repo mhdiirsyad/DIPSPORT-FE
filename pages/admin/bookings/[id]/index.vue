@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
 import { ref, computed, watch } from 'vue'
 import { generateTimeSlots, type Slot } from '~/utils/generateTimeSlots'
 
@@ -28,6 +29,16 @@ interface Images {
   imageUrl: string
 }
 
+interface Facility {
+  id: number
+  name: string
+  icon: string
+}
+
+interface StadionFacility {
+  Facility: Facility
+}
+
 interface StadionRow {
   id: number
   name: string
@@ -38,6 +49,7 @@ interface StadionRow {
   mapUrl: string
   price?: number
   sport?: string
+  facilities: StadionFacility[]
 }
 
 interface BookingDetails {
@@ -291,27 +303,16 @@ function makeBooking() {
             </button>
           </div>
           <div class="flex flex-col gap-4">
-            <div class="grid gap-4">
+            <div class="grid gap-4" v-if="stadion?.images">
               <img 
-                v-if="stadion?.images?.[1]" 
-                :src="stadion.images[1].imageUrl" :alt="stadion?.name"
-                class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44" 
-                @click="stadionImageIndex = 1"
-                >
-              <div class="relative">
-                <img 
-                  v-if="stadion?.images?.[2]" 
-                  :src="stadion.images[2].imageUrl" :alt="stadion?.name"
-                  class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44" 
-                  @click="stadionImageIndex = 2"
-                  >
-                <!-- <button
-                  class="w-full relative rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-black">
-                  Lihat semua foto
-                </button> -->
-              </div>
+                v-for="(image, idx) in stadion.images.slice(1, 3)"
+                :key="image.imageUrl"
+                :src="image.imageUrl" 
+                :alt="stadion?.name"
+                class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44 cursor-pointer transition-all hover:opacity-80" 
+                @click="stadionImageIndex = idx + 1"
+              >
             </div>
-
           </div>
           <!-- <div class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
             <p class="text-sm text-gray-500">Mulai dari</p>
@@ -326,7 +327,7 @@ function makeBooking() {
         </div>
 
         <!-- Deskripsi -->
-        <div class="grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <div v-if="stadion" class="grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div class="space-y-6 rounded-3xl bg-white p-6 shadow-sm">
             <div class="space-y-2">
               <h1 class="text-3xl font-bold text-gray-900">{{ stadion?.name }}</h1>
@@ -359,6 +360,15 @@ function makeBooking() {
                 <span v-else class="text-sm text-gray-400">Peta belum tersedia</span>
               </div>
             </div>
+          </div>
+          <div class="space-y-3">
+            <h2 class="text-lg font-semibold text-gray-900">Fasilitas</h2>
+            <ul class="grid gap-3 text-gray-600 sm:grid-cols-2">
+              <li v-for="facility in stadion.facilities" :key="facility.Facility.id" class="flex items-center gap-2">
+                <Icon :icon="facility.Facility.icon" />
+                <span>{{ facility.Facility.name }}</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>

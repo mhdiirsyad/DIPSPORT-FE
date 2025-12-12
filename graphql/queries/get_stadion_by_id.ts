@@ -16,6 +16,7 @@ export const QUERY_GET_STADION_BY_ID = gql`
         Facility {
           id
           name
+          icon
         }
       }
       images {
