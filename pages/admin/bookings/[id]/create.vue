@@ -232,7 +232,7 @@ watch(() => bookingForm.isAcademic, (val) => {
 
       <div class="flex items-center gap-2">
         <input id="academic" type="checkbox" v-model="bookingForm.isAcademic" />
-        <label for="academic">Booking Akademik? (harga jadi 0)</label>
+        <label for="academic">Akademik?</label>
       </div>
 
       <div v-if="bookingForm.isAcademic" class="space-y-3">
