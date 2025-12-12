@@ -32,6 +32,9 @@ type Court = {
   status: 'Ready' | 'Maintenance'
 
   image: string
+  
+  // Update: Menambahkan gallery untuk slider
+  gallery: string[]
 
   slots: Slot[]
 
@@ -260,23 +263,22 @@ const buildSlotsForField = (field: any, hours: { open: number; close: number }):
 
 
 
-const mapFieldToCourt = (field: any, hours: { open: number; close: number }): Court => ({
+const mapFieldToCourt = (field: any, hours: { open: number; close: number }): Court => {
+  // Logic untuk mengambil gambar lapangan (array)
+  const rawImages = field?.images?.map((img: any) => img?.imageUrl).filter(Boolean) || []
+  const finalImages = rawImages.length > 0 ? rawImages : [FALLBACK_IMAGES[0]]
 
-  id: Number(field?.id) || 0,
-
-  name: field?.name ?? 'Lapangan',
-
-  surface: field?.description || 'Permukaan belum tersedia',
-
-  type: 'Indoor',
-
-  status: field?.status === 'ACTIVE' ? 'Ready' : 'Maintenance',
-
-  image: field?.images?.[0]?.imageUrl ?? FALLBACK_IMAGES[0],
-
-  slots: buildSlotsForField(field, hours),
-
-})
+  return {
+    id: Number(field?.id) || 0,
+    name: field?.name ?? 'Lapangan',
+    surface: field?.description || 'Permukaan belum tersedia',
+    type: 'Indoor',
+    status: field?.status === 'ACTIVE' ? 'Ready' : 'Maintenance',
+    image: finalImages[0], // Primary image
+    gallery: finalImages,    // Full gallery for slider
+    slots: buildSlotsForField(field, hours),
+  }
+}
 
 
 
@@ -375,6 +377,8 @@ const venue = computed(() => buildVenueFromGraphQL(stadionData.value))
 const selectedDayIndex = ref(0)
 
 const expandedCourts = ref<Record<number, boolean>>({})
+// New: Menyimpan index gambar aktif untuk setiap court
+const courtImageIndices = ref<Record<number, number>>({})
 
 const selectedSlots = ref<SelectedSlot[]>([])
 
@@ -404,6 +408,24 @@ const toggleCourt = (courtId: number) => {
 
 }
 
+// --- Logic Slider Lapangan (Matches Reference) ---
+const nextCourtImage = (courtId: number, length: number) => {
+  if (!length) return
+  const current = courtImageIndices.value[courtId] ?? 0
+  courtImageIndices.value[courtId] = (current + 1) % length
+}
+
+const prevCourtImage = (courtId: number, length: number) => {
+  if (!length) return
+  const current = courtImageIndices.value[courtId] ?? 0
+  courtImageIndices.value[courtId] = (current - 1 + length) % length
+}
+
+const getCourtImageUrl = (court: Court) => {
+  const index = courtImageIndices.value[court.id] ?? 0
+  return court.gallery[index] || court.image
+}
+// -------------------------------------------------
 
 
 const isCourtExpanded = (courtId: number) => expandedCourts.value[courtId] ?? false
@@ -683,7 +705,7 @@ watch(selectedDayIndex, () => {
           </ul>
         </div>
       </div>
-      
+       
       <section class="rounded-3xl border border-gray-100 bg-white shadow-sm">
 
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-6 py-4">
@@ -770,18 +792,36 @@ watch(selectedDayIndex, () => {
 
           <div class="flex flex-col gap-5 rounded-3xl border border-gray-200 p-5 lg:flex-row">
 
+            <!-- SLIDER START: Updated to match reference -->
             <div class="relative w-full overflow-hidden rounded-[28px] border border-white shadow lg:w-[420px]">
 
-              <img :src="court.image" :alt="court.name" class="h-56 w-full object-cover" >
+              <img 
+                :src="getCourtImageUrl(court)" 
+                :alt="court.name" 
+                class="h-56 w-full object-cover transition-transform duration-500" 
+              >
+
+              <template v-if="court.gallery && court.gallery.length > 1">
+                <button 
+                  @click.stop="prevCourtImage(court.id, court.gallery.length)" 
+                  class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60"
+                >
+                  ‹
+                </button>
+                <button 
+                  @click.stop="nextCourtImage(court.id, court.gallery.length)" 
+                  class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60"
+                >
+                  ›
+                </button>
+              </template>
 
               <span class="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
-
-                Lihat semua foto
-
+                {{ (courtImageIndices[court.id] ?? 0) + 1 }} / {{ court.gallery?.length || 1 }} Foto
               </span>
 
             </div>
-
+            <!-- SLIDER END -->
 
 
             <div class="flex-1 space-y-4">
@@ -792,7 +832,7 @@ watch(selectedDayIndex, () => {
 
                   {{ court.name }}
 
-                  <span class="text-sm text-gray-400"></span>
+                  <span class="text-sm text-gray-400">›</span>
 
                 </p>
 
@@ -963,6 +1003,7 @@ watch(selectedDayIndex, () => {
             </p>
 
             <article
+
               v-for="item in selectedSlots"
               :key="item.key"
               class="flex items-start justify-between rounded-xl border border-gray-200 bg-[#f4f6fc] px-4 py-3 text-sm text-[#1f2a56]"

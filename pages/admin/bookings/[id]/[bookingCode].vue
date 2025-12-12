@@ -66,12 +66,10 @@ async function markAsPaid() {
 
 async function setBookingStatus(newStatus: string) {
   if (!booking.value) return
-  // Only allow status change when payment is PAID
   if (booking.value.paymentStatus !== 'PAID') {
     alert('Booking hanya bisa diubah setelah pembayaran status PAID')
     return
   }
-  // Disallow changing after accepted or rejected
   const locked = ['APPROVED', 'CANCELLED']
   if (locked.includes(booking.value.status)) {
     alert('Status booking sudah final dan tidak bisa diubah')
@@ -164,40 +162,7 @@ async function setBookingStatus(newStatus: string) {
             <h3 class="font-medium text-gray-700">Status Pembayaran</h3>
             <p class="text-sm text-gray-600">{{ booking.paymentStatus }}</p>
           </div>
-          <!-- <div class="ml-auto">
-            <button
-              v-if="booking.paymentStatus !== 'PAID'"
-              @click.prevent="markAsPaid"
-              :disabled="updating"
-              class="px-3 py-1 bg-green-600 text-white rounded text-sm"
-            >
-              Tandai Lunas (PAID)
-            </button>
-          </div> -->
         </div>
-
-        <!-- <div class="flex gap-3 items-center pt-3">
-          <div>
-            <h3 class="font-medium text-gray-700">Aksi Booking</h3>
-            <p class="text-sm text-gray-600">Status: {{ booking.status }}</p>
-          </div>
-          <div v-if="booking.status=='PENDING'" class="ml-auto flex gap-2">
-            <button
-              @click.prevent="setBookingStatus('APPROVED')"
-              :disabled="booking.paymentStatus !== 'PAID' || updating"
-              class="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
-            >
-              Terima
-            </button>
-            <button
-              @click.prevent="setBookingStatus('CANCELLED')"
-              :disabled="booking.paymentStatus !== 'PAID' || updating"
-              class="px-3 py-1 bg-red-600 text-white rounded text-sm disabled:opacity-50"
-            >
-              Tolak
-            </button>
-          </div>
-        </div> -->
 
         <div>
           <h2 class="font-semibold text-gray-800">Status</h2>
@@ -216,7 +181,6 @@ async function setBookingStatus(newStatus: string) {
                 <th class="border px-3 py-2 text-left">Lapangan</th>
                 <th class="border px-3 py-2 text-left">Tanggal</th>
                 <th class="border px-3 py-2 text-left">Jam</th>
-                <th class="border px-3 py-2 text-right">Harga/Jam</th>
               </tr>
             </thead>
             <tbody>
@@ -224,20 +188,12 @@ async function setBookingStatus(newStatus: string) {
                 <td class="border px-3 py-2">{{ d.Field.name }}</td>
                 <td class="border px-3 py-2">{{ new Date(d.bookingDate).toLocaleDateString('id-ID') }}</td>
                 <td class="border px-3 py-2">{{ d.startHour }}:00 - {{ d.startHour+1 }}:00</td>
-                <td class="border px-3 py-2 text-right">
-                  Rp {{ d.subtotal.toLocaleString('id-ID') }}
-                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="pt-4 border-t">
-          <h2 class="font-semibold text-gray-800">Total Pembayaran</h2>
-          <p class="text-xl font-bold text-gray-900">
-            Rp {{ booking?.totalPrice?.toLocaleString('id-ID') }}
-          </p>
-        </div>
+        <!-- TOTAL HARGA DIHAPUS SESUAI PERMINTAAN -->
       </div>
     </section>
   </main>

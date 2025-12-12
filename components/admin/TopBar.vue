@@ -36,7 +36,7 @@ const nameMapping: Record<string, string> = {
   'stadiums': 'Stadion',
   'fields': 'Lapangan',
   'facilities': 'Fasilitas',
-  'bookings': 'Bookins',
+  'bookings': 'Booking',
   'schedules': 'Jadwal',
   'create': 'Tambah Baru',
   'edit': 'Edit',
