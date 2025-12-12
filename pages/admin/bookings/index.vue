@@ -14,6 +14,7 @@ interface Images {
 interface StadionRow {
   id: number
   name: string
+  status: string // Menambahkan status untuk filtering
   images?: Images[]
   fields?: any[] 
   _count?: { fields: number }
@@ -36,11 +37,18 @@ watch(searchQuery, applyDebounce)
 
 const filteredStadions = computed(() => {
   if (!stadions.value) return []
-  if (!debouncedSearch.value) return stadions.value
   
-  return stadions.value.filter(stadion =>
-    stadion.name.toLowerCase().includes(debouncedSearch.value)
-  )
+  // 1. Filter stadion yang statusnya ACTIVE saja
+  let result = stadions.value.filter(s => s.status === 'ACTIVE')
+
+  // 2. Filter berdasarkan pencarian nama
+  if (debouncedSearch.value) {
+    result = result.filter(stadion =>
+      stadion.name.toLowerCase().includes(debouncedSearch.value)
+    )
+  }
+  
+  return result
 })
 
 const currentPage = ref(1)
@@ -128,7 +136,7 @@ const fallbackImage = 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb
           </svg>
         </div>
         <h3 class="text-base font-bold text-gray-900">Venue tidak ditemukan</h3>
-        <p class="text-sm text-gray-500 mt-1">Coba kata kunci pencarian lain.</p>
+        <p class="text-sm text-gray-500 mt-1">Tidak ada stadion aktif atau sesuai pencarian.</p>
       </div>
 
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
