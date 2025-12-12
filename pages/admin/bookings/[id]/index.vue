@@ -13,7 +13,7 @@ interface Field {
   name: string
   pricePerHour: number
   type?: string
-  status?: 'Ready' | 'Maintenance'
+  status?: string
   images?: Images[]
   slots: Slot[]
 }
@@ -407,7 +407,9 @@ function makeBooking() {
                 <button @click.stop="nextFieldImage(Number(field.id))" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60">
                   ›
                 </button>
-                <span class="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">Lihat semua foto</span>
+                <!-- <span class="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
+                  Lihat semua foto
+                </span> -->
               </div>
 
               <div class="flex-1 space-y-3">
@@ -415,12 +417,12 @@ function makeBooking() {
                   <p class="text-2xl font-semibold text-gray-900">{{ field.name }}</p>
                   <p 
                     class="text-sm font-semibold"
-                    :class="field.status === 'Ready' ? 'text-green-600' : 'text-amber-600'">
-                    {{ field.status === 'Ready' ? 'Ready' : 'Maintenance' }}
+                    :class="field.status === 'ACTIVE' ? 'text-green-600' : 'text-amber-600'">
+                    {{ field.status }}
                   </p>
-                  <div class="flex flex-wrap gap-4 text-sm text-gray-500">
+                  <!-- <div class="flex flex-wrap gap-4 text-sm text-gray-500">
                     <span>Tipe: {{ field.type || '-' }}</span>
-                  </div>
+                  </div> -->
                 </div>
 
                 <button
