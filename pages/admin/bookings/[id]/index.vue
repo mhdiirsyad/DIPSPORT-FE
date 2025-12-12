@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { generateTimeSlots, type Slot } from '~/utils/generateTimeSlots'
 
 definePageMeta({
@@ -102,11 +102,61 @@ const { data: stadion, pending, error } = await useAsyncData(
         ...field,
         slots: generateTimeSlots(openHour, closeHour, field.pricePerHour)
       }))
-
       return { ...stadion, fields }
     }
   }
 )
+
+// Carousel state for stadion images
+const stadionImageIndex = ref(0)
+
+watch(stadion, (s) => {
+  if (!s) return
+  stadionImageIndex.value = 0
+  // initialize per-field image index map
+  if (s.fields && Array.isArray(s.fields)) {
+    s.fields.forEach((f: any) => {
+      if (f && f.id != null && fieldImageIndex.value[f.id] == null) fieldImageIndex.value[f.id] = 0
+    })
+  }
+})
+
+function nextStadionImage(){
+  const len = stadion.value?.images?.length || 0
+  if (!len) return
+  stadionImageIndex.value = (stadionImageIndex.value + 1) % len
+}
+
+function prevStadionImage(){
+  const len = stadion.value?.images?.length || 0
+  if (!len) return
+  stadionImageIndex.value = (stadionImageIndex.value - 1 + len) % len
+}
+
+const currentStadionImage = computed(() => stadion.value?.images?.[stadionImageIndex.value]?.imageUrl || '/placeholder-stadium.jpg')
+
+// Per-field carousel state: map fieldId -> index
+const fieldImageIndex = ref<Record<number, number>>({})
+
+function nextFieldImage(fieldId: number){
+  const field = stadion.value?.fields?.find((f: any) => Number(f.id) === Number(fieldId))
+  const len = field?.images?.length || 0
+  if (!len) return
+  fieldImageIndex.value[fieldId] = ((fieldImageIndex.value[fieldId] || 0) + 1) % len
+}
+
+function prevFieldImage(fieldId: number){
+  const field = stadion.value?.fields?.find((f: any) => Number(f.id) === Number(fieldId))
+  const len = field?.images?.length || 0
+  if (!len) return
+  fieldImageIndex.value[fieldId] = ((fieldImageIndex.value[fieldId] || 0) - 1 + len) % len
+}
+
+function getFieldImageUrl(fieldId: number){
+  const field = stadion.value?.fields?.find((f: any) => Number(f.id) === Number(fieldId))
+  const idx = fieldImageIndex.value[fieldId] || 0
+  return field?.images?.[idx]?.imageUrl || '/placeholder-field.jpg'
+}
 
 const { data: bookingsResult } = await useAsyncData(
   () => `bookings-${stadionId}-${selectedDateKey.value ?? 'none'}`,
@@ -230,29 +280,40 @@ function makeBooking() {
         <div class="grid gap-5 lg:grid-cols-[minmax(0,2.3fr)_minmax(320px,1fr)]">
           <div class="relative overflow-hidden rounded-[32px] border border-white/70 bg-white shadow-md">
             <img 
-              :src="stadion?.images?.[0]?.imageUrl || '/placeholder-stadium.jpg'" :alt="stadion?.name"
+              :src="currentStadionImage" :alt="stadion?.name"
               class="aspect-[16/9] w-full object-cover transition-transform duration-500 hover:scale-[1.01]" >
+
+            <button @click="prevStadionImage" class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60">
+              ‹
+            </button>
+            <button @click="nextStadionImage" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60">
+              ›
+            </button>
           </div>
           <div class="flex flex-col gap-4">
             <div class="grid gap-4">
               <img 
                 v-if="stadion?.images?.[1]" 
                 :src="stadion.images[1].imageUrl" :alt="stadion?.name"
-                class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44" >
+                class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44" 
+                @click="stadionImageIndex = 1"
+                >
               <div class="relative">
                 <img 
                   v-if="stadion?.images?.[2]" 
                   :src="stadion.images[2].imageUrl" :alt="stadion?.name"
-                  class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44" >
-                <button
+                  class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44" 
+                  @click="stadionImageIndex = 2"
+                  >
+                <!-- <button
                   class="w-full relative rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-black">
                   Lihat semua foto
-                </button>
+                </button> -->
               </div>
             </div>
 
           </div>
-          <div class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
+          <!-- <div class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
             <p class="text-sm text-gray-500">Mulai dari</p>
             <p class="text-3xl font-bold text-gray-900">
               Rp {{ stadion?.price?.toLocaleString('id-ID') || '0' }}
@@ -261,7 +322,7 @@ function makeBooking() {
             <button class="mt-4 w-full rounded-xl bg-[#1f2a56] py-3 text-sm font-semibold text-white hover:bg-[#162347]">
               Cek Ketersediaan
             </button>
-          </div>
+          </div> -->
         </div>
 
         <!-- Deskripsi -->
@@ -328,12 +389,15 @@ function makeBooking() {
             <div class="flex flex-col gap-5 rounded-3xl border border-gray-200 p-5 lg:flex-row">
               <div class="relative w-full overflow-hidden rounded-[28px] border border-white shadow lg:w-[420px]">
                 <img 
-                  :src="field.images?.[0]?.imageUrl || '/placeholder-field.jpg'" :alt="field.name"
+                  :src="getFieldImageUrl(Number(field.id))" :alt="field.name"
                   class="h-56 w-full object-cover" >
-                <span
-                  class="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">
-                  Lihat semua foto
-                </span>
+                <button @click.stop="prevFieldImage(Number(field.id))" class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60">
+                  ‹
+                </button>
+                <button @click.stop="nextFieldImage(Number(field.id))" class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60">
+                  ›
+                </button>
+                <span class="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">Lihat semua foto</span>
               </div>
 
               <div class="flex-1 space-y-3">
@@ -366,10 +430,10 @@ function makeBooking() {
                 v-for="slot in field.slots" :key="slot.start"
                 class="rounded-xl border px-4 py-3 text-center shadow-sm transition-colors"
                 :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
-                  ? 'bg-white text-gray-400 border-red-200 cursor-pointer hover:bg-red-50'
+                  ? 'bg-white text-gray-400 border-gray-200 cursor-pointer hover:bg-red-50'
                   : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0])) 
                   ? 'bg-blue-100 text-blue-900 border-blue-300 hover:border-[#1f2a56] hover:bg-blue cursor-default' 
-                  : 'bg-gray-50 text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
+                  : 'bg-white-50 text-white-900 border-blue-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
                 @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]), Number(slot.price), field.name)"
               >
                 <p
@@ -387,7 +451,7 @@ function makeBooking() {
                   class="font-semibold"
                   :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-400' : 'text-gray-700'"
                 >
-                  {{ isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'Booked' : `Rp ${slot.price.toLocaleString('id-ID')}` }}
+                  {{ isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'Booked' : 'Available'}}
                 </p>
               </div>
 

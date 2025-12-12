@@ -74,6 +74,8 @@ export default defineEventHandler(async (event) => {
           suratUrl: body.suratUrl,
           isAcademic: body.isAcademic,
           details: body.details,
+          status: "APPROVED",
+          paymentStatus: "PAID",
         },
       },
       headers,
