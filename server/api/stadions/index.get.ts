@@ -1,3 +1,5 @@
+// Jembatan untuk query 'stadions' (semua)
+import { print } from 'graphql'
 import { defineEventHandler, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { QUERY_GET_STADIONS } from '~/graphql/queries/get_stadions'
@@ -9,8 +11,9 @@ export default defineEventHandler(async (event) => {
   try {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
+      headers: {"Content-Type": "application/json"},
       body: { 
-        query: QUERY_GET_STADIONS
+        query: print(QUERY_GET_STADIONS)
       },
     })
     

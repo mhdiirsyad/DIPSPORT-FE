@@ -140,7 +140,7 @@ const buildScheduleDays = () =>
 
     const date = new Date()
 
-    date.setDate(date.getDate() + idx)
+    date.setDate(date.getDate() + idx + 1)
 
     return { label: formatDayLabel(date), value: date.toISOString() }
 
@@ -382,6 +382,8 @@ const isDrawerOpen = ref(false)
 
 const router = useRouter()
 
+const selectionDisabled = true
+
 const bookingCart = useState('booking-cart', () => ({
   stadionId: null as number | null,
   stadionName: '',
@@ -454,6 +456,7 @@ const isSlotBookedFromServer = (fieldId: number, startHour: number) => {
 
 const toggleSlotSelection = (court: Court, slot: Slot) => {
 
+  if (selectionDisabled) return
   if (slot.status === 'Booked') return
 
   const startHour = Number(slot.start.split(':')[0])
@@ -511,6 +514,7 @@ const removeSelectedSlot = (key: string) => {
 
 const openDrawer = () => {
 
+  if (selectionDisabled) return
   if (selectedSlots.value.length) {
 
     isDrawerOpen.value = true
@@ -557,17 +561,10 @@ watch(selectedDayIndex, () => {
 
       <button
         type="button"
-        class="relative inline-flex items-center gap-2 rounded-full border border-[#1f2a56] px-4 py-2 text-sm font-semibold text-[#1f2a56] transition disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400"
-        :disabled="!selectedSlotCount"
-        @click="openDrawer"
+        class="relative inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-400 cursor-not-allowed bg-gray-100"
+        disabled
       >
-        Jadwal Dipilih
-        <span
-          v-if="selectedSlotCount"
-          class="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#1f2a56] px-1 text-xs text-white"
-        >
-          {{ selectedSlotCount }}
-        </span>
+        Pemilihan jadwal dinonaktifkan
       </button>
 
     </header>
@@ -632,24 +629,7 @@ watch(selectedDayIndex, () => {
 
           </div>
 
-          <div class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
-
-            <p class="text-sm text-gray-500">Mulai dari</p>
-
-            <p class="text-3xl font-bold text-gray-900">
-
-              Rp {{ venue?.price.toLocaleString('id-ID') }}
-
-              <span class="text-sm font-medium text-gray-500">/ sesi</span>
-
-            </p>
-
-            <button class="mt-4 w-full rounded-xl bg-[#1f2a56] py-3 text-sm font-semibold text-white hover:bg-[#162347]">
-
-              Cek Ketersediaan
-
-            </button>
-
+          <div v-if="false" class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
           </div>
 
         </div>
@@ -718,13 +698,13 @@ watch(selectedDayIndex, () => {
 
           <div class="flex gap-3 text-sm">
 
-            <button class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 hover:bg-gray-50">
+            <button v-if="false" class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 hover:bg-gray-50">
 
               Filter Waktu
 
             </button>
 
-            <button class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 hover:bg-gray-50">
+            <button v-if="false" class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 hover:bg-gray-50">
 
               Cabor
 
@@ -884,11 +864,7 @@ watch(selectedDayIndex, () => {
 
                     ? 'bg-white text-gray-400 border-gray-200 cursor-not-allowed'
 
-                    : isSlotSelected(court.id, slot.range)
-
-                      ? 'bg-[#1f2a56] text-white border-[#1f2a56]'
-
-                      : 'bg-gray-50 text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-white cursor-pointer'
+                    : 'bg-white text-gray-900 border-gray-200 hover:border-gray-300 hover:bg-gray-50 cursor-pointer'
 
                 ]"
 
@@ -900,7 +876,7 @@ watch(selectedDayIndex, () => {
 
                   class="text-[0.65rem] uppercase tracking-wide font-semibold"
 
-                  :class="isSlotSelected(court.id, slot.range) ? 'text-white/80' : 'text-gray-400'"
+                  :class="slot.status === 'Booked' || isSlotBookedFromServer(court.id, Number(slot.start.split(':')[0])) ? 'text-gray-400' : 'text-gray-500'"
 
                 >
 
@@ -918,11 +894,7 @@ watch(selectedDayIndex, () => {
 
                       ? 'text-gray-500'
 
-                      : isSlotSelected(court.id, slot.range)
-
-                        ? 'text-white'
-
-                        : 'text-[#1f2a56]'
+                      : 'text-[#1f2a56]'
 
                   ]"
 
@@ -941,45 +913,17 @@ watch(selectedDayIndex, () => {
 
                 </p>
 
-                <div
+                <p
 
                   v-else
 
-                  class="text-sm"
-
-                  :class="isSlotSelected(court.id, slot.range) ? 'text-white/90' : 'text-gray-700'"
+                  class="text-sm font-semibold text-green-700"
 
                 >
 
-                  <p v-if="slot.previousPrice" class="text-xs text-gray-400 line-through">
+                  Available
 
-                    Rp{{ slot.previousPrice!.toLocaleString('id-ID') }}
-
-                  </p>
-
-                  <p class="font-semibold">
-
-                    Rp{{ slot.price!.toLocaleString('id-ID') }}
-
-                  </p>
-
-                </div>
-
-                <span
-
-                  v-if="isSlotSelected(court.id, slot.range)"
-
-                  class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full border border-white/50 bg-white/10"
-
-                >
-
-                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3">
-
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-
-                  </svg>
-
-                </span>
+                </p>
 
               </button>
 
@@ -1078,7 +1022,3 @@ watch(selectedDayIndex, () => {
 }
 
 </style>
-
-
-
-

@@ -62,10 +62,10 @@ async function handleSubmit(){
     return
   }
 
-  if (bookingForm.isAcademic && !bookingForm.suratFile) {
-    errorMsg.value = 'Upload surat pengantar (PDF) diperlukan untuk booking akademik.'
-    return
-  }
+  // if (bookingForm.isAcademic && !bookingForm.suratFile) {
+  //   errorMsg.value = 'Upload surat pengantar (PDF) diperlukan untuk booking akademik.'
+  //   return
+  // }
 
   const details = selectedSlots.value.map((slot) => {
     const price = bookingForm.isAcademic ? 0 : (slot.pricePerHour || 0)
@@ -77,13 +77,14 @@ async function handleSubmit(){
       subtotal: price,
     }
   })
-  const vars: any = {
+  const vars = {
     name: bookingForm.name,
     contact: bookingForm.contact,
     email: bookingForm.email,
     institution: bookingForm.isAcademic ? bookingForm.institution : undefined,
     isAcademic: bookingForm.isAcademic,
     details,
+    suratFile: null as File | null
   }
 
   // only include suratFile variable when a file is actually attached
@@ -132,7 +133,7 @@ async function handleSubmit(){
 
         xhr.onerror = () => reject(new Error('Network error saat mengirim request'))
         xhr.send(fd)
-      }).then((bookingCode: any) => {
+      }).then((bookingCode) => {
         navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
       })
     } else {
@@ -156,7 +157,8 @@ async function handleSubmit(){
       if (!bookingCode) throw new Error('Server tidak mengembalikan booking code')
       navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
     }
-  } catch (err: any) {
+  } catch (e) {
+    const err = e as Error
     errorMsg.value = err?.message || 'Gagal membuat booking.'
   } finally {
     uploadProgress.value = null
@@ -194,9 +196,9 @@ watch(() => bookingForm.isAcademic, (val) => {
             {{ slot.date.split('T')[0] }} • {{ slot.startHour }}:00 - {{ slot.startHour + 1 }}:00
           </p>
 
-          <p class="font-semibold mt-1">
+          <!-- <p class="font-semibold mt-1">
             Rp {{ slot.pricePerHour.toLocaleString('id-ID') }}
-          </p>
+          </p> -->
         </div>
       </div>
 

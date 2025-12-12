@@ -164,7 +164,7 @@ async function setBookingStatus(newStatus: string) {
             <h3 class="font-medium text-gray-700">Status Pembayaran</h3>
             <p class="text-sm text-gray-600">{{ booking.paymentStatus }}</p>
           </div>
-          <div class="ml-auto">
+          <!-- <div class="ml-auto">
             <button
               v-if="booking.paymentStatus !== 'PAID'"
               @click.prevent="markAsPaid"
@@ -173,10 +173,10 @@ async function setBookingStatus(newStatus: string) {
             >
               Tandai Lunas (PAID)
             </button>
-          </div>
+          </div> -->
         </div>
 
-        <div class="flex gap-3 items-center pt-3">
+        <!-- <div class="flex gap-3 items-center pt-3">
           <div>
             <h3 class="font-medium text-gray-700">Aksi Booking</h3>
             <p class="text-sm text-gray-600">Status: {{ booking.status }}</p>
@@ -197,7 +197,7 @@ async function setBookingStatus(newStatus: string) {
               Tolak
             </button>
           </div>
-        </div>
+        </div> -->
 
         <div>
           <h2 class="font-semibold text-gray-800">Status</h2>

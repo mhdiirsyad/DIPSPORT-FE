@@ -59,6 +59,7 @@ const onSubmit = async () => {
     const response = await $fetch<{ ok: boolean; admin: any }>('/api/auth/login', {
       method: 'POST',
       body: { email: trimmedEmail, password: password.value },
+      credentials: 'include'
     })
 
     if (!response?.ok) throw new Error('Login gagal')

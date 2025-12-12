@@ -1,4 +1,6 @@
-export const QUERY_GET_STADION_BY_ID = `
+import gql from "graphql-tag";
+
+export const QUERY_GET_STADION_BY_ID = gql`
   query GetStadionById($stadionId: ID!) {
     stadion(stadionId: $stadionId) {
       id
@@ -29,12 +31,6 @@ export const QUERY_GET_STADION_BY_ID = `
         images {
           id
           imageUrl
-        }
-        bookingDetails {
-          id
-          bookingDate
-          startHour
-          subtotal
         }
       }
     }
