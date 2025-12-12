@@ -305,15 +305,15 @@ function makeBooking() {
                   class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44" 
                   @click="stadionImageIndex = 2"
                   >
-                <button
+                <!-- <button
                   class="w-full relative rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-black">
                   Lihat semua foto
-                </button>
+                </button> -->
               </div>
             </div>
 
           </div>
-          <div class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
+          <!-- <div class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
             <p class="text-sm text-gray-500">Mulai dari</p>
             <p class="text-3xl font-bold text-gray-900">
               Rp {{ stadion?.price?.toLocaleString('id-ID') || '0' }}
@@ -322,7 +322,7 @@ function makeBooking() {
             <button class="mt-4 w-full rounded-xl bg-[#1f2a56] py-3 text-sm font-semibold text-white hover:bg-[#162347]">
               Cek Ketersediaan
             </button>
-          </div>
+          </div> -->
         </div>
 
         <!-- Deskripsi -->
@@ -430,7 +430,7 @@ function makeBooking() {
                 v-for="slot in field.slots" :key="slot.start"
                 class="rounded-xl border px-4 py-3 text-center shadow-sm transition-colors"
                 :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
-                  ? 'bg-white text-gray-400 border-red-200 cursor-pointer hover:bg-red-50'
+                  ? 'bg-white text-gray-400 border-gray-200 cursor-pointer hover:bg-red-50'
                   : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0])) 
                   ? 'bg-blue-100 text-blue-900 border-blue-300 hover:border-[#1f2a56] hover:bg-blue cursor-default' 
                   : 'bg-white-50 text-white-900 border-blue-200 hover:border-[#1f2a56] hover:bg-white cursor-default'"
@@ -451,7 +451,7 @@ function makeBooking() {
                   class="font-semibold"
                   :class="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'text-gray-400' : 'text-gray-700'"
                 >
-                  {{ isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'Booked' : `Rp ${slot.price.toLocaleString('id-ID')}` }}
+                  {{ isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) ? 'Booked' : 'Available'}}
                 </p>
               </div>
 

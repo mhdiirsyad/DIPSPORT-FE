@@ -24,7 +24,7 @@ interface StadionRow {
 // -------------------------------------------------------------------
 // Data Fetching
 // -------------------------------------------------------------------
-const { data: stadions, pending, error, refresh } = await useAsyncData(
+const { data: stadions } = await useAsyncData(
   'stadionsList',
   () => $fetch<StadionRow[]>('/api/stadions')
 )
@@ -49,9 +49,6 @@ const filteredStadions = computed(() => {
   )
 })
 
-// -------------------------------------------------------------------
-// Pagination (opsional bisa dihapus jika ingin infinite scroll)
-// -------------------------------------------------------------------
 const currentPage = ref(1)
 const itemsPerPage = 8
 
@@ -67,14 +64,14 @@ const paginatedStadions = computed(() => {
     <div class="mx-auto max-w-6xl px-6 py-10 space-y-10">
       <header class="flex flex-wrap items-center justify-between gap-4">
         <div class="text-xl font-semibold tracking-wide text-[#1f2a56]">DIPSPORTS</div>
-        <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
-          <!-- <NuxtLink
+        <!-- <nav class="flex items-center gap-6 text-sm font-medium text-gray-500">
+          <NuxtLink
             to="/admin/login"
             class="rounded-full bg-[#1f2a56] px-4 py-2 text-white shadow-sm transition-colors hover:bg-[#1b244c]"
           >
             Masuk Admin
-          </NuxtLink> -->
-        </nav>
+          </NuxtLink>
+        </nav> -->
       </header>
 
       <section class="flex flex-wrap gap-3 rounded-2xl bg-white p-4 shadow-sm">
