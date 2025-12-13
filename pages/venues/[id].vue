@@ -27,7 +27,7 @@ type Court = {
 
   surface: string
 
-  type: string
+  type?: string
 
   status: 'Ready' | 'Maintenance'
 
@@ -272,7 +272,7 @@ const mapFieldToCourt = (field: any, hours: { open: number; close: number }): Co
     id: Number(field?.id) || 0,
     name: field?.name ?? 'Lapangan',
     surface: field?.description || 'Permukaan belum tersedia',
-    type: 'Indoor',
+    type: field?.type,
     status: field?.status === 'ACTIVE' ? 'Ready' : 'Maintenance',
     image: finalImages[0], // Primary image
     gallery: finalImages,    // Full gallery for slider
@@ -372,7 +372,22 @@ const { data: stadionData } = await useAsyncData(
 
 const venue = computed(() => buildVenueFromGraphQL(stadionData.value))
 
+const activeGalleryIndex = ref(0)
+const galleryLength = computed(() => venue.value?.gallery?.length ?? 0)
 
+watch(venue, () => { activeGalleryIndex.value = 0 })
+
+const nextGallery = () => {
+  const len = galleryLength.value
+  if (!len) return
+  activeGalleryIndex.value = (activeGalleryIndex.value + 1) % len
+}
+
+const prevGallery = () => {
+  const len = galleryLength.value
+  if (!len) return
+  activeGalleryIndex.value = (activeGalleryIndex.value - 1 + len) % len
+}
 
 const selectedDayIndex = ref(0)
 
@@ -431,6 +446,13 @@ const getCourtImageUrl = (court: Court) => {
 const isCourtExpanded = (courtId: number) => expandedCourts.value[courtId] ?? false
 
 const availableCount = (court: Court) => court.slots.filter((slot) => slot.status === 'Available').length
+const availableCountWithServer = (court: Court) => {
+  return court.slots.filter((slot) => {
+    const startHour = Number(slot.start.split(':')[0])
+    const isBooked = slot.status === 'Booked' || isSlotBookedFromServer(court.id, Number.isNaN(startHour) ? 0 : startHour)
+    return !isBooked
+  }).length
+}
 
 const selectedDayValue = computed(() => venue.value?.scheduleDays[selectedDayIndex.value]?.value ?? null)
 
@@ -596,66 +618,53 @@ watch(selectedDayIndex, () => {
     <section class="mx-auto max-w-6xl space-y-6 px-6">
 
       <div class="grid gap-5 lg:grid-cols-[minmax(0,2.3fr)_minmax(320px,1fr)]">
-
         <div class="relative overflow-hidden rounded-[32px] border border-white/70 bg-white shadow-md">
-
           <img
-
-            :src="venue?.gallery[0]"
-
+            :src="venue?.gallery[activeGalleryIndex]"
             :alt="venue?.name"
-
-            class="aspect-[16/9] w-full object-cover transition-transform duration-500 hover:scale-[1.01]"
-
+            class="aspect-[16/9] w-full object-cover transition-transform duration-500"
           >
 
+          <button
+            class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 p-2 text-white shadow hover:bg-black/60"
+            @click="prevGallery"
+            aria-label="Foto sebelumnya"
+          >
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 p-2 text-white shadow hover:bg-black/60"
+            @click="nextGallery"
+            aria-label="Foto berikutnya"
+          >
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+            <button
+              v-for="(img, idx) in venue?.gallery"
+              :key="`dot-${idx}`"
+              class="h-2.5 w-2.5 rounded-full transition-all"
+              :class="idx === activeGalleryIndex ? 'bg-white shadow-md w-5' : 'bg-white/50 hover:bg-white/80'"
+              @click="activeGalleryIndex = idx"
+            />
+          </div>
         </div>
 
-        <div class="flex flex-col gap-4">
-
-          <div class="grid gap-4">
-
-            <img
-
-              :src="venue?.gallery[1]"
-
-              :alt="`${venue?.name} preview 1`"
-
-              class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44"
-
-            >
-
-            <div class="relative">
-
-              <img
-
-                :src="venue?.gallery[2]"
-
-                :alt="`${venue?.name} preview 2`"
-
-                class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44"
-
-              >
-
-              <button
-
-                class="absolute inset-x-4 bottom-4 rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-black"
-
-              >
-
-                Lihat semua foto
-
-              </button>
-
-            </div>
-
-          </div>
-
-          <div v-if="false" class="rounded-[32px] border border-gray-200 bg-white p-6 shadow-sm">
-          </div>
-
+        <div class="grid gap-4">
+          <img
+            v-for="(img, idx) in venue?.gallery.slice(1, 3)"
+            :key="`thumb-${idx}`"
+            :src="img"
+            :alt="`${venue?.name} preview ${idx + 1}`"
+            class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44 cursor-pointer transition-all hover:opacity-80"
+            @click="activeGalleryIndex = idx + 1"
+          >
         </div>
-
       </div>
 
 
@@ -766,16 +775,6 @@ watch(selectedDayIndex, () => {
 
           </button>
 
-          <button
-
-            class="ml-auto flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
-
-          >
-
-            <span class="text-lg">?</span>
-
-          </button>
-
         </div>
 
 
@@ -803,16 +802,20 @@ watch(selectedDayIndex, () => {
 
               <template v-if="court.gallery && court.gallery.length > 1">
                 <button 
-                  @click.stop="prevCourtImage(court.id, court.gallery.length)" 
+                  @click.stop="prevCourtImage(court.id, court.gallery.length)" aria-label="Foto sebelumnya"
                   class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60"
                 >
-                  ‹
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
                 </button>
                 <button 
-                  @click.stop="nextCourtImage(court.id, court.gallery.length)" 
+                  @click.stop="nextCourtImage(court.id, court.gallery.length)" aria-label="Foto berikutnya"
                   class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60"
                 >
-                  ›
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </template>
 
@@ -844,10 +847,6 @@ watch(selectedDayIndex, () => {
 
                 <div class="flex flex-wrap gap-4 text-sm text-gray-500">
 
-                  <span>Cabang: {{ venue.sport }}</span>
-
-                  <span>Tipe: {{ court.type }}</span>
-
                   <span>Permukaan: {{ court.surface }}</span>
 
                 </div>
@@ -864,9 +863,16 @@ watch(selectedDayIndex, () => {
 
               >
 
-                {{ isCourtExpanded(court.id) ? 'Sembunyikan Jadwal' : `${availableCount(court)} Jadwal Tersedia` }}
+                {{ isCourtExpanded(court.id) ? 'Sembunyikan Jadwal' : `${availableCountWithServer(court)} Jadwal Tersedia` }}
 
-                <span class="text-xs">{{ isCourtExpanded(court.id) ? '^' : '?' }}</span>
+                <span class="text-xs text-white/80">
+                  <svg v-if="isCourtExpanded(court.id)" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 15l-6-6-6 6" />
+                  </svg>
+                  <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
+                  </svg>
+                </span>
 
               </button>
 
