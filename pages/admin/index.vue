@@ -101,7 +101,7 @@ const { data: bookingsResponse, pending: isLoading, refresh: refreshBookings } =
 const rawBookings = computed<any[]>(() => (bookingsResponse.value as any)?.data?.bookings || [])
 
 const dashboardData = computed<DashboardCardItem[]>(() => {
-  let fieldsToCheck = allFields.value.filter(f => f.status === 'ACTIVE')
+  let fieldsToCheck = allFields.value
 
   if (selectedStadionId.value) {
     fieldsToCheck = fieldsToCheck.filter(f =>
