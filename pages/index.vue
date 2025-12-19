@@ -40,11 +40,7 @@ const totalFields = computed(() =>
   stadionsData.value?.reduce((sum, s) => sum + (s.fields?.length ?? 0), 0) ?? 0
 )
 
-const activeFieldCount = (stadion?: StadiumCard) => {
-  if (!stadion?.fields) return 0
-  const active = stadion.fields.filter((f) => f.status === 'ACTIVE').length
-  return active || stadion.fields.length
-}
+const activeFieldCount = (stadion?: StadiumCard) => stadion?.fields?.length ?? 0
 
 const totalFreeFields = computed(() =>
   stadionsData.value?.reduce((sum, s) => sum + activeFieldCount(s), 0) ?? 0

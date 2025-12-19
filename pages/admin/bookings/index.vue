@@ -38,10 +38,9 @@ watch(searchQuery, applyDebounce)
 const filteredStadions = computed(() => {
   if (!stadions.value) return []
   
-  // 1. Filter stadion yang statusnya ACTIVE saja
-  let result = stadions.value.filter(s => s.status === 'ACTIVE')
+  let result = stadions.value
 
-  // 2. Filter berdasarkan pencarian nama
+  // Filter berdasarkan pencarian nama
   if (debouncedSearch.value) {
     result = result.filter(stadion =>
       stadion.name.toLowerCase().includes(debouncedSearch.value)
