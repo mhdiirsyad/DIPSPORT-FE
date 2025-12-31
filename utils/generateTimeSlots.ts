@@ -11,7 +11,8 @@ interface Slot {
 export function generateTimeSlots(
   startHour = 8,
   endHour = 22,
-  pricePerHour = 100000,
+  // HARGA DISEMBUNYIKAN: Default pricePerHour set ke 0
+  pricePerHour = 0, // 100000,
   bookedSlots: number[] = []
 ): Slot[] {
   const slots: Slot[] = []
@@ -23,8 +24,11 @@ export function generateTimeSlots(
       start: start,
       end: end,
       hour,
-      price: pricePerHour,
-      previousPrice: Math.random() > 0.7 ? pricePerHour + 20000 : null,
+      // HARGA DISEMBUNYIKAN: price set ke 0
+      price: 0, // pricePerHour,
+      // HARGA DISEMBUNYIKAN: previousPrice dikomentari
+      // previousPrice: Math.random() > 0.7 ? pricePerHour + 20000 : null,
+      previousPrice: null,
       highlight: Math.random() > 0.8,
       status: isBooked ? 'Booked' : 'Available'
     })

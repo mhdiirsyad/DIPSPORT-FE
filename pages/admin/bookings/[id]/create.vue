@@ -87,7 +87,6 @@ async function handleSubmit(){
     suratFile: null as File | null
   }
 
-  // only include suratFile variable when a file is actually attached
   if (bookingForm.suratFile) vars.suratFile = null
 
   const operations = {
@@ -95,8 +94,6 @@ async function handleSubmit(){
     variables: vars
   }
 
-  // If there's a file attached, send multipart/form-data (GraphQL multipart spec).
-  // Otherwise send a plain JSON POST to the server (avoids sending an empty multipart without `map`).
   try {
     if (bookingForm.suratFile) {
       const fd = new FormData()
@@ -137,7 +134,6 @@ async function handleSubmit(){
         navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
       })
     } else {
-      // JSON path — server expects plain JSON for non-file submissions
       const payload = {
         name: bookingForm.name,
         contact: bookingForm.contact,
@@ -165,111 +161,234 @@ async function handleSubmit(){
   }
 }
 
-// clear uploaded file if user toggles off academic booking
 watch(() => bookingForm.isAcademic, (val) => {
   if (!val) bookingForm.suratFile = null
 })
 </script>
 
 <template>
-  <main class="max-w-3xl mx-auto p-6 space-y-8">
-    <h1 class="text-2xl font-bold">Data Pemesan</h1>
-
-    <div v-if="errorMsg" class="text-red-600 bg-red-50 p-3 rounded">{{ errorMsg }}</div>
-
-    <!-- ===================== SELECTED SLOTS ===================== -->
-    <section class="border rounded-xl p-4 bg-gray-50">
-      <h2 class="font-semibold mb-3">Slot yang Dipilih</h2>
-
-      <div v-if="selectedSlots.length === 0" class="text-sm text-gray-500">
-        <h1>tidak ada slot yang dipilih</h1>
-      </div>
-
-      <div v-else class="space-y-2">
-        <div 
-          v-for="slot in selectedSlots" 
-          :key="slot.fieldId + '-' + slot.startHour"
-          class="p-3 rounded-lg bg-white border shadow-sm"
-        >
-          <p class="font-medium">{{ slot.fieldName }}</p>
-          <p class="text-sm text-gray-600">
-            {{ slot.date.split('T')[0] }} • {{ slot.startHour }}:00 - {{ slot.startHour + 1 }}:00
+  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-12 relative">
+    
+    <!-- HEADER -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div class="flex items-start gap-4">
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 shrink-0 hidden sm:flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl uppercase font-bold text-gray-900 tracking-tight">Buat Booking Baru</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Lengkapi informasi pemesan untuk membuat booking lapangan olahraga.
           </p>
-
-          <!-- <p class="font-semibold mt-1">
-            Rp {{ slot.pricePerHour.toLocaleString('id-ID') }}
-          </p> -->
         </div>
       </div>
+    </header>
 
-      <hr class="my-4" />
-
-      <!-- TOTAL -->
-      <div class="flex justify-between items-center">
-        <span class="text-lg font-semibold">Total</span>
-        <span class="text-xl font-bold"
-          >Rp {{ totalPrice.toLocaleString('id-ID') }}</span
-        >
-      </div>
-    </section>
-
-    <!-- ===================== FORM ===================== -->
-    <form @submit.prevent="handleSubmit" class="space-y-4">
+    <!-- ERROR MESSAGE -->
+    <div v-if="errorMsg" class="p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-start gap-3 shadow-sm">
+      <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       <div>
-        <label class="block text-sm font-medium">Nama</label>
-        <input v-model="bookingForm.name" type="text" class="input" required />
+        <p class="font-bold text-sm">Terjadi Kesalahan</p>
+        <p class="text-sm">{{ errorMsg }}</p>
       </div>
+    </div>
 
-      <div>
-        <label class="block text-sm font-medium">Kontak</label>
-        <input v-model="bookingForm.contact" type="text" class="input" required />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium">Email</label>
-        <input v-model="bookingForm.email" type="email" class="input" required />
-      </div>
-
-      <div class="flex items-center gap-2">
-        <input id="academic" type="checkbox" v-model="bookingForm.isAcademic" />
-        <label for="academic">Akademik?</label>
-      </div>
-
-      <div v-if="bookingForm.isAcademic" class="space-y-3">
-        <div>
-          <label class="block text-sm font-medium">Institusi</label>
-          <input v-model="bookingForm.institution" type="text" class="input" required />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium">Upload Surat (PDF)</label>
-          <input type="file" accept="application/pdf" @change="handleFileUpload" />
-          <div v-if="uploadProgress !== null" class="mt-2">
-            <div class="w-full bg-gray-200 rounded h-2">
-              <div :style="{ width: uploadProgress + '%' }" class="bg-blue-600 h-2 rounded"></div>
+    <form id="booking-form" @submit.prevent="handleSubmit" class="flex flex-col gap-8 max-w-5xl mx-auto w-full">
+      
+      <!-- ===================== SELECTED SLOTS CARD ===================== -->
+      <div class="w-full">
+        <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-200 bg-gray-50/50">
+            <h3 class="text-base font-bold text-gray-900">Slot yang Dipilih</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Review jadwal booking sebelum melanjutkan.</p>
+          </div>
+          
+          <div class="p-6">
+            <div v-if="selectedSlots.length === 0" class="text-center py-8">
+              <svg class="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p class="text-sm text-gray-500 font-medium">Tidak ada slot yang dipilih</p>
+              <p class="text-xs text-gray-400 mt-1">Silakan pilih slot terlebih dahulu</p>
             </div>
-            <div class="text-sm text-gray-600 mt-1">Uploading: {{ uploadProgress }}%</div>
+
+            <div v-else class="space-y-3">
+              <div 
+                v-for="slot in selectedSlots" 
+                :key="slot.fieldId + '-' + slot.startHour"
+                class="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <p class="font-bold text-gray-900 text-base">{{ slot.fieldName }}</p>
+                    <div class="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="font-medium">{{ slot.date.split('T')[0] }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1.5 text-sm text-gray-600">
+                      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span class="font-medium">{{ slot.startHour }}:00 - {{ slot.startHour + 1 }}:00</span>
+                    </div>
+                  </div>
+                  <!-- HARGA DISEMBUNYIKAN SEMENTARA -->
+                  <!-- <div class="text-right">
+                    <p class="text-xs text-gray-500 uppercase tracking-wide font-bold">Harga</p>
+                    <p class="text-lg font-bold text-blue-600 mt-1">Rp {{ slot.pricePerHour.toLocaleString('id-ID') }}</p>
+                  </div> -->
+                </div>
+              </div>
+
+              <!-- TOTAL PEMBAYARAN DISEMBUNYIKAN SEMENTARA -->
+              <!-- <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="flex justify-between items-center bg-blue-600 p-4 rounded-xl shadow-sm">
+                  <span class="text-base font-bold text-white uppercase tracking-wide">Total Pembayaran</span>
+                  <span class="text-2xl font-bold text-white">Rp {{ totalPrice.toLocaleString('id-ID') }}</span>
+                </div>
+              </div> -->
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- SUBMIT -->
-      <button
-        type="submit"
-        class="mt-6 w-full rounded-full bg-[#1f2a56] px-6 py-3 font-semibold text-white shadow hover:bg-[#162347]"
-      >
-        Buat Booking
-      </button>
+      <!-- ===================== INFORMASI PEMESAN CARD ===================== -->
+      <div class="w-full">
+        <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-200 bg-gray-50/50">
+            <h3 class="text-base font-bold text-gray-900">Informasi Pemesan</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Data kontak untuk konfirmasi booking.</p>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Lengkap <span class="text-red-500">*</span></label>
+              <input 
+                v-model="bookingForm.name" 
+                type="text" 
+                required 
+                placeholder="Masukkan nama lengkap" 
+                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nomor Kontak <span class="text-red-500">*</span></label>
+              <input 
+                v-model="bookingForm.contact" 
+                type="text" 
+                required 
+                placeholder="Contoh: 081234567890" 
+                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Alamat Email <span class="text-red-500">*</span></label>
+              <input 
+                v-model="bookingForm.email" 
+                type="email" 
+                required 
+                placeholder="contoh@email.com" 
+                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== BOOKING AKADEMIK CARD ===================== -->
+      <div class="w-full">
+        <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-200 bg-gray-50/50">
+            <h3 class="text-base font-bold text-gray-900">Kategori Booking</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Pilih jenis booking untuk keperluan akademik atau umum.</p>
+          </div>
+          <div class="p-6 space-y-6">
+            <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <input 
+                id="academic" 
+                type="checkbox" 
+                v-model="bookingForm.isAcademic"
+                class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" 
+              />
+              <div class="flex-1">
+                <label for="academic" class="block text-sm font-bold text-gray-900 cursor-pointer">
+                  Booking untuk Keperluan Akademik
+                </label>
+                <p class="text-xs text-gray-600 mt-1">
+                  Centang jika booking ini untuk kegiatan akademik (gratis biaya).
+                </p>
+              </div>
+            </div>
+
+            <div v-if="bookingForm.isAcademic" class="space-y-4 pl-4 border-l-4 border-blue-500">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Institusi <span class="text-red-500">*</span></label>
+                <input 
+                  v-model="bookingForm.institution" 
+                  type="text" 
+                  required 
+                  placeholder="Contoh: Universitas Diponegoro" 
+                  class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Upload Surat Pengantar (PDF)</label>
+                <div class="relative">
+                  <input 
+                    type="file" 
+                    accept="application/pdf" 
+                    @change="handleFileUpload"
+                    class="block w-full text-sm text-gray-900 border border-gray-300 rounded-xl cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 file:mr-4 file:py-3 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all" 
+                  />
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                  💡 Format file harus PDF, maksimal 5MB.
+                </p>
+                
+                <div v-if="uploadProgress !== null" class="mt-3 space-y-2">
+                  <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div 
+                      :style="{ width: uploadProgress + '%' }" 
+                      class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300 ease-out"
+                    ></div>
+                  </div>
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-gray-600 font-medium">Mengunggah file...</span>
+                    <span class="text-blue-600 font-bold">{{ uploadProgress }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-4">
+        <button
+          type="button"
+          @click="$router.back()"
+          class="flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all active:scale-95"
+        >
+          Batal
+        </button>
+
+        <button
+          type="submit"
+          :disabled="uploadProgress !== null"
+          class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          <svg v-if="uploadProgress !== null" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <span>{{ uploadProgress !== null ? 'Menyimpan...' : 'Buat Booking' }}</span>
+        </button>
+      </div>
+
     </form>
-  </main>
+  </section>
 </template>
-
-
-<style scoped>
-.input {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-</style>

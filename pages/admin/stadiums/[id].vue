@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import { useConfirmation } from '~/composables/useConfirmation'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -35,6 +36,7 @@ interface FetchErrorData {
 const router = useRouter()
 const route = useRoute()
 const stadionId = route.params.id as string
+const { confirm } = useConfirmation()
 
 const form = ref({
   name: '',
@@ -211,7 +213,15 @@ async function handleSubmit() {
 }
 
 async function handleDelete() {
-  if (!confirm('PERINGATAN: Menghapus stadion ini akan menghapus semua lapangan dan booking terkait. Anda yakin?')) return
+  const isConfirmed = await confirm({
+    title: 'Hapus Stadion',
+    message: 'PERINGATAN: Menghapus stadion ini akan menghapus semua lapangan dan booking terkait. Anda yakin?',
+    confirmText: 'Hapus',
+    cancelText: 'Batal',
+    type: 'danger'
+  })
+
+  if (!isConfirmed) return
   
   loadingDelete.value = true
   try {
@@ -300,10 +310,33 @@ async function handleDelete() {
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Stadion <span class="text-red-500">*</span></label>
               <input v-model="form.name" type="text" required placeholder="Contoh: Stadion Diponegoro" class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" />
+              <p v-if="errorMsg && errorMsg.includes('Nama stadion')" class="mt-2 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ errorMsg }}</span>
+              </p>
             </div>
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Deskripsi</label>
-              <textarea v-model="form.description" rows="4" placeholder="Jelaskan fasilitas unggulan..." class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all resize-none"></textarea>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Deskripsi <span class="text-gray-400 font-normal">(Opsional)</span>
+              </label>
+              <textarea 
+                v-model="form.description" 
+                rows="4" 
+                maxlength="191" 
+                placeholder="Jelaskan fasilitas unggulan, lokasi strategis, atau keunggulan stadion ini..."
+                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all resize-none"
+              ></textarea>
+              <div class="flex items-center justify-between text-[11px]">
+                <p class="text-gray-500">
+                  <svg class="w-3.5 h-3.5 inline-block mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Tambahkan deskripsi untuk memberikan informasi lengkap kepada pengunjung
+                </p>
+                <span class="font-semibold" :class="form.description.length >= 191 ? 'text-red-500' : 'text-gray-400'">
+                  {{ form.description.length }}/191
+                </span>
+              </div>
             </div>
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">URL Google Maps <span class="text-red-500">*</span></label>
@@ -311,6 +344,10 @@ async function handleDelete() {
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
                 <input v-model="form.mapUrl" type="url" required placeholder="https://maps.app.goo.gl/..." class="block w-full rounded-xl border border-gray-300 pl-10 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" />
               </div>
+              <p v-if="errorMsg && (errorMsg.includes('URL Peta') || errorMsg.includes('URL'))" class="mt-2 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ errorMsg }}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -320,16 +357,22 @@ async function handleDelete() {
             <div><h3 class="text-base font-bold text-gray-900">Fasilitas Tersedia</h3><p class="text-xs text-gray-500 mt-0.5">Pilih fasilitas yang tersedia (maksimal 10).</p></div>
             <span class="text-xs font-bold px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-100">{{ form.facilityIds.length }}/10 Dipilih</span>
           </div>
-          <div class="p-6">
+          <div class="p-6 space-y-4">
             <div v-if="facilitiesPending" class="text-center py-8 text-sm text-gray-500"><div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-blue-600 mb-2"></div><p>Memuat fasilitas...</p></div>
             <div v-else-if="facilityError" class="text-center py-8 text-red-600 text-sm">Gagal memuat data. <button type="button" @click="retryLoadFacilities" class="underline font-bold">Coba lagi</button></div>
-            <div v-else class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
-              <label v-for="facility in facilities" :key="facility.id" class="group relative flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all duration-200" :class="[form.facilityIds.includes(facility.id) ? 'border-blue-500 bg-blue-50/50 shadow-md ring-1 ring-blue-500/20' : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 hover:shadow-sm', (form.facilityIds.length >= 10 && !form.facilityIds.includes(facility.id)) ? 'opacity-50 cursor-not-allowed grayscale' : '']">
-                <input type="checkbox" v-model="form.facilityIds" :value="facility.id" :disabled="form.facilityIds.length >= 10 && !form.facilityIds.includes(facility.id)" class="sr-only" />
-                <div v-if="form.facilityIds.includes(facility.id)" class="absolute top-2 right-2 bg-blue-500 rounded-full p-0.5 shadow-sm"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg></div>
-                <Icon :icon="facility.icon" class="w-8 h-8 mb-2 transition-transform duration-200 group-hover:scale-110" :class="form.facilityIds.includes(facility.id) ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'" />
-                <span class="text-xs font-medium text-center leading-tight transition-colors" :class="form.facilityIds.includes(facility.id) ? 'text-blue-700 font-bold' : 'text-gray-600 group-hover:text-blue-600'">{{ facility.name }}</span>
-              </label>
+            <div v-else class="space-y-4">
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                <label v-for="facility in facilities" :key="facility.id" class="group relative flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all duration-200" :class="[form.facilityIds.includes(facility.id) ? 'border-blue-500 bg-blue-50/50 shadow-md ring-1 ring-blue-500/20' : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 hover:shadow-sm', (form.facilityIds.length >= 10 && !form.facilityIds.includes(facility.id)) ? 'opacity-50 cursor-not-allowed grayscale' : '']">
+                  <input type="checkbox" v-model="form.facilityIds" :value="facility.id" :disabled="form.facilityIds.length >= 10 && !form.facilityIds.includes(facility.id)" class="sr-only" />
+                  <div v-if="form.facilityIds.includes(facility.id)" class="absolute top-2 right-2 bg-blue-500 rounded-full p-0.5 shadow-sm"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg></div>
+                  <Icon :icon="facility.icon" class="w-8 h-8 mb-2 transition-transform duration-200 group-hover:scale-110" :class="form.facilityIds.includes(facility.id) ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'" />
+                  <span class="text-xs font-medium text-center leading-tight transition-colors" :class="form.facilityIds.includes(facility.id) ? 'text-blue-700 font-bold' : 'text-gray-600 group-hover:text-blue-600'">{{ facility.name }}</span>
+                </label>
+              </div>
+              <p v-if="errorMsg && errorMsg.includes('Fasilitas')" class="mt-2 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ errorMsg }}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -353,7 +396,6 @@ async function handleDelete() {
                 </div>
               </div>
             </div>
-            <div v-if="errorMsg" id="error-alert" class="p-3 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm font-medium flex items-start gap-2 animate-pulse"><svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>{{ errorMsg }}</span></div>
           </div>
         </div>
 
@@ -468,6 +510,11 @@ async function handleDelete() {
                 </button>
               </div>
             </div>
+
+            <p v-if="errorMsg && errorMsg.includes('gambar')" class="mt-3 text-xs text-red-600 font-medium flex items-start gap-1.5">
+              <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span>{{ errorMsg }}</span>
+            </p>
 
           </div>
         </div>

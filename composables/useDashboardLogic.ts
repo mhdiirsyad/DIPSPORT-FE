@@ -45,6 +45,7 @@ dayjs.tz.setDefault("Asia/Jakarta")
 export interface DashboardCardItem {
   id: string
   name: string
+  stadionId: number
   stadionName: string
   mode: 'daily' | 'range'
   totalCapacity: number
@@ -102,6 +103,7 @@ export const useDashboardLogic = () => {
       return {
         id: field.id,
         name: field.name,
+        stadionId: field.stadionId || Number(field.Stadion?.id) || 0,
         stadionName: field.Stadion?.name || '-',
         mode: 'daily',
         totalCapacity: dailyCapacity,
@@ -161,6 +163,7 @@ export const useDashboardLogic = () => {
       return {
         id: field.id,
         name: field.name,
+        stadionId: field.stadionId || Number(field.Stadion?.id) || 0,
         stadionName: field.Stadion?.name || '-',
         mode: 'range',
         totalCapacity: totalRangeCapacity,

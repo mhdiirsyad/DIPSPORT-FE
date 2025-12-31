@@ -14,7 +14,7 @@ interface Images {
 interface StadionRow {
   id: number
   name: string
-  status: string // Menambahkan status untuk filtering
+  status: string
   images?: Images[]
   fields?: any[] 
   _count?: { fields: number }
@@ -40,7 +40,6 @@ const filteredStadions = computed(() => {
   
   let result = stadions.value
 
-  // Filter berdasarkan pencarian nama
   if (debouncedSearch.value) {
     result = result.filter(stadion =>
       stadion.name.toLowerCase().includes(debouncedSearch.value)
@@ -65,7 +64,7 @@ const paginationSummary = computed(() => {
   if (totalItems.value === 0) return 'Tidak ada data'
   const start = (currentPage.value - 1) * itemsPerPage + 1
   const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}-${end} dari ${totalItems.value} venue`
+  return `Menampilkan ${start}-${end} dari ${totalItems.value} Venue`
 })
 
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
@@ -153,13 +152,6 @@ const fallbackImage = 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb
               onerror="this.src='https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'"
             >
             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60"></div>
-            
-            <div class="absolute bottom-3 left-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              {{ venue._count?.fields ?? venue.fields?.length ?? 0 }} Lapangan
-            </div>
           </div>
 
           <div class="flex flex-col flex-1 p-5">
@@ -171,7 +163,13 @@ const fallbackImage = 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb
             </div>
 
             <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <span class="text-xs font-medium text-gray-500">Klik untuk detail</span>
+              <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                <span class="font-semibold text-gray-700">{{ venue._count?.fields ?? venue.fields?.length ?? 0 }}</span>
+                <span>Lapangan</span>
+              </div>
               <div class="flex items-center gap-1 text-sm font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
                 Lihat Jadwal
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

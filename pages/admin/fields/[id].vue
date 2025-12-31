@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import { useConfirmation } from '~/composables/useConfirmation'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -31,6 +32,7 @@ interface FetchErrorData {
 const router = useRouter()
 const route = useRoute()
 const fieldId = route.params.id as string
+const { confirm } = useConfirmation()
 
 const form = ref({
   stadionId: 0,
@@ -144,7 +146,8 @@ async function handleSubmit() {
 
   if (!form.value.stadionId) { errorMsg.value = 'Stadion induk wajib dipilih.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (!form.value.name.trim()) { errorMsg.value = 'Nama lapangan wajib diisi.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-  if (!form.value.pricePerHour) { errorMsg.value = 'Harga per jam wajib diisi.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  // HARGA DISEMBUNYIKAN: Validasi harga dikomentari
+  // if (!form.value.pricePerHour) { errorMsg.value = 'Harga per jam wajib diisi.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
 
   try {
     const updated: any = await $fetch('/api/fields/update', {
@@ -153,7 +156,9 @@ async function handleSubmit() {
         fieldId: Number(fieldId),
         ...form.value,
         stadionId: Number(form.value.stadionId),
-        pricePerHour: Number(form.value.pricePerHour),
+        // HARGA DISEMBUNYIKAN: Kirim form value (default 0), bukan hardcode
+        // Nanti kalau UI di-uncomment, akan otomatis kirim value dari form
+        pricePerHour: Number(form.value.pricePerHour || 0),
         description: form.value.description || undefined,
       },
     } as any) as any
@@ -199,7 +204,15 @@ async function handleSubmit() {
 }
 
 async function handleDelete() {
-  if (!confirm('Apakah Anda yakin ingin menghapus lapangan ini? Data yang dihapus tidak dapat dikembalikan.')) return
+  const isConfirmed = await confirm({
+    title: 'Hapus Lapangan',
+    message: 'Apakah Anda yakin ingin menghapus lapangan ini? Data yang dihapus tidak dapat dikembalikan.',
+    confirmText: 'Hapus',
+    cancelText: 'Batal',
+    type: 'danger'
+  })
+
+  if (!isConfirmed) return
   loadingDelete.value = true
   try {
     await $fetch('/api/fields/delete', {
@@ -316,11 +329,31 @@ async function handleDelete() {
             </div>
             
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Deskripsi</label>
-              <textarea v-model="form.description" rows="3" placeholder="Deskripsi spesifikasi lapangan, jenis lantai, dll..." class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all resize-none"></textarea>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Deskripsi Lapangan <span class="text-gray-400 font-normal">(Opsional)</span>
+              </label>
+              <textarea 
+                v-model="form.description" 
+                rows="4" 
+                maxlength="191" 
+                placeholder="Jelaskan spesifikasi lapangan: jenis lantai, ukuran, pencahayaan, fasilitas penunjang, dll..."
+                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all resize-none"
+              ></textarea>
+              <div class="flex items-center justify-between text-[11px]">
+                <p class="text-gray-500">
+                  <svg class="w-3.5 h-3.5 inline-block mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Detail spesifikasi membantu pengguna memahami kondisi dan fasilitas lapangan
+                </p>
+                <span class="font-semibold" :class="form.description.length >= 191 ? 'text-red-500' : 'text-gray-400'">
+                  {{ form.description.length }}/191
+                </span>
+              </div>
             </div>
 
-            <div class="space-y-1.5">
+            <!-- HARGA DISEMBUNYIKAN: Form input harga dikomentari -->
+            <!-- <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Harga Sewa per Jam <span class="text-red-500">*</span></label>
               <div class="relative rounded-xl shadow-sm">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -339,7 +372,7 @@ async function handleDelete() {
                   <span class="text-gray-400 text-xs font-medium">/ jam</span>
                 </div>
               </div>
-            </div>
+            </div> -->
 
           </div>
         </div>
@@ -372,7 +405,20 @@ async function handleDelete() {
                 Stadion induk sedang non-aktif.
               </p>
             </div>
-            <div v-if="errorMsg" id="error-alert" class="p-3 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm font-medium flex items-start gap-2 animate-pulse"><svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>{{ errorMsg }}</span></div>
+          </div>
+        </div>
+        
+        <div v-if="errorMsg" id="error-alert" class="bg-white rounded-2xl border border-red-300 shadow-sm overflow-hidden">
+          <div class="p-4 bg-red-50 border-l-4 border-red-500">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-red-800 mb-1">Terjadi Kesalahan</p>
+                <p class="text-sm text-red-700 break-words">{{ errorMsg }}</p>
+              </div>
+            </div>
           </div>
         </div>
 

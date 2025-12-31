@@ -24,7 +24,8 @@ const form = ref({
   stadionId: '',
   name: '',
   description: '',
-  pricePerHour: null as number | null,
+  // HARGA DISEMBUNYIKAN: Default 0 agar tidak perlu input
+  pricePerHour: 0 as number | null,
   status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
 })
 
@@ -100,7 +101,8 @@ async function handleSubmit() {
 
   if (!form.value.stadionId) { errorMsg.value = 'Stadion induk wajib dipilih.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (!form.value.name.trim()) { errorMsg.value = 'Nama lapangan wajib diisi.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-  if (!form.value.pricePerHour) { errorMsg.value = 'Harga per jam wajib diisi.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  // HARGA DISEMBUNYIKAN: Validasi harga dikomentari
+  // if (!form.value.pricePerHour) { errorMsg.value = 'Harga per jam wajib diisi.'; loading.value = false; window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
 
   try {
     const created: any = await $fetch('/api/fields/create', {
@@ -108,7 +110,9 @@ async function handleSubmit() {
       body: {
         ...form.value,
         stadionId: Number(form.value.stadionId),
-        pricePerHour: Number(form.value.pricePerHour),
+        // HARGA DISEMBUNYIKAN: Kirim form value (default 0), bukan hardcode
+        // Nanti kalau UI di-uncomment, akan otomatis kirim value dari form
+        pricePerHour: Number(form.value.pricePerHour || 0),
         description: form.value.description || undefined,
       },
     } as any) as any
@@ -188,14 +192,6 @@ async function handleSubmit() {
       </div>
     </header>
 
-    <div v-if="errorMsg" id="error-alert" class="p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-start gap-3 shadow-sm animate-pulse">
-      <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-      <div>
-        <p class="font-bold text-sm">Terjadi Kesalahan</p>
-        <p class="text-sm">{{ errorMsg }}</p>
-      </div>
-    </div>
-
     <form id="create-field-form" @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       <div class="lg:col-span-2 space-y-8">
@@ -230,19 +226,47 @@ async function handleSubmit() {
                   <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                 </div>
               </div>
+              <p v-if="errorMsg && errorMsg.includes('Stadion')" class="mt-2 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ errorMsg }}</span>
+              </p>
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Lapangan <span class="text-red-500">*</span></label>
               <input v-model="form.name" type="text" required placeholder="Contoh: Lapangan Badminton A" class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" />
+              <p v-if="errorMsg && errorMsg.includes('Nama lapangan')" class="mt-2 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ errorMsg }}</span>
+              </p>
             </div>
             
             <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Deskripsi</label>
-              <textarea v-model="form.description" rows="3" placeholder="Deskripsi spesifikasi lapangan, jenis lantai, dll..." class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all resize-none"></textarea>
+              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Deskripsi Lapangan <span class="text-gray-400 font-normal">(Opsional)</span>
+              </label>
+              <textarea 
+                v-model="form.description" 
+                rows="4" 
+                maxlength="191" 
+                placeholder="Jelaskan spesifikasi lapangan: jenis lantai, ukuran, pencahayaan, fasilitas penunjang, dll..."
+                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all resize-none"
+              ></textarea>
+              <div class="flex items-center justify-between text-[11px]">
+                <p class="text-gray-500">
+                  <svg class="w-3.5 h-3.5 inline-block mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Detail spesifikasi membantu pengguna memahami kondisi dan fasilitas lapangan
+                </p>
+                <span class="font-semibold" :class="form.description.length >= 191 ? 'text-red-500' : 'text-gray-400'">
+                  {{ form.description.length }}/191
+                </span>
+              </div>
             </div>
 
-            <div class="space-y-1.5">
+            <!-- HARGA DISEMBUNYIKAN: Form input harga dikomentari -->
+            <!-- <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Harga Sewa per Jam <span class="text-red-500">*</span></label>
               <div class="relative rounded-xl shadow-sm">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -261,7 +285,11 @@ async function handleSubmit() {
                   <span class="text-gray-400 text-xs font-medium">/ jam</span>
                 </div>
               </div>
-            </div>
+              <p v-if="errorMsg && errorMsg.includes('Harga')" class="mt-2 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ errorMsg }}</span>
+              </p>
+            </div> -->
 
           </div>
         </div>
@@ -328,6 +356,11 @@ async function handleSubmit() {
                 </div>
                 <input type="file" multiple accept="image/*" @change="handleImageInput" class="hidden" />
               </label>
+            </div>
+
+            <div v-if="errorMsg && errorMsg.includes('gambar')" class="text-xs text-red-600 font-medium flex items-start gap-1.5 p-3 bg-red-50 rounded-lg border border-red-100 mb-4">
+              <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span>{{ errorMsg }}</span>
             </div>
 
             <div v-if="selectedImages.length > 0" class="flex flex-col gap-3">

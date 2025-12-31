@@ -117,6 +117,7 @@ const dashboardData = computed<DashboardCardItem[]>(() => {
 
 const totalAvailable = computed(() => dashboardData.value.reduce((acc, curr) => acc + curr.remaining, 0))
 const totalBooked = computed(() => dashboardData.value.reduce((acc, curr) => acc + curr.totalBooked, 0))
+const totalCapacity = computed(() => dashboardData.value.reduce((acc, curr) => acc + curr.totalCapacity, 0))
 
 const switchMode = (mode: 'daily' | 'range') => {
   filterMode.value = mode
@@ -126,9 +127,10 @@ const switchMode = (mode: 'daily' | 'range') => {
 <template>
   <div class="w-full pb-16 px-4 sm:px-6 print:p-0 print:pb-0">
     
-    <div class="hidden print:flex items-center gap-6 mb-8 border-b-2 border-gray-900 pb-6">
-      <div class="w-20 h-20 bg-gray-200 flex items-center justify-center rounded-lg border border-gray-300">
-        <span class="text-xs font-bold text-gray-500 text-center">LOGO<br>INSTANSI</span>
+    <!-- HEADER PRINT -->
+    <div class="hidden print:flex items-center gap-6 mb-8 pb-6 px-6 pt-6">
+      <div class="w-20 h-20 flex items-center justify-center rounded-lg">
+        <img src="~/assets/images/UNDIPOfficial.png" alt="Logo UNDIP" class="w-full h-full object-contain" />
       </div>
       
       <div class="flex-1">
@@ -234,40 +236,40 @@ const switchMode = (mode: 'daily' | 'range') => {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 print:mb-6 print:break-inside-avoid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 print:mb-8 print:break-inside-avoid px-6 print:px-6">
       <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-200 print:bg-white print:text-black print:border-2 print:border-gray-800 print:shadow-none">
         <div class="absolute right-0 top-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 print:hidden">
           <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
         </div>
-        <p class="relative z-10 text-blue-100 text-xs font-bold uppercase tracking-wider mb-3 print:text-gray-600">
+        <p class="relative z-10 text-blue-100 text-xs font-bold uppercase tracking-wider mb-3 print:text-gray-100">
           {{ filterMode === 'daily' ? 'Sisa Kapasitas Besok' : 'Total Kuota Periode Ini' }}
         </p>
         <div class="relative z-10 flex items-baseline gap-2">
           <h2 class="text-6xl font-extrabold tracking-tight print:text-black">{{ totalAvailable }}</h2>
-          <span class="text-xl font-medium text-blue-100 print:text-gray-800">Jam Kosong</span>
+          <span class="text-xl font-medium text-blue-100 print:text-white-100">Jam Kosong</span>
         </div>
-        <div class="relative z-10 mt-2 text-sm text-blue-200 font-medium print:text-gray-500">Siap digunakan</div>
+        <div class="relative z-10 mt-2 text-sm text-blue-200 font-medium print:text-gray-100">Siap digunakan</div>
       </div>
 
       <div class="relative overflow-hidden bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-center print:border-2 print:border-gray-800">
-        <p class="relative z-10 text-gray-500 text-xs font-bold uppercase tracking-wider mb-3 print:text-gray-600">
+        <p class="relative z-10 text-gray-500 text-xs font-bold uppercase tracking-wider mb-3 print:text-gray-10">
           {{ filterMode === 'daily' ? 'Terbooking Besok' : 'Total Terbooking (Volume)' }}
         </p>
         <div class="relative z-10 flex items-baseline gap-2">
           <h2 class="text-6xl font-extrabold text-gray-900 tracking-tight print:text-black">{{ totalBooked }}</h2>
-          <span class="text-xl font-medium text-gray-500 print:text-gray-800">Jam Terisi</span>
+          <span class="text-xl font-medium text-gray-500 print:text-gray-100">Jam Terisi</span>
         </div>
         <div class="relative z-10 mt-2 text-sm text-gray-500 font-medium flex items-center gap-1"></div>
       </div>
     </div>
 
-    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse print:hidden">
+    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse print:hidden px-4 sm:px-6">
       <div v-for="i in 3" :key="i" class="bg-white rounded-2xl h-64 border border-gray-200 p-5 flex flex-col justify-between">
          <div class="space-y-3"><div class="h-4 bg-gray-200 rounded w-3/4"></div><div class="h-10 bg-gray-200 rounded w-full"></div></div>
       </div>
     </div>
 
-    <div v-else-if="dashboardData.length === 0" class="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 print:border-gray-800 print:py-10">
+    <div v-else-if="dashboardData.length === 0" class="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 print:border-gray-800 print:py-10 mx-4 sm:mx-6 print:mx-6 print:border-2">
       <div class="p-4 bg-gray-50 rounded-full mb-4 print:hidden">
         <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
       </div>
@@ -280,70 +282,140 @@ const switchMode = (mode: 'daily' | 'range') => {
       </button>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 print:grid-cols-2 gap-6 print:gap-4">
-      <div v-for="item in dashboardData" :key="item.id" class="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 overflow-hidden flex flex-col print:shadow-none print:border-gray-400 break-inside-avoid">
+    <div v-else class="print:hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 px-4 sm:px-6">
+      <div v-for="item in dashboardData" :key="item.id" class="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 overflow-hidden flex flex-col break-inside-avoid">
         
-        <div class="p-5 border-b border-gray-100 bg-gray-50/50 print:bg-white print:border-gray-300 print:p-3">
+        <div class="p-5 border-b border-gray-100 bg-gray-50/50">
           <div class="flex justify-between items-start gap-4">
             <div class="min-w-0 flex-1">
-              <h3 class="text-lg font-bold text-gray-900 line-clamp-2 print:text-black print:text-sm" :title="item.name">
+              <h3 class="text-lg font-bold text-gray-900 line-clamp-2" :title="item.name">
                 {{ item.name }}
               </h3>
               
-              <div class="flex items-start gap-1.5 mt-2 print:mt-1">
-                <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5 print:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex items-start gap-1.5 mt-2">
+                <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide break-words print:text-gray-700">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide break-words">
                   {{ item.stadionName }}
                 </p>
               </div>
             </div>
 
-            <span class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wide shadow-sm print:border-gray-800 print:text-black" :class="item.statusColor">
+            <span class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wide shadow-sm" :class="item.statusColor">
               {{ item.statusLabel }}
             </span>
           </div>
         </div>
 
-        <div class="p-6 flex-1 flex flex-col justify-center print:p-3">
-          <div class="flex justify-between items-end mb-3 print:mb-1">
+        <div class="p-6 flex-1 flex flex-col justify-center">
+          <div class="flex justify-between items-end mb-3">
             <div>
-              <span class="text-xs font-bold uppercase text-gray-400 block mb-1 print:text-gray-600">Sisa</span>
+              <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Sisa</span>
               <div class="flex items-baseline gap-1.5">
-                <span class="text-4xl font-extrabold text-gray-900 tracking-tighter print:text-2xl">{{ item.remaining }}</span>
-                <span class="text-sm font-semibold text-gray-400 print:text-gray-600 print:text-xs">/ {{ item.totalCapacity }}</span>
+                <span class="text-4xl font-extrabold text-gray-900 tracking-tighter">{{ item.remaining }}</span>
+                <span class="text-sm font-semibold text-gray-400">/ {{ item.totalCapacity }}</span>
               </div>
             </div>
             <div class="text-right">
-              <span class="text-xs font-bold text-gray-400 block mb-1 print:text-gray-600">Terisi</span>
-              <span class="text-xl font-bold print:text-base" :class="item.occupancyRate > 80 ? 'text-red-600' : 'text-blue-600'">
+              <span class="text-xs font-bold text-gray-400 block mb-1">Terisi</span>
+              <span class="text-xl font-bold" :class="item.occupancyRate > 80 ? 'text-red-600' : 'text-blue-600'">
                 {{ Math.round(item.occupancyRate) }}%
               </span>
             </div>
           </div>
 
-          <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner print:border print:border-gray-300 print:h-2">
+          <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
             <div
-              class="h-full rounded-full transition-all duration-700 ease-out relative print-color-exact"
+              class="h-full rounded-full transition-all duration-700 ease-out relative"
               :class="item.occupancyRate > 80 ? 'bg-red-500' : (item.occupancyRate > 50 ? 'bg-amber-500' : 'bg-green-500')"
               :style="{ width: `${Math.max(item.occupancyRate, 5)}%` }"
             ></div>
           </div>
         </div>
 
-        <div class="p-4 bg-gray-50 border-t border-gray-100 group-hover:bg-blue-50/30 transition-colors print:hidden">
-          <NuxtLink :to="`/admin/bookings/${item.id}`" class="flex items-center justify-center w-full py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-700 bg-white border border-gray-200 hover:border-blue-300 rounded-xl shadow-sm hover:shadow transition-all gap-2">
+        <div class="p-4 bg-gray-50 border-t border-gray-100 group-hover:bg-blue-50/30 transition-colors">
+          <NuxtLink :to="`/admin/bookings/${item.stadionId}`" class="flex items-center justify-center w-full py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-700 bg-white border border-gray-200 hover:border-blue-300 rounded-xl shadow-sm hover:shadow transition-all gap-2">
             Lihat Jadwal Detail
           </NuxtLink>
         </div>
       </div>
     </div>
 
-    <div class="hidden print:flex fixed bottom-0 left-0 w-full justify-between items-center text-[10px] text-gray-400 border-t border-gray-200 pt-2 px-6 bg-white">
+    <div v-if="dashboardData.length > 0" class="hidden print:block px-6 pb-8">
+      <table class="w-full border-collapse border border-gray-900 mb-8">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="border border-gray-900 px-4 py-3 text-left font-bold text-xs text-gray-900 uppercase tracking-wide">No.</th>
+            <th class="border border-gray-900 px-4 py-3 text-left font-bold text-xs text-gray-900 uppercase tracking-wide">Nama Lapangan</th>
+            <th class="border border-gray-900 px-4 py-3 text-left font-bold text-xs text-gray-900 uppercase tracking-wide">Stadion</th>
+            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Total Kuota</th>
+            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Terbooking</th>
+            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Sisa</th>
+            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Persentase Okupansi</th>
+            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in dashboardData" :key="item.id" :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ index + 1 }}</td>
+            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900">{{ item.name }}</td>
+            <td class="border border-gray-900 px-4 py-2.5 text-xs text-gray-900">{{ item.stadionName }}</td>
+            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ item.totalCapacity }}</td>
+            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ item.totalBooked }}</td>
+            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ item.remaining }}</td>
+            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-center" :class="item.occupancyRate >= 100 ? 'bg-red-100 text-red-900' : (item.occupancyRate > 75 ? 'bg-amber-100 text-amber-900' : 'bg-green-100 text-green-900')">
+              {{ Math.round(item.occupancyRate) }}%
+            </td>
+            <td class="border border-gray-900 px-4 py-2.5 text-xs font-bold text-center text-gray-900 uppercase">
+              {{ item.statusLabel }}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="bg-gray-200 font-bold">
+            <td colspan="3" class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 uppercase">Total</td>
+            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">{{ totalCapacity }}</td>
+            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">{{ totalBooked }}</td>
+            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">{{ totalAvailable }}</td>
+            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">
+              {{ totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0 }}%
+            </td>
+            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">-</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="mt-8 space-y-4 text-xs text-gray-800">
+        <div class="border-t border-gray-400 pt-4">
+          <p class="font-bold mb-2 text-sm">Keterangan Informasi:</p>
+          <ul class="list-disc list-inside space-y-1 text-gray-700">
+            <li><span class="font-semibold">Total Kuota:</span> Kapasitas jam operasional lapangan selama periode yang dipilih</li>
+            <li><span class="font-semibold">Terbooking:</span> Jumlah jam yang sudah dipesan oleh pengguna</li>
+            <li><span class="font-semibold">Sisa:</span> Jumlah jam yang masih tersedia untuk dipesan</li>
+            <li><span class="font-semibold">Persentase Okupansi:</span> Tingkat penggunaan lapangan (Terbooking / Total Kuota × 100%)</li>
+          </ul>
+        </div>
+
+        <div class="border-t border-gray-400 pt-4">
+          <p class="font-bold mb-2 text-sm">Status Ketersediaan Lapangan:</p>
+          <ul class="list-disc list-inside space-y-1 text-gray-700">
+            <li><span class="font-semibold">Tersedia:</span> Kapasitas masih banyak (0-75% terisi)</li>
+            <li><span class="font-semibold">Hampir Penuh:</span> Kapasitas terbatas (76-99% terisi)</li>
+            <li><span class="font-semibold">Full Booked:</span> Semua kapasitas telah dipesan (100% terisi)</li>
+          </ul>
+        </div>
+
+        <div class="border-t border-gray-400 pt-4">
+          <p class="text-gray-600 italic">Laporan ini dicetak secara otomatis oleh Sistem Informasi Manajemen Lapangan VENUE UNDIP</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hidden print:flex fixed bottom-0 left-0 w-full justify-between items-center text-[10px] text-gray-500 border-t border-gray-300 pt-2 px-6 bg-white py-3">
       <p>Sistem Informasi Manajemen Lapangan - VENUE UNDIP</p>
-      <p>Halaman ini dicetak secara otomatis oleh sistem.</p>
+      <p>Halaman ini dicetak secara otomatis oleh sistem pada {{ printTimestamp }}</p>
     </div>
 
   </div>
@@ -351,18 +423,38 @@ const switchMode = (mode: 'daily' | 'range') => {
 
 <style scoped>
 @media print {
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .grid { display: grid !important; }
-  .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
-  .print-color-exact { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  
-  .bg-gradient-to-br { background: none !important; }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: avoid;
+  }
+
+  thead, tfoot {
+    page-break-inside: avoid;
+  }
+
+  tbody tr {
+    page-break-inside: avoid;
+  }
 }
 </style>
 
 <style>
 @media print {
-  nav, header, aside, footer, .sidebar, .top-bar, .layout-header, .navbar { display: none !important; }
-  body, #__nuxt, #__layout { margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: white !important; }
+  nav, header, aside, footer, .sidebar, .top-bar, .layout-header, .navbar {
+    display: none !important;
+  }
+  
+  body, #__nuxt, #__layout {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background-color: white !important;
+  }
 }
 </style>

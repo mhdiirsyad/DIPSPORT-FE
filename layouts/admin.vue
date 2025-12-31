@@ -1,10 +1,20 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useAdminLayout } from '~/composables/useAdminLayout'
+import { useConfirmation } from '~/composables/useConfirmation'
+
 const { isSidebarOpen, closeSidebar } = useAdminLayout()
+const { registerModal } = useConfirmation()
+const confirmModal = ref(null)
+
+onMounted(() => {
+  registerModal(confirmModal.value)
+})
 </script>
 
 <template>
   <div class="flex min-h-screen">
+    <ConfirmationModal ref="confirmModal" />
     
     <AdminSidebar />
 

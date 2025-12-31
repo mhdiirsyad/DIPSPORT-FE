@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFetch } from 'nuxt/app'
 import { useAdminLayout } from '~/composables/useAdminLayout'
+import { useConfirmation } from '~/composables/useConfirmation'
 
 const route = useRoute()
 const router = useRouter()
 const { toggleSidebar, isSidebarOpen } = useAdminLayout()
+const { confirm } = useConfirmation()
 
 type MeResponse = { ok: boolean; admin: { name: string; email: string } | null }
 const { data: me } = await useFetch<MeResponse>('/api/auth/me', { method: 'GET' })
@@ -42,6 +44,38 @@ const nameMapping: Record<string, string> = {
   'edit': 'Edit',
 }
 
+const dynamicNames = ref<Record<string, string>>({})
+
+watch(() => route.path, async (newPath) => {
+  const params = route.params
+  if (!params.id) return
+
+  const id = String(params.id)
+  let type = ''
+  
+  if (newPath.includes('/stadiums/')) type = 'stadions'
+  else if (newPath.includes('/fields/')) type = 'fields'
+  else if (newPath.includes('/facilities/')) type = 'facilities'
+  else if (newPath.includes('/bookings/') && !newPath.includes('/bookings/order')) type = 'stadions'
+
+  if (type) {
+    const key = `${type}-${id}`
+    if (dynamicNames.value[key]) return
+
+    try {
+      const data = await $fetch<any>(`/api/${type}/${id}`)
+      if (data && data.name) {
+        dynamicNames.value[key] = data.name
+      } else {
+        dynamicNames.value[key] = id
+      }
+    } catch (e) {
+      console.error(`Failed to fetch name for ${type} ${id}`, e)
+      dynamicNames.value[key] = id
+    }
+  }
+}, { immediate: true })
+
 const breadcrumbs = computed(() => {
   const pathParts = route.path.split('/').filter(p => p && p !== 'admin')
   const crumbs = [{ name: 'Dashboard', to: '/admin', isLast: pathParts.length === 0 }]
@@ -52,6 +86,26 @@ const breadcrumbs = computed(() => {
     
     let displayName = nameMapping[part] || (part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' '))
     
+    if (part === String(route.params.id)) {
+       const prevPart = pathParts[index - 1]
+       let type = ''
+       if (prevPart === 'stadiums') type = 'stadions'
+       else if (prevPart === 'fields') type = 'fields'
+       else if (prevPart === 'facilities') type = 'facilities'
+       else if (prevPart === 'bookings') type = 'stadions'
+       
+       const key = `${type}-${part}`
+       const name = dynamicNames.value[key]
+       
+       if (type) {
+         if (name) {
+           displayName = name
+         } else {
+           displayName = '...'
+         }
+       }
+    }
+
     if (part === 'fields' && index === pathParts.length - 1 && route.params.id) {
       displayName = `Lapangan`
     }
@@ -68,6 +122,16 @@ const breadcrumbs = computed(() => {
 
 const topbarLogoutLoading = ref(false)
 const handleTopbarLogout = async () => {
+  const isConfirmed = await confirm({
+    title: 'Konfirmasi Logout',
+    message: 'Apakah Anda yakin ingin keluar dari aplikasi?',
+    confirmText: 'Logout',
+    cancelText: 'Batal',
+    type: 'danger'
+  })
+
+  if (!isConfirmed) return
+
   if (topbarLogoutLoading.value) return
   topbarLogoutLoading.value = true
   try {

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { availableIcons, VALID_FACILITY_ICONS } from '~/utils/validIconList'
 import { Icon } from '@iconify/vue'
+import { useConfirmation } from '~/composables/useConfirmation'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -12,6 +13,7 @@ definePageMeta({
 const router = useRouter()
 const route = useRoute()
 const facilityId = Number(route.params.id)
+const { confirm } = useConfirmation()
 
 interface FacilityData {
   id: number
@@ -72,7 +74,15 @@ async function handleSubmit() {
 }
 
 async function handleDelete() {
-  if (!confirm('Apakah Anda yakin ingin menghapus fasilitas ini?')) return
+  const isConfirmed = await confirm({
+    title: 'Hapus Fasilitas',
+    message: 'Apakah Anda yakin ingin menghapus fasilitas ini?',
+    confirmText: 'Hapus',
+    cancelText: 'Batal',
+    type: 'danger'
+  })
+
+  if (!isConfirmed) return
   loadingDelete.value = true
   try {
     await $fetch('/api/facilities/delete', {

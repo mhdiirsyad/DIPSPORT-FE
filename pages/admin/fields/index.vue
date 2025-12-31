@@ -154,7 +154,8 @@ const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
             <thead>
               <tr class="bg-gray-50/50 border-b border-gray-300">
                 <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-left">Info Lapangan</th>
-                <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Harga / Jam</th>
+                <!-- HARGA DISEMBUNYIKAN: Kolom harga dikomentari -->
+                <!-- <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Harga / Jam</th> -->
                 <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Status</th>
                 <th class="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">Aksi</th>
               </tr>
@@ -175,11 +176,12 @@ const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
                   </div>
                 </td>
                 
-                <td class="px-6 py-4 text-center align-middle">
+                <!-- HARGA DISEMBUNYIKAN: Kolom harga dikomentari -->
+                <!-- <td class="px-6 py-4 text-center align-middle">
                   <span class="text-sm font-semibold text-gray-900">
                     Rp {{ field.pricePerHour.toLocaleString('id-ID') }}
                   </span>
-                </td>
+                </td> -->
                 
                 <td class="px-6 py-4 text-center align-middle">
                   <span
@@ -229,14 +231,15 @@ const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
             <div class="border-t border-gray-300 my-3"></div>
 
             <div class="flex items-center justify-between">
-              <div class="flex flex-col">
+              <!-- HARGA DISEMBUNYIKAN: Tampilan harga dikomentari -->
+              <!-- <div class="flex flex-col">
                 <div class="flex items-baseline gap-1">
                   <span class="text-sm font-bold text-gray-900">
                     Rp {{ field.pricePerHour.toLocaleString('id-ID') }}
                   </span>
                   <span class="text-xs font-normal text-gray-500">/ jam</span>
                 </div>
-              </div>
+              </div> -->
 
               <NuxtLink
                 :to="`/admin/fields/${field.id}`"

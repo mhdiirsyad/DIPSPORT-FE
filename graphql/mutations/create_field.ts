@@ -4,7 +4,7 @@ export const MUTATION_CREATE_FIELD = `
     $name: String!
     $description: String
     $pricePerHour: Int!
-    $images: [FieldImageInput!]  # Diaktifkan
+    $images: [FieldImageInput!]
     $status: Status
   ) {
     createField(
@@ -12,7 +12,7 @@ export const MUTATION_CREATE_FIELD = `
       name: $name
       description: $description
       pricePerHour: $pricePerHour
-      images: $images            # Diaktifkan
+      images: $images
       status: $status
     ) {
       id

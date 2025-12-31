@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import { useAdminLayout } from '~/composables/useAdminLayout'
+import { useConfirmation } from '~/composables/useConfirmation'
 
 type NavItem = {
   label: string
@@ -16,6 +17,7 @@ const router = useRouter()
 const route = useRoute()
 const logoutLoading = ref(false)
 const { isSidebarOpen, closeSidebar } = useAdminLayout()
+const { confirm } = useConfirmation()
 
 const primaryNav: NavItem[] = [
   { label: 'Dashboard', icon: 'dashboard', to: '/admin', exact: true },
@@ -46,6 +48,16 @@ const handleNavClick = () => {
 
 const handleAction = async (item: NavItem) => {
   if (item.action === 'logout') {
+    const isConfirmed = await confirm({
+      title: 'Konfirmasi Logout',
+      message: 'Apakah Anda yakin ingin keluar dari aplikasi?',
+      confirmText: 'Logout',
+      cancelText: 'Batal',
+      type: 'danger'
+    })
+
+    if (!isConfirmed) return
+
     if (logoutLoading.value) return
     logoutLoading.value = true
     try {
