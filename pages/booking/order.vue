@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-
-definePageMeta({ layout: false })
+import { parseBackendError } from '~/utils/errorParser'
 
 interface StadionDetail {
   id: number
@@ -31,7 +30,7 @@ if (!bookingCart.value.stadionId || bookingCart.value.slots.length === 0) {
 
 const stadionId = bookingCart.value.stadionId
 
-const { data: stadion, pending } = await useAsyncData<StadionDetail | null>(
+const { data: stadion, pending, error: fetchError } = await useAsyncData<StadionDetail | null>(
   () => (stadionId ? `booking-stadion-${stadionId}` : ""),
 
   async () => {
@@ -41,6 +40,14 @@ const { data: stadion, pending } = await useAsyncData<StadionDetail | null>(
   
   { immediate: Boolean(stadionId) }
 )
+
+if (fetchError.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Stadion tidak ditemukan',
+    fatal: true
+  })
+}
 
 const orderSlots = computed(() => bookingCart.value.slots)
 const totalPrice = computed(() =>
@@ -56,6 +63,79 @@ const bookingLoading = ref(false)
 const bookingError = ref<string | null>(null)
 const bookingSuccess = ref<string | null>(null)
 const customerSuratUrl = ref('')
+
+// Validation errors per field
+const errors = ref({
+  name: '',
+  contact: '',
+  email: '',
+  suratUrl: ''
+})
+
+// Validation regex
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/
+const urlRegex = /^https?:\/\/.+/
+
+const validateName = () => {
+  const trimmed = customerName.value.trim()
+  if (!trimmed) {
+    errors.value.name = 'Nama wajib diisi'
+    return false
+  }
+  if (trimmed.length < 3) {
+    errors.value.name = 'Nama minimal 3 karakter'
+    return false
+  }
+  if (!/^[a-zA-Z\s.]+$/.test(trimmed)) {
+    errors.value.name = 'Nama hanya boleh huruf dan spasi'
+    return false
+  }
+  errors.value.name = ''
+  return true
+}
+
+const validateContact = () => {
+  const trimmed = customerContact.value.trim()
+  if (!trimmed) {
+    errors.value.contact = 'Nomor kontak wajib diisi'
+    return false
+  }
+  if (!phoneRegex.test(trimmed)) {
+    errors.value.contact = 'Format nomor tidak valid (contoh: 081234567890)'
+    return false
+  }
+  errors.value.contact = ''
+  return true
+}
+
+const validateEmail = () => {
+  const trimmed = customerEmail.value.trim()
+  if (!trimmed) {
+    errors.value.email = 'Email wajib diisi'
+    return false
+  }
+  if (!emailRegex.test(trimmed)) {
+    errors.value.email = 'Format email tidak valid'
+    return false
+  }
+  errors.value.email = ''
+  return true
+}
+
+const validateSuratUrl = () => {
+  if (!customerAcademic.value) {
+    errors.value.suratUrl = ''
+    return true
+  }
+  const trimmed = customerSuratUrl.value.trim()
+  if (trimmed && !urlRegex.test(trimmed)) {
+    errors.value.suratUrl = 'URL harus diawali dengan http:// atau https://'
+    return false
+  }
+  errors.value.suratUrl = ''
+  return true
+}
 
 const formatDateLong = (slotDate: string, label: string) => {
   try {
@@ -90,20 +170,36 @@ const addMore = () => {
 
 const createBooking = async () => {
   if (!orderSlots.value.length) return
-  if (!customerName.value || !customerContact.value || !customerEmail.value) {
-    bookingError.value = 'Nama, kontak, dan email wajib diisi.'
+  
+  const isNameValid = validateName()
+  const isContactValid = validateContact()
+  const isEmailValid = validateEmail()
+  const isSuratUrlValid = validateSuratUrl()
+  
+  if (!isNameValid || !isContactValid || !isEmailValid || !isSuratUrlValid) {
+    bookingError.value = 'Mohon perbaiki data yang tidak valid'
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     return
   }
+  
   bookingLoading.value = true
   bookingError.value = null
   bookingSuccess.value = null
+  
+  // Trim all inputs before submit
+  customerName.value = customerName.value.trim()
+  customerContact.value = customerContact.value.trim()
+  customerEmail.value = customerEmail.value.trim()
+  if (customerInstitution.value) customerInstitution.value = customerInstitution.value.trim()
+  if (customerSuratUrl.value) customerSuratUrl.value = customerSuratUrl.value.trim()
   const details = orderSlots.value.map(slot => {
     const [startText] = slot.range.split('-')
     const [hourText] = startText?.trim().split(':') ?? []
     const startHour = Number(hourText)
+    // UTC midnight format: YYYY-MM-DDT00:00:00.000Z
     return {
       fieldId: slot.courtId,
-      bookingDate: `${slot.dateKey}T00:00:00.000Z`,
+      bookingDate: `${slot.dateKey}T00:00:00.000Z`, // Sudah UTC midnight
       startHour: Number.isNaN(startHour) ? 0 : startHour,
       pricePerHour: slot.price,
     }
@@ -121,7 +217,6 @@ const createBooking = async () => {
         details,
       },
     })
-    console.log('Booking created', result)
     bookingCart.value = { stadionId: null, stadionName: '', slots: [] }
     bookingSuccess.value = `Booking berhasil! Kode: ${result?.bookingCode || ''}`
     setTimeout(() => {
@@ -129,7 +224,8 @@ const createBooking = async () => {
       navigateTo('/')
     }, 1500)
   } catch (error: any) {
-    bookingError.value = error?.data?.statusMessage || error?.message || 'Gagal membuat booking'
+    const parsed = parseBackendError(error)
+    bookingError.value = parsed.message
   } finally {
     bookingLoading.value = false
   }
@@ -137,7 +233,7 @@ const createBooking = async () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#f5f7fb] pb-16 pt-10">
+  <main class="min-h-screen bg-[#f5f7fb] pb-16">
     <div class="mx-auto grid max-w-6xl gap-6 px-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,1fr)]">
       <section class="space-y-6">
         <div class="rounded-3xl bg-white p-6 shadow-sm">
@@ -187,28 +283,67 @@ const createBooking = async () => {
           <p class="mb-3 font-semibold text-[#1f2a56]">Data Pemesan</p>
           <div class="space-y-3 text-sm">
             <label class="block">
-              <span class="text-gray-600">Nama Lengkap</span>
+              <span class="text-gray-600">Nama Lengkap <span class="text-red-500">*</span></span>
               <input
                 v-model="customerName"
                 type="text"
-                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-[#1f2a56] focus:outline-none focus:ring-2 focus:ring-[#1f2a56]/20"
+                placeholder="Masukkan nama lengkap"
+                @blur="validateName"
+                :class="[
+                  'mt-1 w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 transition-colors',
+                  errors.name 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                    : 'border-gray-200 focus:border-[#1f2a56] focus:ring-[#1f2a56]/20'
+                ]"
               />
+              <p v-if="errors.name" class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ errors.name }}
+              </p>
             </label>
             <label class="block">
-              <span class="text-gray-600">Kontak</span>
+              <span class="text-gray-600">Nomor Kontak <span class="text-red-500">*</span></span>
               <input
                 v-model="customerContact"
-                type="text"
-                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-[#1f2a56] focus:outline-none focus:ring-2 focus:ring-[#1f2a56]/20"
+                type="tel"
+                placeholder="Contoh: 081234567890"
+                @blur="validateContact"
+                :class="[
+                  'mt-1 w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 transition-colors',
+                  errors.contact 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                    : 'border-gray-200 focus:border-[#1f2a56] focus:ring-[#1f2a56]/20'
+                ]"
               />
+              <p v-if="errors.contact" class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ errors.contact }}
+              </p>
             </label>
             <label class="block">
-              <span class="text-gray-600">Email</span>
+              <span class="text-gray-600">Email <span class="text-red-500">*</span></span>
               <input
                 v-model="customerEmail"
                 type="email"
-                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-[#1f2a56] focus:outline-none focus:ring-2 focus:ring-[#1f2a56]/20"
+                placeholder="nama@email.com"
+                @blur="validateEmail"
+                :class="[
+                  'mt-1 w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 transition-colors',
+                  errors.email 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                    : 'border-gray-200 focus:border-[#1f2a56] focus:ring-[#1f2a56]/20'
+                ]"
               />
+              <p v-if="errors.email" class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ errors.email }}
+              </p>
             </label>
             <label class="block">
               <span class="text-gray-600">Instansi (opsional)</span>
@@ -223,13 +358,25 @@ const createBooking = async () => {
               Pemesan berasal dari unit akademik
             </label>
             <label v-if="customerAcademic" class="block">
-              <span class="text-gray-600">URL Surat Pengantar</span>
+              <span class="text-gray-600">URL Surat Pengantar <span class="text-gray-400">(opsional)</span></span>
               <input
                 v-model="customerSuratUrl"
                 type="url"
                 placeholder="https://contoh.com/surat.pdf"
-                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-[#1f2a56] focus:outline-none focus:ring-2 focus:ring-[#1f2a56]/20"
+                @blur="validateSuratUrl"
+                :class="[
+                  'mt-1 w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 transition-colors',
+                  errors.suratUrl 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                    : 'border-gray-200 focus:border-[#1f2a56] focus:ring-[#1f2a56]/20'
+                ]"
               />
+              <p v-if="errors.suratUrl" class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ errors.suratUrl }}
+              </p>
             </label>
           </div>
         </div>

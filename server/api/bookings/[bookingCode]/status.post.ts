@@ -22,7 +22,7 @@ export default defineEventHandler(async(event) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: {
-            query: print(UPDATE_BOOK_STATUS),
+            query: UPDATE_BOOK_STATUS,
             variables: { bookingCode, status: bookingStatus },
         },
     })

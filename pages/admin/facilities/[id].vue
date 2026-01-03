@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { availableIcons, VALID_FACILITY_ICONS } from '~/utils/validIconList'
 import { Icon } from '@iconify/vue'
 import { useConfirmation } from '~/composables/useConfirmation'
+import { parseBackendError } from '~/utils/errorParser'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -30,9 +31,16 @@ const form = ref({
   icon: VALID_FACILITY_ICONS[0] as typeof VALID_FACILITY_ICONS[number],
 })
 
+const searchQuery = ref('')
 const loading = ref(false)
 const loadingDelete = ref(false)
 const errorMsg = ref<string | null>(null)
+
+const filteredIcons = computed(() => {
+  if (!searchQuery.value.trim()) return availableIcons
+  const query = searchQuery.value.toLowerCase()
+  return availableIcons.filter(icon => icon.name.toLowerCase().includes(query))
+})
 
 function getValidIcon(icon: string | null | undefined): typeof VALID_FACILITY_ICONS[number] {
   return icon && (VALID_FACILITY_ICONS as readonly string[]).includes(icon)
@@ -45,12 +53,17 @@ const { data: facility, error: fetchError, pending: pagePending } = await useAsy
   () => $fetch<FacilityData>(`/api/facilities/${facilityId}`)
 )
 
+if (fetchError.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Fasilitas tidak ditemukan',
+    fatal: true
+  })
+}
+
 if (facility.value) {
   form.value.name = facility.value.name
   form.value.icon = getValidIcon(facility.value.icon)
-} else if (fetchError.value) {
-  const err = fetchError.value as FetchErrorData
-  errorMsg.value = err.data?.statusMessage || 'Gagal memuat data fasilitas.'
 }
 
 async function handleSubmit() {
@@ -67,7 +80,8 @@ async function handleSubmit() {
     })
     await router.push('/admin/facilities')
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || err.message || 'Gagal memperbarui fasilitas'
+    const parsed = parseBackendError(err)
+    errorMsg.value = parsed.message
   } finally {
     loading.value = false
   }
@@ -91,7 +105,8 @@ async function handleDelete() {
     })
     router.push('/admin/facilities')
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || 'Gagal menghapus fasilitas.'
+    const parsed = parseBackendError(err)
+    errorMsg.value = parsed.message
     loadingDelete.value = false
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -99,7 +114,7 @@ async function handleDelete() {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-12 relative">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-12 relative">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">
@@ -181,9 +196,42 @@ async function handleDelete() {
             <p class="text-xs text-gray-500 mt-0.5">Pilih simbol yang paling merepresentasikan fasilitas ini.</p>
           </div>
           <div class="p-6">
-            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            <!-- Search Input -->
+            <div class="mb-5 relative">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Cari ikon... (contoh: toilet, parkir, wifi)"
+                  class="block w-full rounded-xl border border-gray-300 pl-11 pr-10 py-3 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all"
+                />
+                <button
+                  v-if="searchQuery"
+                  @click="searchQuery = ''"
+                  type="button"
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div class="mt-2 flex items-center justify-between">
+                <span class="text-xs text-gray-500">
+                  <span class="font-bold text-blue-600">{{ filteredIcons.length }}</span> ikon ditemukan dari <span class="font-bold">{{ availableIcons.length }}</span> total
+                </span>
+              </div>
+            </div>
+
+            <!-- Icon Grid -->
+            <div v-if="filteredIcons.length > 0" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               <label
-                v-for="icon in availableIcons"
+                v-for="icon in filteredIcons"
                 :key="icon.value"
                 class="group relative flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all duration-200"
                 :class="[form.icon === icon.value ? 'border-blue-500 bg-blue-50/50 shadow-md ring-1 ring-blue-500/20' : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 hover:shadow-sm']"
@@ -195,6 +243,25 @@ async function handleDelete() {
                 <Icon :icon="icon.value" class="w-8 h-8 mb-2 transition-transform duration-200 group-hover:scale-110" :class="form.icon === icon.value ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'" />
                 <span class="text-[10px] font-medium text-center leading-tight transition-colors" :class="form.icon === icon.value ? 'text-blue-700 font-bold' : 'text-gray-600 group-hover:text-blue-600'">{{ icon.name }}</span>
               </label>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-12">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <h3 class="mt-3 text-sm font-bold text-gray-900">Tidak ada ikon ditemukan</h3>
+              <p class="mt-1 text-xs text-gray-500">Coba kata kunci lain atau hapus filter pencarian</p>
+              <button
+                @click="searchQuery = ''"
+                type="button"
+                class="mt-4 inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Reset Pencarian
+              </button>
             </div>
             
             <p class="mt-6 text-xs text-center text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200">

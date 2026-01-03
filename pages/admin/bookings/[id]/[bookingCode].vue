@@ -6,6 +6,17 @@ definePageMeta({
 
 const confirmationModal = ref<any>(null)
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('id-ID', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    timeZone: 'UTC'
+  })
+}
+
 interface Field {
   name: string
 }
@@ -40,6 +51,14 @@ const { data: booking, pending, error, refresh } = await useAsyncData(
   `booking-${bookingCode}`,
   () => $fetch<BookingResult>(`/api/bookings/${bookingCode}`)
 )
+
+if (error.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Booking tidak ditemukan',
+    fatal: true
+  })
+}
 
 const isPdf = (url?: string) => {
   return !!url && url.toLowerCase().endsWith('.pdf')
@@ -103,7 +122,7 @@ async function cancelBooking() {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-12 relative">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-12 relative">
     
     <!-- HEADER -->
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -299,7 +318,7 @@ async function cancelBooking() {
                 <tbody class="divide-y divide-gray-200">
                   <tr v-for="(d, i) in booking.details" :key="i" class="hover:bg-gray-50 transition-colors">
                     <td class="px-4 py-3 font-medium text-gray-900">{{ d.Field.name }}</td>
-                    <td class="px-4 py-3 text-gray-600">{{ new Date(d.bookingDate).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ formatDate(d.bookingDate) }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ d.startHour }}:00 - {{ d.startHour + 1 }}:00</td>
                   </tr>
                 </tbody>
@@ -340,7 +359,7 @@ async function cancelBooking() {
       </div>
 
     </div>
+    
+    <ConfirmationModal ref="confirmationModal" />
   </section>
-
-  <ConfirmationModal ref="confirmationModal" />
 </template>

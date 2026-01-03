@@ -2,6 +2,7 @@
 import { print } from 'graphql'
 import { $fetch } from 'ofetch'
 import { MUTATION_CREATE_BOOKING } from '~/graphql/mutations/create_booking'
+import { parseBackendError } from '~/utils/errorParser'
 definePageMeta({
   layout: 'admin',
   middleware: 'auth-admin'
@@ -28,6 +29,85 @@ const bookingForm = reactive({
 
 const errorMsg = ref<string | null>(null)
 const uploadProgress = ref<number | null>(null)
+const checkingAvailability = ref(false)
+
+// Field-specific validation errors
+const fieldErrors = ref({
+  name: '',
+  contact: '',
+  email: '',
+  institution: ''
+})
+
+// Validation regex patterns
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/
+const nameRegex = /^[a-zA-Z\s.]+$/
+
+// Validation functions
+const validateName = () => {
+  const trimmed = bookingForm.name.trim()
+  if (!trimmed) {
+    fieldErrors.value.name = 'Nama lengkap wajib diisi'
+    return false
+  }
+  if (trimmed.length < 3) {
+    fieldErrors.value.name = 'Nama minimal 3 karakter'
+    return false
+  }
+  if (!nameRegex.test(trimmed)) {
+    fieldErrors.value.name = 'Nama hanya boleh berisi huruf dan spasi'
+    return false
+  }
+  fieldErrors.value.name = ''
+  return true
+}
+
+const validateContact = () => {
+  const trimmed = bookingForm.contact.trim()
+  if (!trimmed) {
+    fieldErrors.value.contact = 'Nomor kontak wajib diisi'
+    return false
+  }
+  if (!phoneRegex.test(trimmed)) {
+    fieldErrors.value.contact = 'Format nomor tidak valid (contoh: 081234567890)'
+    return false
+  }
+  fieldErrors.value.contact = ''
+  return true
+}
+
+const validateEmail = () => {
+  const trimmed = bookingForm.email.trim()
+  if (!trimmed) {
+    fieldErrors.value.email = 'Alamat email wajib diisi'
+    return false
+  }
+  if (!emailRegex.test(trimmed)) {
+    fieldErrors.value.email = 'Format email tidak valid'
+    return false
+  }
+  fieldErrors.value.email = ''
+  return true
+}
+
+const validateInstitution = () => {
+  if (!bookingForm.isAcademic) {
+    fieldErrors.value.institution = ''
+    return true
+  }
+  const trimmed = bookingForm.institution.trim()
+  if (!trimmed) {
+    fieldErrors.value.institution = 'Nama institusi wajib diisi untuk booking akademik'
+    return false
+  }
+  if (trimmed.length < 3) {
+    fieldErrors.value.institution = 'Nama institusi minimal 3 karakter'
+    return false
+  }
+  fieldErrors.value.institution = ''
+  return true
+}
 
 function handleFileUpload(e: Event){
   const input = e.target as HTMLInputElement
@@ -42,36 +122,108 @@ const totalPrice = computed(() => {
   return selectedSlots.value.reduce((sum, s) => sum + (s.pricePerHour || 0), 0)
 })
 
+/**
+ * Check slot availability before creating booking
+ */
+async function checkSlotAvailability(): Promise<boolean> {
+  checkingAvailability.value = true
+  
+  try {
+    // Group slots by field and date
+    const slotsByFieldAndDate = new Map<string, { fieldId: string; date: string; timeSlots: string[] }>()
+    
+    for (const slot of selectedSlots.value) {
+      const normalizedDate = new Date(slot.date)
+      const year = normalizedDate.getUTCFullYear()
+      const month = String(normalizedDate.getUTCMonth() + 1).padStart(2, '0')
+      const day = String(normalizedDate.getUTCDate()).padStart(2, '0')
+      const dateStr = `${year}-${month}-${day}`
+      
+      const key = `${slot.fieldId}-${dateStr}`
+      
+      if (!slotsByFieldAndDate.has(key)) {
+        slotsByFieldAndDate.set(key, {
+          fieldId: String(slot.fieldId),
+          date: dateStr,
+          timeSlots: []
+        })
+      }
+      
+      slotsByFieldAndDate.get(key)!.timeSlots.push(String(slot.startHour))
+    }
+    
+    for (const [, group] of slotsByFieldAndDate) {
+      const response = await $fetch<{
+        available: boolean
+        conflictingSlots: string[]
+        message: string
+      }>('/api/bookings/check-availability', {
+        method: 'POST',
+        body: {
+          fieldId: group.fieldId,
+          date: group.date,
+          timeSlots: group.timeSlots
+        },
+        credentials: 'include'
+      })
+      
+      if (!response.available) {
+        errorMsg.value = response.message
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return false
+      }
+    }
+    
+    return true
+  } catch (error: any) {
+    const parsed = parseBackendError(error)
+    errorMsg.value = parsed.title ? `${parsed.title}: ${parsed.message}` : parsed.message
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    return false
+  } finally {
+    checkingAvailability.value = false
+  }
+}
+
 async function handleSubmit(){
   errorMsg.value = null
   uploadProgress.value = null
 
-  // Basic validations
-  if (!bookingForm.name || !bookingForm.contact || !bookingForm.email) {
-    errorMsg.value = 'Nama, kontak, dan email wajib diisi.'
+  const isNameValid = validateName()
+  const isContactValid = validateContact()
+  const isEmailValid = validateEmail()
+  const isInstitutionValid = validateInstitution()
+
+  if (!isNameValid || !isContactValid || !isEmailValid || !isInstitutionValid) {
+    errorMsg.value = 'Mohon perbaiki data yang tidak valid'
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     return
   }
 
   if (selectedSlots.value.length === 0) {
-    errorMsg.value = 'Pilih minimal satu slot.'
+    errorMsg.value = 'Pilih minimal satu slot booking.'
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     return
   }
 
-  if (bookingForm.isAcademic && !bookingForm.institution) {
-    errorMsg.value = 'Institusi harus diisi untuk booking akademik.'
-    return
-  }
-
-  // if (bookingForm.isAcademic && !bookingForm.suratFile) {
-  //   errorMsg.value = 'Upload surat pengantar (PDF) diperlukan untuk booking akademik.'
-  //   return
-  // }
+  // Trim all inputs before submit
+  bookingForm.name = bookingForm.name.trim()
+  bookingForm.contact = bookingForm.contact.trim()
+  bookingForm.email = bookingForm.email.trim()
+  if (bookingForm.institution) bookingForm.institution = bookingForm.institution.trim()
 
   const details = selectedSlots.value.map((slot) => {
     const price = bookingForm.isAcademic ? 0 : (slot.pricePerHour || 0)
+    // Normalize to UTC midnight untuk konsistensi
+    const normalizedDate = new Date(slot.date)
+    const year = normalizedDate.getUTCFullYear()
+    const month = String(normalizedDate.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(normalizedDate.getUTCDate()).padStart(2, '0')
+    const utcMidnight = `${year}-${month}-${day}T00:00:00.000Z`
+    
     return {
       fieldId: Number(slot.fieldId),
-      bookingDate: slot.date,
+      bookingDate: utcMidnight,
       startHour: Number(slot.startHour),
       pricePerHour: price,
       subtotal: price,
@@ -90,7 +242,7 @@ async function handleSubmit(){
   if (bookingForm.suratFile) vars.suratFile = null
 
   const operations = {
-    query: print(MUTATION_CREATE_BOOKING),
+    query: MUTATION_CREATE_BOOKING,
     variables: vars
   }
 
@@ -154,8 +306,8 @@ async function handleSubmit(){
       navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
     }
   } catch (e) {
-    const err = e as Error
-    errorMsg.value = err?.message || 'Gagal membuat booking.'
+    const parsed = parseBackendError(e)
+    errorMsg.value = parsed.title ? `${parsed.title}: ${parsed.message}` : parsed.message
   } finally {
     uploadProgress.value = null
   }
@@ -167,7 +319,7 @@ watch(() => bookingForm.isAcademic, (val) => {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-12 relative">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-12 relative">
     
     <!-- HEADER -->
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -185,15 +337,6 @@ watch(() => bookingForm.isAcademic, (val) => {
         </div>
       </div>
     </header>
-
-    <!-- ERROR MESSAGE -->
-    <div v-if="errorMsg" class="p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-start gap-3 shadow-sm">
-      <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-      <div>
-        <p class="font-bold text-sm">Terjadi Kesalahan</p>
-        <p class="text-sm">{{ errorMsg }}</p>
-      </div>
-    </div>
 
     <form id="booking-form" @submit.prevent="handleSubmit" class="flex flex-col gap-8 max-w-5xl mx-auto w-full">
       
@@ -271,19 +414,43 @@ watch(() => bookingForm.isAcademic, (val) => {
                 type="text" 
                 required 
                 placeholder="Masukkan nama lengkap" 
-                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+                @blur="validateName"
+                :class="[
+                  'block w-full rounded-xl border pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 shadow-sm transition-all',
+                  fieldErrors.name
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                ]"
               />
+              <p v-if="fieldErrors.name" class="mt-1.5 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>{{ fieldErrors.name }}</span>
+              </p>
             </div>
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nomor Kontak <span class="text-red-500">*</span></label>
               <input 
                 v-model="bookingForm.contact" 
-                type="text" 
+                type="tel" 
                 required 
                 placeholder="Contoh: 081234567890" 
-                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+                @blur="validateContact"
+                :class="[
+                  'block w-full rounded-xl border pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 shadow-sm transition-all',
+                  fieldErrors.contact
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                ]"
               />
+              <p v-if="fieldErrors.contact" class="mt-1.5 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>{{ fieldErrors.contact }}</span>
+              </p>
             </div>
 
             <div class="space-y-1.5">
@@ -293,8 +460,20 @@ watch(() => bookingForm.isAcademic, (val) => {
                 type="email" 
                 required 
                 placeholder="contoh@email.com" 
-                class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+                @blur="validateEmail"
+                :class="[
+                  'block w-full rounded-xl border pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 shadow-sm transition-all',
+                  fieldErrors.email
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                ]"
               />
+              <p v-if="fieldErrors.email" class="mt-1.5 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>{{ fieldErrors.email }}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -332,9 +511,21 @@ watch(() => bookingForm.isAcademic, (val) => {
                   v-model="bookingForm.institution" 
                   type="text" 
                   required 
-                  placeholder="Contoh: Universitas Diponegoro" 
-                  class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" 
+                  placeholder="Fakultas / Jurusan / UKM / Organisasi..." 
+                  @blur="validateInstitution"
+                  :class="[
+                    'block w-full rounded-xl border pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:ring-2 shadow-sm transition-all',
+                    fieldErrors.institution
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  ]"
                 />
+                <p v-if="fieldErrors.institution" class="mt-1.5 text-xs text-red-600 font-medium flex items-start gap-1.5">
+                  <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ fieldErrors.institution }}</span>
+                </p>
               </div>
 
               <div class="space-y-1.5">
@@ -369,6 +560,25 @@ watch(() => bookingForm.isAcademic, (val) => {
         </div>
       </div>
 
+      <!-- ERROR MESSAGE (Sebelum tombol submit) -->
+      <div v-if="errorMsg" class="p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-start gap-3 shadow-sm animate-shake">
+        <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div class="flex-1">
+          <p class="font-bold text-sm">Terjadi Kesalahan</p>
+          <p class="text-sm">{{ errorMsg }}</p>
+        </div>
+        <button 
+          type="button" 
+          @click="errorMsg = null" 
+          class="text-red-700 hover:text-red-900 transition-colors"
+          aria-label="Tutup pesan error"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
       <!-- ACTION BUTTONS -->
       <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-4">
         <button
@@ -381,11 +591,13 @@ watch(() => bookingForm.isAcademic, (val) => {
 
         <button
           type="submit"
-          :disabled="uploadProgress !== null"
+          :disabled="uploadProgress !== null || checkingAvailability"
           class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <svg v-if="uploadProgress !== null" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-          <span>{{ uploadProgress !== null ? 'Menyimpan...' : 'Buat Booking' }}</span>
+          <svg v-if="uploadProgress !== null || checkingAvailability" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <span>
+            {{ checkingAvailability ? 'Memeriksa Ketersediaan...' : uploadProgress !== null ? 'Menyimpan...' : 'Buat Booking' }}
+          </span>
         </button>
       </div>
 

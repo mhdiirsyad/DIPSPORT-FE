@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { generateTimeSlots, type Slot } from '~/utils/generateTimeSlots'
 import { Icon } from '@iconify/vue'
+import { parseBackendError } from '~/utils/errorParser'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -47,6 +48,7 @@ interface StadionRow {
   fields: Field[]
   operatingHours: OperatingHour[]
   description?: string
+  location?: string
   mapUrl: string
   facilities: StadionFacility[]
 }
@@ -65,21 +67,18 @@ interface BookingsResult {
 const days = getNext7Days()
 const selectedDate = ref<string>(days[0]!.value)
 
-const toLocalDateKey = (value?: string | Date | null) => {
+// Gunakan UTC date key untuk konsistensi dengan client
+const toDateKey = (value?: string | Date | null) => {
   if (!value) return null
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return null
-  
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return date.toISOString().slice(0, 10)
 }
 
-const selectedDateKey = computed(() => toLocalDateKey(selectedDate.value))
+const selectedDateKey = computed(() => toDateKey(selectedDate.value))
 
 const isDateEqual = (date1: string, date2: string) => {
-  return toLocalDateKey(date1) === toLocalDateKey(date2)
+  return toDateKey(date1) === toDateKey(date2)
 }
 
 function hourFrom(entry: OperatingHour | undefined, key: 'open' | 'close') {
@@ -107,7 +106,7 @@ const route = useRoute()
 const stadionId = Number(route.params.id)
 
 const { data: stadion, pending, error } = await useAsyncData(
-  `stadion-${stadionId}`,
+  `admin-bookings-stadion-${stadionId}`,
   () => $fetch<StadionRow>(`/api/stadions/${stadionId}`),
   {
     transform: (stadion) => {
@@ -146,6 +145,30 @@ function prevStadionImage() {
   stadionImageIndex.value = (stadionImageIndex.value - 1 + len) % len
 }
 
+const SWIPE_THRESHOLD_PX = 40
+
+const stadionTouchStartX = ref<number | null>(null)
+
+function onStadionTouchStart(e: TouchEvent) {
+  if ((stadion.value?.images?.length || 0) <= 1) return
+  stadionTouchStartX.value = e.touches?.[0]?.clientX ?? null
+}
+
+function onStadionTouchEnd(e: TouchEvent) {
+  if ((stadion.value?.images?.length || 0) <= 1) return
+  const startX = stadionTouchStartX.value
+  stadionTouchStartX.value = null
+  if (startX == null) return
+
+  const endX = e.changedTouches?.[0]?.clientX
+  if (endX == null) return
+
+  const deltaX = endX - startX
+  if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) return
+  if (deltaX < 0) nextStadionImage()
+  else prevStadionImage()
+}
+
 const currentStadionImage = computed(() => stadion.value?.images?.[stadionImageIndex.value]?.imageUrl || '/placeholder-stadium.jpg')
 
 const fieldImageIndex = ref<Record<number, number>>({})
@@ -170,38 +193,101 @@ function getFieldImageUrl(fieldId: number) {
   return field?.gallery?.[idx] || field?.images?.[idx]?.imageUrl || '/placeholder-field.jpg'
 }
 
-const { data: bookingsResult } = await useAsyncData(
-  () => `bookings-${stadionId}-${selectedDateKey.value ?? 'none'}`,
-  () => $fetch<BookingsResult[]>('/api/bookings', {
-    query: {
-      stadionId,
-      ...(selectedDateKey.value ? { date: `${selectedDateKey.value}T00:00:00.000Z` } : {})
-    }
-  }),
-  {
-    watch: [selectedDateKey]
-  }
-)
+const fieldTouchStartX = ref<Record<number, number | null>>({})
+
+function onFieldTouchStart(fieldId: number, e: TouchEvent) {
+  const field = stadion.value?.fields?.find((f: any) => Number(f.id) === Number(fieldId))
+  const len = field?.gallery?.length || 0
+  if (len <= 1) return
+  fieldTouchStartX.value[fieldId] = e.touches?.[0]?.clientX ?? null
+}
+
+function onFieldTouchEnd(fieldId: number, e: TouchEvent) {
+  const field = stadion.value?.fields?.find((f: any) => Number(f.id) === Number(fieldId))
+  const len = field?.gallery?.length || 0
+  if (len <= 1) return
+
+  const startX = fieldTouchStartX.value[fieldId]
+  fieldTouchStartX.value[fieldId] = null
+  if (startX == null) return
+
+  const endX = e.changedTouches?.[0]?.clientX
+  if (endX == null) return
+
+  const deltaX = endX - startX
+  if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX) return
+  if (deltaX < 0) nextFieldImage(fieldId)
+  else prevFieldImage(fieldId)
+}
 
 const publicBookings = ref<BookingsResult[]>([])
+const bookingError = ref<string | null>(null)
 
 const loadPublicBookings = async () => {
   if (!stadionId || !selectedDateKey.value) {
     publicBookings.value = []
+    bookingError.value = null
     return
   }
   try {
+    bookingError.value = null
     publicBookings.value = await $fetch<BookingsResult[]>('/api/bookings', {
       query: { stadionId, date: `${selectedDateKey.value}T00:00:00.000Z` },
     })
-  } catch (error) {
-    console.error('Failed to load bookings', error)
+  } catch (error: any) {
+    const parsed = parseBackendError(error)
+    console.error('Failed to load bookings:', parsed.message)
+    bookingError.value = parsed.message
     publicBookings.value = []
   }
 }
 
 onMounted(loadPublicBookings)
 watch(selectedDateKey, () => loadPublicBookings())
+
+const logOverflowingElements = () => {
+  if (!import.meta.dev) return
+
+  const viewportWidth = window.innerWidth
+  const offenders: Array<{ el: Element; right: number; width: number }> = []
+
+  document.querySelectorAll('body *').forEach((el) => {
+    const element = el as HTMLElement
+    const rect = element.getBoundingClientRect()
+    const right = rect.right
+    const width = rect.width
+
+    if (right > viewportWidth + 1 || width > viewportWidth + 1) {
+      offenders.push({ el, right, width })
+    }
+  })
+
+  const docScrollWidth = document.documentElement.scrollWidth
+}
+
+onMounted(() => {
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      loadPublicBookings()
+    }
+  }
+  
+  const pollInterval = setInterval(() => {
+    if (!document.hidden) {
+      loadPublicBookings()
+    }
+  }, 15000)
+  
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+
+  setTimeout(logOverflowingElements, 300)
+  setTimeout(logOverflowingElements, 1200)
+  
+  onBeforeUnmount(() => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+    clearInterval(pollInterval)
+  })
+})
 
 const expandedFields = ref<Record<number, boolean>>({})
 
@@ -222,7 +308,7 @@ function isSlotBooked(fieldId: number, startHour: number) {
     booking.details?.some(
       (detail) =>
         detail.fieldId === fieldId &&
-        toLocalDateKey(detail.bookingDate) === selectedDateKey.value &&
+        toDateKey(detail.bookingDate) === selectedDateKey.value &&
         detail.startHour === startHour
     )
   )
@@ -235,6 +321,13 @@ function isFieldFullyBooked(field: Field) {
   })
 }
 
+function availableSlotsCount(field: Field) {
+  return field.slots.filter((slot) => {
+    const startHour = Number(slot.start.split(':')[0])
+    return !isSlotBooked(Number(field.id), startHour)
+  }).length
+}
+
 function getBookingCode(fieldId: number, startHour: number) {
   const selectedKey = selectedDateKey.value
   if (!selectedKey) return undefined
@@ -242,7 +335,7 @@ function getBookingCode(fieldId: number, startHour: number) {
     b.details.some(
       (d) =>
         d.fieldId === fieldId &&
-        toLocalDateKey(d.bookingDate) === selectedKey &&
+        toDateKey(d.bookingDate) === selectedKey &&
         d.startHour === startHour
     )
   )
@@ -250,7 +343,6 @@ function getBookingCode(fieldId: number, startHour: number) {
 }
 
 function handleSlotClick(fieldId: number, startHour: number, pricePerHour: number, fieldName: string) {
-  // Jika slot sudah booked, tampilkan detail booking (terlepas dari status maintenance)
   if (isSlotBooked(fieldId, startHour)) {
     const bookingCode = getBookingCode(fieldId, startHour)
     if (bookingCode) {
@@ -321,10 +413,8 @@ watch(() => selectedSlots.value.length, (newLength) => {
 </script>
 
 <template>
-  <div>
-    <main class="min-h-screen bg-[#f5f7fb] pb-16">
-      
-      <header class="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4 sm:py-6">
+  <div class="w-full pb-16">
+    <header class="mx-auto flex max-w-6xl items-center justify-between pt-2 pb-4 sm:pt-1 sm:pb-6">
         <NuxtLink 
           to="/admin/bookings" 
           class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-[#1f2a56] hover:border-[#1f2a56] hover:shadow-md active:scale-95"
@@ -343,7 +433,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
         </div>
       </section>
 
-      <section v-else-if="error" class="mx-auto max-w-6xl px-4 sm:px-6 py-12">
+      <section v-else-if="error" class="mx-auto max-w-6xl py-12">
         <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
           <div class="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-4">
             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -355,24 +445,30 @@ watch(() => selectedSlots.value.length, (newLength) => {
         </div>
       </section>
 
-      <section v-else class="mx-auto max-w-6xl space-y-4 sm:space-y-6 px-4 sm:px-6">
+      <section v-else class="mx-auto max-w-6xl space-y-4 sm:space-y-6 overflow-hidden">
         
-        <div class="grid gap-5 lg:grid-cols-[minmax(0,2.3fr)_minmax(320px,1fr)]">
-          <div class="relative overflow-hidden rounded-[32px] border border-white/70 bg-white shadow-md">
-            <img
-              v-if="stadion?.images && stadion.images.length > 0"
-              :src="currentStadionImage"
-              :alt="stadion?.name"
-              class="aspect-[16/9] w-full object-cover"
-            >
-            <div v-else class="aspect-[16/9] w-full flex items-center justify-center bg-gray-100">
-              <PlaceholderImage text="Foto Stadion Belum Ditambahkan" />
+        <div class="grid gap-3 lg:grid-cols-[minmax(0,2.3fr)_minmax(320px,1fr)]">
+          <div
+            class="relative overflow-hidden rounded-[32px] border border-gray-200/80 bg-white shadow-md"
+            @touchstart.passive="onStadionTouchStart"
+            @touchend="onStadionTouchEnd"
+          >
+            <div class="relative aspect-[16/10] w-full overflow-hidden bg-gray-200 p-[1px] leading-[0]">
+              <img
+                v-if="stadion?.images && stadion.images.length > 0"
+                :src="currentStadionImage"
+                :alt="stadion?.name"
+                class="absolute inset-[1px] h-[calc(100%-2px)] w-[calc(100%-2px)] object-cover block"
+              >
+              <div v-else class="absolute inset-[1px] flex items-center justify-center bg-gray-100">
+                <PlaceholderImage text="Foto Stadion Belum Ditambahkan" />
+              </div>
             </div>
 
             <button
               v-if="(stadion?.images?.length || 0) > 1"
               @click="prevStadionImage"
-              class="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2.5 text-gray-700 shadow-lg hover:bg-white transition-all backdrop-blur-sm"
+              class="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2.5 text-gray-700 shadow-lg hover:bg-white hover:scale-110 transition-all backdrop-blur-sm active:scale-95"
               aria-label="Foto sebelumnya"
             >
               <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -400,18 +496,29 @@ watch(() => selectedSlots.value.length, (newLength) => {
                 :aria-label="`Gambar ${idx + 1}`"
               />
             </div>
+
+            <span 
+              v-if="stadion?.images && stadion.images.length > 0" 
+              class="absolute top-3 sm:top-4 right-3 sm:right-4 rounded-lg bg-black/75 backdrop-blur-sm px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold text-white"
+            >
+              {{ stadionImageIndex + 1 }} / {{ stadion.images.length }}
+            </span>
           </div>
 
-          <div class="grid gap-4">
+          <div class="hidden lg:grid gap-3 grid-rows-2">
             <template v-if="stadion?.images && stadion.images.length > 1">
-              <img
+              <div
                 v-for="(img, idx) in stadion?.images?.slice(1, 3)"
                 :key="`thumb-${idx}`"
-                :src="img.imageUrl"
-                :alt="`${stadion?.name} preview ${idx + 1}`"
-                class="h-40 w-full rounded-[24px] object-cover shadow-sm lg:h-44 cursor-pointer transition-all hover:opacity-80"
+                class="h-full w-full rounded-[24px] overflow-hidden shadow-sm cursor-pointer transition-all duration-200 hover:opacity-80 hover:shadow-md"
                 @click="stadionImageIndex = idx + 1"
               >
+                <img
+                  :src="img.imageUrl"
+                  :alt="`${stadion?.name} preview ${idx + 1}`"
+                  class="h-full w-full object-cover transition-transform duration-200 hover:scale-[1.02]"
+                >
+              </div>
             </template>
           </div>
         </div>
@@ -434,29 +541,75 @@ watch(() => selectedSlots.value.length, (newLength) => {
               </p>
             </div>
 
-            <div class="rounded-lg sm:rounded-xl bg-gray-50 border border-gray-100 p-3 sm:p-4">
-              <p class="text-xs sm:text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1f2a56]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div class="relative rounded-lg sm:rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-white p-3 sm:p-4 border border-gray-200">
+              <!-- Subtle Street Map Background Pattern -->
+              <div class="absolute inset-0 opacity-[0.08] pointer-events-none">
+                <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" preserveAspectRatio="xMidYMid slice">
+                  <!-- Main roads berkelok natural -->
+                  <path d="M 0 150 Q 50 145, 100 150 Q 140 155, 180 150 Q 220 145, 260 140 Q 300 138, 350 140" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+                  <path d="M 350 140 Q 400 142, 450 145 Q 500 148, 550 150 L 600 152" stroke="#94a3b8" stroke-width="2" fill="none"/>
+                  
+                  <path d="M 180 0 Q 185 40, 180 80 Q 175 120, 180 150 Q 182 180, 185 220 Q 188 260, 190 300" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+                  
+                  <path d="M 420 0 Q 415 50, 420 100 Q 425 130, 420 160 Q 418 200, 420 240 L 420 300" stroke="#94a3b8" stroke-width="2" fill="none"/>
+                  
+                  <!-- Secondary roads berkelok -->
+                  <path d="M 0 80 Q 40 78, 80 80 Q 120 82, 160 85 Q 200 83, 240 80 Q 280 78, 320 80" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+                  
+                  <path d="M 100 50 Q 102 70, 100 90 Q 98 120, 100 150 Q 102 180, 105 210" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+                  
+                  <path d="M 0 220 Q 60 218, 120 220 Q 180 222, 240 220 Q 300 218, 360 220 Q 420 222, 480 220 L 600 218" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+                  
+                  <!-- Small connecting roads berkelok -->
+                  <path d="M 350 140 Q 360 120, 370 100 Q 380 85, 390 80" stroke="#94a3b8" stroke-width="1" fill="none"/>
+                  
+                  <path d="M 260 80 Q 270 100, 280 120 Q 285 135, 280 150" stroke="#94a3b8" stroke-width="1" fill="none"/>
+                  
+                  <path d="M 500 80 Q 490 110, 485 140 Q 483 170, 490 200" stroke="#94a3b8" stroke-width="1" fill="none"/>
+                  
+                  <path d="M 300 220 Q 310 200, 320 180 Q 330 160, 340 145" stroke="#94a3b8" stroke-width="1" fill="none"/>
+                  
+                  <!-- Intersection points (biru) -->
+                  <circle cx="180" cy="150" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="350" cy="140" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="420" cy="160" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="180" cy="80" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="260" cy="140" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="100" cy="150" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="420" cy="100" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="240" cy="220" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="500" cy="145" r="3" fill="#3b82f6" opacity="0.7"/>
+                  <circle cx="100" cy="80" r="2.5" fill="#3b82f6" opacity="0.6"/>
+                  <circle cx="260" cy="80" r="2.5" fill="#3b82f6" opacity="0.6"/>
+                  <circle cx="320" cy="80" r="2.5" fill="#3b82f6" opacity="0.6"/>
                 </svg>
-                Lokasi Stadion
-              </p>
-              <div class="flex items-center justify-between gap-3 sm:gap-4">
-                <span class="text-xs sm:text-sm text-gray-700 flex-1 truncate">{{ stadion?.mapUrl || 'Tidak diketahui' }}</span>
-                <a
-                  v-if="stadion?.mapUrl"
-                  :href="stadion.mapUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-[#1f2a56] hover:underline transition-colors whitespace-nowrap"
-                >
-                  <span>Buka Peta</span>
-                  <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </div>
+              
+              <!-- Content -->
+              <div class="relative z-10">
+                <p class="text-xs sm:text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-[#3b82f6]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                   </svg>
-                </a>
-                <span v-else class="text-xs sm:text-sm text-gray-400 whitespace-nowrap">Peta belum tersedia</span>
+                  <span>Lokasi Venue</span>
+                </p>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                  <span class="text-xs sm:text-sm text-gray-600">{{ stadion?.mapUrl || 'Lokasi belum tersedia' }}</span>
+                  <a
+                    v-if="stadion?.mapUrl"
+                    :href="stadion.mapUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#3b82f6] hover:text-[#2563eb] hover:underline transition-all whitespace-nowrap"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span>Buka Peta</span>
+                  </a>
+                  <span v-else class="text-xs sm:text-sm text-gray-400 whitespace-nowrap">Peta belum tersedia</span>
+                </div>
               </div>
             </div>
           </div>
@@ -472,7 +625,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
               <li 
                 v-for="facility in stadion?.facilities" 
                 :key="facility.Facility.id" 
-                class="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm bg-gray-50 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-100"
+                class="flex items-center gap-2 sm:gap-2.5 text-xs sm:text-sm bg-gray-50 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-gray-100 hover:bg-white hover:border-gray-300 hover:shadow-sm hover:scale-[1.02] transition-all"
               >
                 <div class="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-gray-100 border border-gray-200 text-[#1f2a56]">
                   <Icon
@@ -552,6 +705,50 @@ watch(() => selectedSlots.value.length, (newLength) => {
             </div>
           </div>
 
+          <!-- Error Loading Bookings -->
+          <div v-if="bookingError" class="px-4 sm:px-6 py-4 bg-yellow-50 border-b border-yellow-200">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-yellow-900">Gagal Memuat Data Booking</p>
+                <p class="text-xs text-yellow-700 mt-1">{{ bookingError }}</p>
+                <button 
+                  @click="loadPublicBookings" 
+                  class="mt-2 text-xs font-semibold text-yellow-900 hover:text-yellow-700 underline"
+                >
+                  Coba Lagi
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State - Belum Ada Lapangan -->
+          <div 
+            v-if="!stadion?.fields || stadion.fields.length === 0"
+            class="flex flex-col items-center justify-center py-16 px-4"
+          >
+            <div class="w-24 h-24 rounded-full bg-blue-50 flex items-center justify-center mb-6">
+              <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Belum Ada Lapangan di Stadion Ini</h3>
+            <p class="text-sm text-gray-500 text-center max-w-md mb-6">
+              Stadion ini belum memiliki lapangan. Silakan tambahkan lapangan terlebih dahulu untuk mulai menerima booking.
+            </p>
+            <NuxtLink 
+              :to="`/admin/fields/create?stadionId=${stadionId}`"
+              class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-95"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Tambah Lapangan</span>
+            </NuxtLink>
+          </div>
+
           <div
             v-for="field in stadion?.fields"
             :key="field.id"
@@ -559,14 +756,18 @@ watch(() => selectedSlots.value.length, (newLength) => {
           >
             <div class="p-4 sm:p-5">
               <div class="flex flex-col gap-5 rounded-3xl border border-gray-200 p-5 lg:flex-row">
-                <div class="relative w-full overflow-hidden rounded-[28px] border border-white shadow lg:w-[420px]">
+                <div
+                  class="relative w-full overflow-hidden rounded-[28px] border border-white shadow lg:w-[420px] h-56"
+                  @touchstart.passive="onFieldTouchStart(Number(field.id), $event)"
+                  @touchend="onFieldTouchEnd(Number(field.id), $event)"
+                >
                   <img
                     v-if="getFieldImageUrl(Number(field.id)) && !getFieldImageUrl(Number(field.id)).includes('placeholder')"
                     :src="getFieldImageUrl(Number(field.id))"
                     :alt="field.name"
-                    class="h-56 w-full object-cover transition-transform duration-500"
+                    class="w-full h-full object-cover transition-transform duration-500"
                   >
-                  <div v-else class="h-56 w-full flex items-center justify-center bg-gray-100">
+                  <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
                     <PlaceholderImage text="Foto Lapangan Belum Ditambahkan" />
                   </div>
 
@@ -574,7 +775,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
                     <button
                       @click.stop="prevFieldImage(Number(field.id))"
                       aria-label="Foto sebelumnya"
-                      class="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2 text-gray-700 hover:bg-white shadow-lg transition-all backdrop-blur-sm"
+                      class="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2 text-gray-700 hover:bg-white hover:scale-110 shadow-lg transition-all backdrop-blur-sm active:scale-95"
                     >
                       <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -583,7 +784,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
                     <button
                       @click.stop="nextFieldImage(Number(field.id))"
                       aria-label="Foto berikutnya"
-                      class="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2 text-gray-700 hover:bg-white shadow-lg transition-all backdrop-blur-sm"
+                      class="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2 text-gray-700 hover:bg-white hover:scale-110 shadow-lg transition-all backdrop-blur-sm active:scale-95"
                     >
                       <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -604,7 +805,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
                     <h4 class="text-lg sm:text-xl font-bold text-gray-900">
                       {{ field.name }}
                     </h4>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                       <span
                         v-if="field.status !== 'ACTIVE'"
                         class="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold border bg-amber-50 text-amber-700 border-amber-200"
@@ -619,13 +820,26 @@ watch(() => selectedSlots.value.length, (newLength) => {
                         <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
                         Full Booked
                       </span>
-                      <span
-                        v-else
-                        class="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold border bg-green-50 text-green-700 border-green-200"
-                      >
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
-                        Ready
-                      </span>
+                      <template v-else>
+                        <span
+                          class="inline-flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold border bg-green-50 text-green-700 border-green-200"
+                        >
+                          <span class="relative flex h-1.5 w-1.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-600"></span>
+                          </span>
+                          Ready
+                        </span>
+                        <span 
+                          v-if="availableSlotsCount(field) > 0"
+                          class="inline-flex items-center gap-1 rounded-lg px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-bold bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm"
+                        >
+                          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                          </svg>
+                          {{ availableSlotsCount(field) }} Slot Tersedia
+                        </span>
+                      </template>
                     </div>
                     <p class="text-xs sm:text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-none">
                       {{ field.description || 'Tidak ada deskripsi tersedia.' }}
@@ -657,7 +871,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
               <transition name="expand">
                 <div
                   v-if="isFieldExpanded(Number(field.id))"
-                  class="mt-4 sm:mt-5 grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                  class="mt-4 sm:mt-5 grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
                 >
                   <button
                     v-for="slot in field.slots"
@@ -671,7 +885,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
                         ? 'bg-orange-50 text-orange-400 border-orange-100 cursor-not-allowed'
                         : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0]))
                         ? 'bg-[#1f2a56] text-white border-[#1f2a56] shadow-md ring-2 ring-[#1f2a56] ring-offset-2'
-                        : 'bg-white text-gray-900 border-gray-200 hover:border-[#1f2a56] hover:bg-[#1f2a56]/5 hover:shadow-md hover:scale-105 active:scale-100 cursor-pointer'
+                        : 'bg-white text-gray-900 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-105 active:scale-100 cursor-pointer'
                     ]"
                     @click="handleSlotClick(Number(field.id), Number(slot.start.split(':')[0]), Number(slot.price), field.name)"
                   >
@@ -753,14 +967,13 @@ watch(() => selectedSlots.value.length, (newLength) => {
           </div>
         </section>
       </section>
-    </main>
 
     <transition name="slide-up">
       <div
         v-if="selectedSlots.length > 0"
-        class="fixed bottom-0 left-0 lg:left-64 right-0 z-50 border-t border-gray-200 bg-white shadow-2xl"
+        class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-2xl backdrop-blur-sm lg:left-64"
       >
-        <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4">
+        <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 w-full">
           <div class="flex items-center gap-2 sm:gap-3">
             <div class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-[#1f2a56] rounded-full">
               <span class="text-sm sm:text-base font-bold text-white">{{ selectedSlots.length }}</span>
@@ -797,6 +1010,15 @@ watch(() => selectedSlots.value.length, (newLength) => {
 </template>
 
 <style scoped>
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .expand-enter-active,
 .expand-leave-active {
   transition: all 0.2s ease;
@@ -806,5 +1028,16 @@ watch(() => selectedSlots.value.length, (newLength) => {
 .expand-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
 }
 </style>

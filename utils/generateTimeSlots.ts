@@ -11,7 +11,6 @@ interface Slot {
 export function generateTimeSlots(
   startHour = 8,
   endHour = 22,
-  // HARGA DISEMBUNYIKAN: Default pricePerHour set ke 0
   pricePerHour = 0, // 100000,
   bookedSlots: number[] = []
 ): Slot[] {

@@ -146,7 +146,8 @@ const handleTopbarLogout = async () => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-sm">
+  <!-- TopBar sticky - selalu terlihat di atas saat scroll -->
+  <header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
     <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
 
       <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">

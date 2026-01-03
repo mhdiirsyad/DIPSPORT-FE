@@ -1,6 +1,4 @@
-import gql from "graphql-tag";
-
-export const QUERY_GET_BOOKING = gql`
+export const QUERY_GET_BOOKING = `
   query Booking($bookingCode: String!) {
     booking(bookingCode: $bookingCode) {
       bookingCode,

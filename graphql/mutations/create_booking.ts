@@ -1,6 +1,4 @@
-import gql from "graphql-tag";
-
-export const MUTATION_CREATE_BOOKING = gql`
+export const MUTATION_CREATE_BOOKING = `
   mutation CreateBooking(
     $name: String!, 
     $contact: String!, 

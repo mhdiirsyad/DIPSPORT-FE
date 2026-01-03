@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useFetch } from 'nuxt/app'
 import { gql } from 'graphql-tag'
 import { print } from 'graphql'
@@ -10,6 +10,7 @@ import { useDashboardLogic, type DashboardCardItem } from '~/composables/useDash
 import { QUERY_GET_FIELDS } from '~/graphql/queries/get_fields'
 import { QUERY_GET_BOOKINGS } from '~/graphql/queries/get_bookings'
 import { QUERY_GET_STADIONS } from '~/graphql/queries/get_stadions'
+import { OPERATING_HOURS } from '~/utils/constants'
 
 definePageMeta({ middleware: 'auth-admin', layout: 'admin' })
 dayjs.locale('id')
@@ -59,7 +60,10 @@ const { data: opHoursData } = await useFetch('/api/graphql', {
   method: 'POST',
   body: { query: getQueryString(QUERY_OP_HOURS_INLINE) }
 })
-const opHours = computed(() => (opHoursData.value as any)?.data?.operatingHours || { openHour: 8, closeHour: 22 })
+const opHours = computed(() => (opHoursData.value as any)?.data?.operatingHours || { 
+  openHour: OPERATING_HOURS.DEFAULT_OPEN, 
+  closeHour: OPERATING_HOURS.DEFAULT_CLOSE 
+})
 
 const { data: fieldsData } = await useFetch('/api/graphql', {
   method: 'POST',
@@ -79,11 +83,20 @@ const stadionList = computed(() => (stadionsData.value as any)?.data?.stadions |
 const bookingPayload = computed(() => {
   const vars: any = { stadionId: selectedStadionId.value || undefined }
 
+  // Normalize ke UTC midnight untuk konsistensi
+  const toUTCMidnight = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const year = date.getUTCFullYear()
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(date.getUTCDate()).padStart(2, '0')
+    return `${year}-${month}-${day}T00:00:00.000Z`
+  }
+
   if (filterMode.value === 'daily') {
-    vars.date = new Date(singleDate.value).toISOString()
+    vars.date = toUTCMidnight(singleDate.value)
   } else {
-    vars.startDate = new Date(startDate.value).toISOString()
-    vars.endDate = new Date(endDate.value).toISOString()
+    vars.startDate = toUTCMidnight(startDate.value)
+    vars.endDate = toUTCMidnight(endDate.value)
   }
 
   return {
@@ -96,6 +109,27 @@ const { data: bookingsResponse, pending: isLoading, refresh: refreshBookings } =
   method: 'POST',
   body: bookingPayload,
   watch: [singleDate, startDate, endDate, filterMode, selectedStadionId] 
+})
+
+onMounted(() => {
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      refreshBookings()
+    }
+  }
+  
+  const pollInterval = setInterval(() => {
+    if (!document.hidden) {
+      refreshBookings()
+    }
+  }, 15000)
+  
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  
+  onBeforeUnmount(() => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+    clearInterval(pollInterval)
+  })
 })
 
 const rawBookings = computed<any[]>(() => (bookingsResponse.value as any)?.data?.bookings || [])
@@ -125,30 +159,32 @@ const switchMode = (mode: 'daily' | 'range') => {
 </script>
 
 <template>
-  <div class="w-full pb-16 px-4 sm:px-6 print:p-0 print:pb-0">
+  <div class="w-full pb-16 print:p-0 print:pb-0">
     
     <!-- HEADER PRINT -->
-    <div class="hidden print:flex items-center gap-6 mb-8 pb-6 px-6 pt-6">
-      <div class="w-20 h-20 flex items-center justify-center rounded-lg">
-        <img src="~/assets/images/UNDIPOfficial.png" alt="Logo UNDIP" class="w-full h-full object-contain" />
-      </div>
-      
-      <div class="flex-1">
-        <h1 class="text-2xl font-bold text-gray-900 uppercase tracking-tight">Laporan Operasional Lapangan</h1>
-        <h2 class="text-lg font-semibold text-gray-700">VENUE UNDIP</h2>
-        <p class="text-sm text-gray-500 mt-1">Jl. Prof. Soedarto, Tembalang, Kec. Tembalang, Kota Semarang, Jawa Tengah</p>
-      </div>
-
-      <div class="text-right">
-        <div class="mb-2">
-          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Periode Data</p>
-          <p class="text-base font-bold text-gray-900">
-            {{ filterMode === 'daily' ? formattedSingleDate : formattedRangeDate }}
-          </p>
+    <div class="hidden print:block mb-6 pb-4 border-b-2 border-gray-900">
+      <div class="flex items-start gap-4">
+        <div class="w-16 h-16 flex items-center justify-center shrink-0">
+          <img src="~/assets/images/VENUE-UNDIP-LOGO.png" alt="Venue UNDIP Logo" class="w-full h-full object-contain" />
         </div>
-        <div>
-          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Dicetak Pada</p>
-          <p class="text-sm font-medium text-gray-700">{{ printTimestamp }}</p>
+        
+        <div class="flex-1">
+          <h1 class="text-xl font-bold text-gray-900 uppercase tracking-tight leading-tight">Laporan Operasional Lapangan</h1>
+          <h2 class="text-base font-semibold text-gray-700 mt-0.5">VENUE UNDIP</h2>
+          <p class="text-[10px] text-gray-600 mt-1 leading-tight">Jl. Prof. Soedarto, Tembalang, Kec. Tembalang, Kota Semarang, Jawa Tengah</p>
+        </div>
+
+        <div class="text-right shrink-0">
+          <div class="mb-2">
+            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Periode Data</p>
+            <p class="text-xs font-bold text-gray-900">
+              {{ filterMode === 'daily' ? formattedSingleDate : formattedRangeDate }}
+            </p>
+          </div>
+          <div>
+            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Dicetak Pada</p>
+            <p class="text-[10px] font-medium text-gray-700">{{ printTimestamp }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -236,40 +272,107 @@ const switchMode = (mode: 'daily' | 'range') => {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 print:mb-8 print:break-inside-avoid px-6 print:px-6">
-      <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-200 print:bg-white print:text-black print:border-2 print:border-gray-800 print:shadow-none">
-        <div class="absolute right-0 top-0 opacity-10 transform translate-x-1/4 -translate-y-1/4 print:hidden">
-          <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 print:grid-cols-2 print:gap-3 print:mb-5 print:break-inside-avoid">
+      <!-- Card Sisa Kapasitas -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 rounded-2xl p-8 text-white shadow-2xl shadow-emerald-200/50 print:bg-white print:text-black print:border-2 print:border-gray-800 print:shadow-none print:rounded-lg print:p-3">
+        <!-- Decorative Elements -->
+        <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl print:hidden"></div>
+        <div class="absolute -left-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl print:hidden"></div>
+        
+        <!-- Icon Background -->
+        <div class="absolute right-4 top-4 opacity-10 print:hidden">
+          <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+          </svg>
         </div>
-        <p class="relative z-10 text-blue-100 text-xs font-bold uppercase tracking-wider mb-3 print:text-gray-100">
-          {{ filterMode === 'daily' ? 'Sisa Kapasitas Besok' : 'Total Kuota Periode Ini' }}
-        </p>
-        <div class="relative z-10 flex items-baseline gap-2">
-          <h2 class="text-6xl font-extrabold tracking-tight print:text-black">{{ totalAvailable }}</h2>
-          <span class="text-xl font-medium text-blue-100 print:text-white-100">Jam Kosong</span>
+
+        <div class="relative z-10">
+          <!-- Label -->
+          <div class="flex items-center gap-2 mb-3 print:mb-1">
+            <div class="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse print:hidden"></div>
+            <p class="text-emerald-50 text-xs font-bold uppercase tracking-wider print:text-gray-700 print:text-[9px]">
+              {{ filterMode === 'daily' ? 'Sisa Kapasitas Besok' : 'Total Kuota Periode Ini' }}
+            </p>
+          </div>
+
+          <!-- Main Number -->
+          <div class="flex items-end gap-3 mb-2 print:mb-0.5">
+            <h2 class="text-7xl font-black tracking-tighter leading-none print:text-black print:text-3xl">
+              {{ totalAvailable }}
+            </h2>
+            <div class="pb-2 print:pb-0">
+              <span class="text-lg font-bold text-emerald-100 uppercase tracking-wide print:text-gray-700 print:text-xs">Jam</span>
+              <span class="block text-sm font-semibold text-emerald-200 -mt-1 print:text-gray-600 print:text-[8px] print:mt-0">Tersedia</span>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="flex items-center gap-2 mt-3 print:mt-0.5">
+            <svg class="w-4 h-4 text-emerald-300 print:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-sm text-emerald-100 font-semibold print:text-gray-600 print:text-[9px]">
+              Siap untuk booking
+            </p>
+          </div>
         </div>
-        <div class="relative z-10 mt-2 text-sm text-blue-200 font-medium print:text-gray-100">Siap digunakan</div>
       </div>
 
-      <div class="relative overflow-hidden bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-center print:border-2 print:border-gray-800">
-        <p class="relative z-10 text-gray-500 text-xs font-bold uppercase tracking-wider mb-3 print:text-gray-10">
-          {{ filterMode === 'daily' ? 'Terbooking Besok' : 'Total Terbooking (Volume)' }}
-        </p>
-        <div class="relative z-10 flex items-baseline gap-2">
-          <h2 class="text-6xl font-extrabold text-gray-900 tracking-tight print:text-black">{{ totalBooked }}</h2>
-          <span class="text-xl font-medium text-gray-500 print:text-gray-100">Jam Terisi</span>
+      <!-- Card Terbooking -->
+      <div class="relative overflow-hidden bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 print:border-2 print:border-gray-800 print:shadow-none print:rounded-lg print:p-3">
+        <!-- Decorative Corner -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100 to-red-100 opacity-50 rounded-bl-full print:hidden"></div>
+        
+        <!-- Icon Background -->
+        <div class="absolute right-4 top-4 opacity-5 print:hidden">
+          <svg class="w-24 h-24 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
         </div>
-        <div class="relative z-10 mt-2 text-sm text-gray-500 font-medium flex items-center gap-1"></div>
+
+        <div class="relative z-10">
+          <!-- Label -->
+          <div class="flex items-center gap-2 mb-3 print:mb-1">
+            <div class="w-1.5 h-1.5 bg-red-500 rounded-full print:hidden"></div>
+            <p class="text-gray-600 text-xs font-bold uppercase tracking-wider print:text-gray-700 print:text-[9px]">
+              {{ filterMode === 'daily' ? 'Terbooking Besok' : 'Total Terbooking (Volume)' }}
+            </p>
+          </div>
+
+          <!-- Main Number -->
+          <div class="flex items-end gap-3 mb-2 print:mb-0.5">
+            <h2 class="text-7xl font-black text-gray-900 tracking-tighter leading-none print:text-black print:text-3xl">
+              {{ totalBooked }}
+            </h2>
+            <div class="pb-2 print:pb-0">
+              <span class="text-lg font-bold text-gray-600 uppercase tracking-wide print:text-gray-700 print:text-xs">Jam</span>
+              <span class="block text-sm font-semibold text-gray-500 -mt-1 print:text-gray-600 print:text-[8px] print:mt-0">Terisi</span>
+            </div>
+          </div>
+
+          <!-- Progress Indicator -->
+          <div class="flex items-center gap-2 mt-3 print:mt-0.5">
+            <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden print:hidden">
+              <div 
+                class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-700"
+                :style="{ width: totalCapacity > 0 ? `${Math.min((totalBooked / totalCapacity) * 100, 100)}%` : '0%' }"
+              ></div>
+            </div>
+            <span class="text-sm font-bold text-gray-700 print:text-[9px]">
+              {{ totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0 }}%
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse print:hidden px-4 sm:px-6">
+    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse print:hidden">
       <div v-for="i in 3" :key="i" class="bg-white rounded-2xl h-64 border border-gray-200 p-5 flex flex-col justify-between">
          <div class="space-y-3"><div class="h-4 bg-gray-200 rounded w-3/4"></div><div class="h-10 bg-gray-200 rounded w-full"></div></div>
       </div>
     </div>
 
-    <div v-else-if="dashboardData.length === 0" class="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 print:border-gray-800 print:py-10 mx-4 sm:mx-6 print:mx-6 print:border-2">
+    <div v-else-if="dashboardData.length === 0" class="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 print:border-gray-800 print:py-10 print:mx-6 print:border-2">
       <div class="p-4 bg-gray-50 rounded-full mb-4 print:hidden">
         <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
       </div>
@@ -282,7 +385,7 @@ const switchMode = (mode: 'daily' | 'range') => {
       </button>
     </div>
 
-    <div v-else class="print:hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 px-4 sm:px-6">
+    <div v-else class="print:hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       <div v-for="item in dashboardData" :key="item.id" class="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 overflow-hidden flex flex-col break-inside-avoid">
         
         <div class="p-5 border-b border-gray-100 bg-gray-50/50">
@@ -343,54 +446,54 @@ const switchMode = (mode: 'daily' | 'range') => {
       </div>
     </div>
 
-    <div v-if="dashboardData.length > 0" class="hidden print:block px-6 pb-8">
-      <table class="w-full border-collapse border border-gray-900 mb-8">
+    <div v-if="dashboardData.length > 0" class="hidden print:block pb-6">
+      <table class="w-full border-collapse border border-gray-900 mb-6 text-[9px]">
         <thead>
           <tr class="bg-gray-200">
-            <th class="border border-gray-900 px-4 py-3 text-left font-bold text-xs text-gray-900 uppercase tracking-wide">No.</th>
-            <th class="border border-gray-900 px-4 py-3 text-left font-bold text-xs text-gray-900 uppercase tracking-wide">Nama Lapangan</th>
-            <th class="border border-gray-900 px-4 py-3 text-left font-bold text-xs text-gray-900 uppercase tracking-wide">Stadion</th>
-            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Total Kuota</th>
-            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Terbooking</th>
-            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Sisa</th>
-            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Persentase Okupansi</th>
-            <th class="border border-gray-900 px-4 py-3 text-center font-bold text-xs text-gray-900 uppercase tracking-wide">Status</th>
+            <th class="border border-gray-900 px-1.5 py-1.5 text-left font-bold text-gray-900 uppercase tracking-wide" style="width: 4%;">No.</th>
+            <th class="border border-gray-900 px-2 py-1.5 text-left font-bold text-gray-900 uppercase tracking-wide" style="width: 22%;">Nama Lapangan</th>
+            <th class="border border-gray-900 px-2 py-1.5 text-left font-bold text-gray-900 uppercase tracking-wide" style="width: 18%;">Stadion</th>
+            <th class="border border-gray-900 px-1.5 py-1.5 text-center font-bold text-gray-900 uppercase tracking-wide" style="width: 10%;">Total Kuota</th>
+            <th class="border border-gray-900 px-1.5 py-1.5 text-center font-bold text-gray-900 uppercase tracking-wide" style="width: 11%;">Terbooking</th>
+            <th class="border border-gray-900 px-1.5 py-1.5 text-center font-bold text-gray-900 uppercase tracking-wide" style="width: 8%;">Sisa</th>
+            <th class="border border-gray-900 px-1.5 py-1.5 text-center font-bold text-gray-900 uppercase tracking-wide" style="width: 12%;">% Okupansi</th>
+            <th class="border border-gray-900 px-1.5 py-1.5 text-center font-bold text-gray-900 uppercase tracking-wide" style="width: 15%;">Status</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(item, index) in dashboardData" :key="item.id" :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
-            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ index + 1 }}</td>
-            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900">{{ item.name }}</td>
-            <td class="border border-gray-900 px-4 py-2.5 text-xs text-gray-900">{{ item.stadionName }}</td>
-            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ item.totalCapacity }}</td>
-            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ item.totalBooked }}</td>
-            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-gray-900 text-center">{{ item.remaining }}</td>
-            <td class="border border-gray-900 px-4 py-2.5 text-xs font-semibold text-center" :class="item.occupancyRate >= 100 ? 'bg-red-100 text-red-900' : (item.occupancyRate > 75 ? 'bg-amber-100 text-amber-900' : 'bg-green-100 text-green-900')">
+            <td class="border border-gray-900 px-1.5 py-1.5 font-semibold text-gray-900 text-center">{{ index + 1 }}</td>
+            <td class="border border-gray-900 px-2 py-1.5 font-semibold text-gray-900">{{ item.name }}</td>
+            <td class="border border-gray-900 px-2 py-1.5 text-gray-900">{{ item.stadionName }}</td>
+            <td class="border border-gray-900 px-1.5 py-1.5 font-semibold text-gray-900 text-center">{{ item.totalCapacity }}</td>
+            <td class="border border-gray-900 px-1.5 py-1.5 font-semibold text-gray-900 text-center">{{ item.totalBooked }}</td>
+            <td class="border border-gray-900 px-1.5 py-1.5 font-semibold text-gray-900 text-center">{{ item.remaining }}</td>
+            <td class="border border-gray-900 px-1.5 py-1.5 font-semibold text-center" :class="item.occupancyRate >= 100 ? 'bg-red-100 text-red-900' : (item.occupancyRate > 75 ? 'bg-amber-100 text-amber-900' : 'bg-green-100 text-green-900')">
               {{ Math.round(item.occupancyRate) }}%
             </td>
-            <td class="border border-gray-900 px-4 py-2.5 text-xs font-bold text-center text-gray-900 uppercase">
+            <td class="border border-gray-900 px-1.5 py-1.5 font-bold text-center text-gray-900 uppercase">
               {{ item.statusLabel }}
             </td>
           </tr>
         </tbody>
         <tfoot>
           <tr class="bg-gray-200 font-bold">
-            <td colspan="3" class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 uppercase">Total</td>
-            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">{{ totalCapacity }}</td>
-            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">{{ totalBooked }}</td>
-            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">{{ totalAvailable }}</td>
-            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">
+            <td colspan="3" class="border border-gray-900 px-2 py-2 font-bold text-gray-900 uppercase">Total</td>
+            <td class="border border-gray-900 px-1.5 py-2 font-bold text-gray-900 text-center">{{ totalCapacity }}</td>
+            <td class="border border-gray-900 px-1.5 py-2 font-bold text-gray-900 text-center">{{ totalBooked }}</td>
+            <td class="border border-gray-900 px-1.5 py-2 font-bold text-gray-900 text-center">{{ totalAvailable }}</td>
+            <td class="border border-gray-900 px-1.5 py-2 font-bold text-gray-900 text-center">
               {{ totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0 }}%
             </td>
-            <td class="border border-gray-900 px-4 py-3 text-xs font-bold text-gray-900 text-center">-</td>
+            <td class="border border-gray-900 px-1.5 py-2 font-bold text-gray-900 text-center">-</td>
           </tr>
         </tfoot>
       </table>
 
-      <div class="mt-8 space-y-4 text-xs text-gray-800">
-        <div class="border-t border-gray-400 pt-4">
-          <p class="font-bold mb-2 text-sm">Keterangan Informasi:</p>
-          <ul class="list-disc list-inside space-y-1 text-gray-700">
+      <div class="mt-4 space-y-3 text-[9px] text-gray-800 leading-tight">
+        <div class="border-t border-gray-400 pt-2">
+          <p class="font-bold mb-1.5 text-[10px]">Keterangan Informasi:</p>
+          <ul class="list-disc list-inside space-y-0.5 text-gray-700 ml-2">
             <li><span class="font-semibold">Total Kuota:</span> Kapasitas jam operasional lapangan selama periode yang dipilih</li>
             <li><span class="font-semibold">Terbooking:</span> Jumlah jam yang sudah dipesan oleh pengguna</li>
             <li><span class="font-semibold">Sisa:</span> Jumlah jam yang masih tersedia untuk dipesan</li>
@@ -398,24 +501,26 @@ const switchMode = (mode: 'daily' | 'range') => {
           </ul>
         </div>
 
-        <div class="border-t border-gray-400 pt-4">
-          <p class="font-bold mb-2 text-sm">Status Ketersediaan Lapangan:</p>
-          <ul class="list-disc list-inside space-y-1 text-gray-700">
+        <div class="border-t border-gray-400 pt-2">
+          <p class="font-bold mb-1.5 text-[10px]">Status Ketersediaan Lapangan:</p>
+          <ul class="list-disc list-inside space-y-0.5 text-gray-700 ml-2">
             <li><span class="font-semibold">Tersedia:</span> Kapasitas masih banyak (0-75% terisi)</li>
             <li><span class="font-semibold">Hampir Penuh:</span> Kapasitas terbatas (76-99% terisi)</li>
             <li><span class="font-semibold">Full Booked:</span> Semua kapasitas telah dipesan (100% terisi)</li>
           </ul>
         </div>
 
-        <div class="border-t border-gray-400 pt-4">
-          <p class="text-gray-600 italic">Laporan ini dicetak secara otomatis oleh Sistem Informasi Manajemen Lapangan VENUE UNDIP</p>
+        <div class="border-t border-gray-400 pt-2">
+          <p class="text-gray-600 italic text-[8px]">Laporan ini dicetak secara otomatis oleh Sistem Informasi Manajemen Lapangan VENUE UNDIP</p>
         </div>
       </div>
     </div>
 
-    <div class="hidden print:flex fixed bottom-0 left-0 w-full justify-between items-center text-[10px] text-gray-500 border-t border-gray-300 pt-2 px-6 bg-white py-3">
-      <p>Sistem Informasi Manajemen Lapangan - VENUE UNDIP</p>
-      <p>Halaman ini dicetak secara otomatis oleh sistem pada {{ printTimestamp }}</p>
+    <div class="hidden print:block fixed bottom-0 left-0 w-full border-t border-gray-300 bg-white py-1.5">
+      <div class="flex justify-between items-center text-[8px] text-gray-500 px-4">
+        <p>Sistem Informasi Manajemen Lapangan - VENUE UNDIP</p>
+        <p>Dicetak: {{ printTimestamp }}</p>
+      </div>
     </div>
 
   </div>
@@ -431,21 +536,40 @@ const switchMode = (mode: 'daily' | 'range') => {
   table {
     width: 100%;
     border-collapse: collapse;
+    page-break-inside: auto;
+    font-size: 9px;
+  }
+
+  thead {
+    display: table-header-group;
     page-break-inside: avoid;
   }
 
-  thead, tfoot {
+  tfoot {
+    display: table-footer-group;
     page-break-inside: avoid;
   }
 
   tbody tr {
     page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  th, td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
   }
 }
 </style>
 
 <style>
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 1.5cm 1cm;
+  }
+
   nav, header, aside, footer, .sidebar, .top-bar, .layout-header, .navbar {
     display: none !important;
   }
@@ -455,6 +579,10 @@ const switchMode = (mode: 'daily' | 'range') => {
     padding: 0 !important;
     width: 100% !important;
     background-color: white !important;
+  }
+
+  * {
+    box-sizing: border-box;
   }
 }
 </style>

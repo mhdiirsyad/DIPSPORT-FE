@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { VALIDATION } from '~/utils/constants'
+import { parseBackendError } from '~/utils/errorParser'
+
 defineOptions({ name: 'AdminLogin' })
+
+definePageMeta({
+  layout: 'auth'
+})
 
 const email = ref('')
 const password = ref('')
@@ -20,7 +27,6 @@ function validateForm(): string | null {
   errorField.value = null
 
   const trimmedEmail = email.value.trim()
-  const emailRegex = /^\S+@\S+\.\S+$/
 
   if (!trimmedEmail) {
     errorMsg.value = 'Email harus diisi.'
@@ -28,7 +34,7 @@ function validateForm(): string | null {
     return null
   }
 
-  if (!emailRegex.test(trimmedEmail)) {
+  if (!VALIDATION.EMAIL_REGEX.test(trimmedEmail)) {
     errorMsg.value = 'Format email tidak valid. Contoh: nama@domain.com'
     errorField.value = 'email'
     return null
@@ -40,8 +46,8 @@ function validateForm(): string | null {
     return null
   }
 
-  if (password.value.length < 8) {
-    errorMsg.value = 'Password minimal harus 8 karakter.'
+  if (password.value.length < VALIDATION.MIN_PASSWORD_LENGTH) {
+    errorMsg.value = `Password minimal harus ${VALIDATION.MIN_PASSWORD_LENGTH} karakter.`
     errorField.value = 'password'
     return null
   }
@@ -66,7 +72,8 @@ const onSubmit = async () => {
 
     await navigateTo('/admin')
   } catch (e: any) {
-    errorMsg.value = e?.message || 'Login gagal'
+    const parsed = parseBackendError(e)
+    errorMsg.value = parsed.message
     errorField.value = null
   } finally {
     loading.value = false
@@ -86,11 +93,10 @@ const onSubmit = async () => {
     <div class="flex flex-col items-center mb-6 relative z-10 animate-fade-in">
       <div class="flex justify-center mb-3 transform transition-transform duration-300 hover:scale-105">
         <div class="relative">
-          <div class="absolute inset-0 bg-white/20 rounded-full blur-xl"></div>
           <img
-            src="~/assets/images/logo-dipsport.svg"
-            alt="Dipsport Logo"
-            class="w-16 h-16 sm:w-20 sm:h-20 relative z-10 drop-shadow-2xl"
+            src="~/assets/images/VENUE-UNDIP-LOGO.png"
+            alt="Venue UNDIP Logo"
+            class="w-20 h-20 sm:w-20 sm:h-20 object-contain relative z-10 drop-shadow-2xl"
           />
         </div>
       </div>

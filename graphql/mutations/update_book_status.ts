@@ -1,6 +1,4 @@
-import gql from "graphql-tag";
-
-export const UPDATE_BOOK_STATUS = gql`
+export const UPDATE_BOOK_STATUS = `
     mutation UpdateBookingStatus($bookingCode: String!, $status: BookingStatus!){
         updateStatusBooking(bookingCode: $bookingCode, status: $status){
             bookingCode,

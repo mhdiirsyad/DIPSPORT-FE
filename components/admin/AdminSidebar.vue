@@ -75,19 +75,16 @@ const handleAction = async (item: NavItem) => {
 
 <template>
   <aside
-    class="bg-ds-blue-900 text-white flex flex-col justify-between h-full fixed inset-y-0 left-0 z-40 w-64 transition-all duration-300 ease-in-out border-r border-ds-blue-800"
+    class="bg-ds-blue-900 text-white flex flex-col justify-between h-full fixed inset-y-0 left-0 z-[70] w-64 transition-all duration-300 ease-in-out border-r border-ds-blue-800"
     :class="[isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0']"
   >
     <div class="px-6 py-7 border-b border-ds-blue-800">
-      <div class="flex items-center gap-2">
-        <div class="relative">
-          <div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg blur-md opacity-30"></div>
-          <img
-            src="~/assets/images/logo-dipsport.svg"
-            alt="Dipsport Logo"
-            class="relative h-11 w-auto drop-shadow-lg mt-2"
-          />
-        </div>
+      <div class="flex items-center gap-3">
+        <img
+          src="~/assets/images/VENUE-UNDIP-LOGO.png"
+          alt="Venue UNDIP Logo"
+          class="h-11 w-11 object-contain drop-shadow-lg"
+        />
         <div class="flex flex-col">
           <p class="font-bold uppercase text-base text-white leading-tight tracking-wide">Venue UNDIP</p>
           <p class="text-xs text-blue-200/90 leading-tight font-medium">Admin Panel</p>

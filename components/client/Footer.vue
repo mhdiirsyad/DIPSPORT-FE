@@ -6,12 +6,11 @@
         <!-- Brand Section -->
         <div class="space-y-4">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm">
-              <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 4l9 5.5v9l-9 5.5-9-5.5v-9z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 13a1 1 0 100-2 1 1 0 000 2z"/>
-              </svg>
-            </div>
+            <img
+              src="~/assets/images/VENUE-UNDIP-LOGO.png"
+              alt="Venue UNDIP Logo"
+              class="h-10 w-10 object-contain drop-shadow-lg"
+            />
             <div>
               <p class="text-lg font-bold leading-tight">VENUE UNDIP</p>
               <p class="text-xs text-blue-200/70">Booking Lapangan</p>
@@ -25,16 +24,36 @@
           <h3 class="text-sm font-bold uppercase tracking-wider text-white mb-4">Navigasi</h3>
           <ul class="space-y-2.5">
             <li>
-              <NuxtLink to="/" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Beranda</NuxtLink>
+              <NuxtLink to="/" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Beranda
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </NuxtLink>
             </li>
             <li>
-              <button @click="openComingSoon" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Stadion</button>
+              <button @click="openComingSoon" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Stadion
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </button>
             </li>
             <li>
-              <button @click="openComingSoon" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Booking Saya</button>
+              <button @click="openComingSoon" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Booking Saya
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </button>
             </li>
             <li>
-              <NuxtLink to="/admin/login" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Admin Panel</NuxtLink>
+              <NuxtLink to="/admin/login" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Admin Panel
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </NuxtLink>
             </li>
           </ul>
         </div>
@@ -44,16 +63,36 @@
           <h3 class="text-sm font-bold uppercase tracking-wider text-white mb-4">Bantuan</h3>
           <ul class="space-y-2.5">
             <li>
-              <button @click="openComingSoon" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Pusat Bantuan</button>
+              <button @click="openComingSoon" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Pusat Bantuan
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </button>
             </li>
             <li>
-              <button @click="openComingSoon" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Panduan Booking</button>
+              <button @click="openComingSoon" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Panduan Booking
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </button>
             </li>
             <li>
-              <button @click="openComingSoon" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Kebijakan Privasi</button>
+              <button @click="openComingSoon" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Kebijakan Privasi
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </button>
             </li>
             <li>
-              <button @click="openComingSoon" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">Syarat & Ketentuan</button>
+              <button @click="openComingSoon" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+                <span class="relative">
+                  Syarat & Ketentuan
+                  <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </span>
+              </button>
             </li>
           </ul>
         </div>
@@ -62,17 +101,17 @@
         <div class="space-y-4">
           <h3 class="text-sm font-bold uppercase tracking-wider text-white mb-4">Hubungi Kami</h3>
           <ul class="space-y-3">
-            <li class="flex items-start gap-3">
-              <svg class="h-5 w-5 text-blue-300 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <li class="group flex items-start gap-3">
+              <svg class="h-5 w-5 text-blue-300 flex-shrink-0 mt-0.5 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
               </svg>
-              <a href="mailto:info@undip.ac.id" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200 break-all">info@undip.ac.id</a>
+              <a href="mailto:info@undip.ac.id" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200 break-all hover:underline underline-offset-2">info@undip.ac.id</a>
             </li>
-            <li class="flex items-start gap-3">
-              <svg class="h-5 w-5 text-blue-300 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <li class="group flex items-start gap-3">
+              <svg class="h-5 w-5 text-blue-300 flex-shrink-0 mt-0.5 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
               </svg>
-              <a href="tel:+622476841001" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200">+62 xxx xxx xxx</a>
+              <a href="tel:+622476841001" class="text-sm text-blue-100/80 hover:text-white transition-colors duration-200 hover:underline underline-offset-2">+62 xxx xxx xxx</a>
             </li>
             <li class="flex items-start gap-3">
               <svg class="h-5 w-5 text-blue-300 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -96,18 +135,18 @@ Semarang, Jawa Tengah</span>
         </p>
         
         <!-- Social Links -->
-        <div class="flex items-center gap-4">
-          <button @click="openComingSoon" class="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200" title="Facebook">
+        <div class="flex items-center gap-3">
+          <button @click="openComingSoon" class="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 hover:scale-110 hover:-translate-y-1" title="Facebook">
             <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
           </button>
-          <button @click="openComingSoon" class="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200" title="Instagram">
+          <button @click="openComingSoon" class="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 hover:scale-110 hover:-translate-y-1" title="Instagram">
             <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 0C5.373 0 0 5.373 0 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-6.627-5.373-12-12-12zm0 2.25c5.385 0 9.75 4.365 9.75 9.75s-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12 6.615 2.25 12 2.25zm0 1.688c-4.454 0-8.062 3.608-8.062 8.062S7.546 20.062 12 20.062s8.062-3.608 8.062-8.062S16.454 3.938 12 3.938zm0 1.312c3.727 0 6.75 3.023 6.75 6.75s-3.023 6.75-6.75 6.75-6.75-3.023-6.75-6.75 3.023-6.75 6.75-6.75zm3.938-1.312c-.58 0-1.05.47-1.05 1.05s.47 1.05 1.05 1.05 1.05-.47 1.05-1.05-.47-1.05-1.05-1.05z"/>
             </svg>
           </button>
-          <button @click="openComingSoon" class="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200" title="Twitter">
+          <button @click="openComingSoon" class="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 hover:scale-110 hover:-translate-y-1" title="Twitter">
             <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a14.001 14.001 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
             </svg>

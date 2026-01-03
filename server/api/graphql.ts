@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { $fetch } from 'ofetch'
+import { AUTH } from '~/utils/constants'
 
 export default defineEventHandler(async (event) => {
   const endpoint = process.env.GQL_HTTP_ENDPOINT
@@ -8,7 +9,7 @@ export default defineEventHandler(async (event) => {
   }
   const body = await readBody(event)
 
-  const token = getCookie(event, 'admin_token')
+  const token = getCookie(event, AUTH.TOKEN_COOKIE_NAME)
 
   try {
     const response = await $fetch(endpoint, {

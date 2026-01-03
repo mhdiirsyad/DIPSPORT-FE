@@ -22,12 +22,11 @@ export default defineNuxtConfig({
       },
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'description', content: 'Platform booking lapangan olahraga online - DIPSPORT' },
+        { name: 'author', content: 'DIPSPORT' }
       ],
-      // Preload critical CSS
-      link: [
-        { rel: 'preload', as: 'style', href: '/_nuxt/assets/css/tailwind.css' }
-      ]
+      link: []
     },
     pageTransition: { 
       name: 'page', 
@@ -40,6 +39,19 @@ export default defineNuxtConfig({
   },
 
   ssr: true,
+
+  nitro: {
+    routeRules: {
+      '/**': {
+        headers: {
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'SAMEORIGIN',
+          'X-XSS-Protection': '1; mode=block',
+          'Referrer-Policy': 'strict-origin-when-cross-origin'
+        }
+      }
+    }
+  },
 
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET,

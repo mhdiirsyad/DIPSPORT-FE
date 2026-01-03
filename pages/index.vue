@@ -34,6 +34,10 @@ const { data: stadionsData, pending, error, refresh } = await useAsyncData<Stadi
 
 const filteredStadions = computed(() => {
   let list = stadionsData.value || []
+  
+  // Filter: Hanya tampilkan stadion ACTIVE di public client
+  list = list.filter((stadion) => stadion.status === 'ACTIVE')
+  
   const query = debouncedSearchQuery.value.trim().toLowerCase()
   
   if (query) {
@@ -81,6 +85,14 @@ const changePage = (page: number) => {
     if (section) {
       section.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
+  }
+}
+
+// Smooth scroll ke stadium list section
+const scrollToStadiumList = () => {
+  const section = document.getElementById('stadium-list')
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
 
@@ -180,9 +192,7 @@ const goToDetail = (stadionId: number) => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-gradient-to-br from-[#f5f7fb] via-[#f8fafc] to-[#f5f7fb]">
-    <ClientTopBar />
-
+  <div class="min-h-screen bg-gradient-to-br from-[#f5f7fb] via-[#f8fafc] to-[#f5f7fb]">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-8 lg:space-y-12">
 
       <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1f4a] via-[#1a2d5a] to-[#0f1f4a] px-6 py-10 text-white shadow-2xl shadow-[#0f1f4a]/40 sm:px-10 lg:py-12">
@@ -212,7 +222,10 @@ const goToDetail = (stadionId: number) => {
           </div>
           
           <div class="grid w-full max-w-2xl grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div class="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md p-5 shadow-xl transition-all duration-300 hover:border-white/30 hover:bg-white/15 hover:-translate-y-1 hover:shadow-2xl">
+            <div 
+              @click="scrollToStadiumList"
+              class="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md p-5 shadow-xl transition-all duration-300 hover:border-white/30 hover:bg-white/15 hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
+            >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-500/20 border border-blue-400/30">
                   <svg class="h-5 w-5 text-blue-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -225,7 +238,10 @@ const goToDetail = (stadionId: number) => {
               <p class="text-xs text-blue-100/70 font-medium">Lokasi terdaftar</p>
             </div>
             
-            <div class="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md p-5 shadow-xl transition-all duration-300 hover:border-white/30 hover:bg-white/15 hover:-translate-y-1 hover:shadow-2xl">
+            <div 
+              @click="scrollToStadiumList"
+              class="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md p-5 shadow-xl transition-all duration-300 hover:border-white/30 hover:bg-white/15 hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
+            >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30">
                   <svg class="h-5 w-5 text-emerald-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -314,7 +330,7 @@ const goToDetail = (stadionId: number) => {
                       <svg class="h-3 w-3 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                       </svg>
-                      <span><span class="font-bold text-white">{{ stadion.bookingCount }}</span> orang booking</span>
+                      <span><span class="font-bold text-white">{{ stadion.bookingCount }}</span> orang telah booking</span>
                     </div>
                     <div class="flex items-center gap-1.5 text-blue-100/80">
                       <svg class="h-3 w-3 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -533,8 +549,7 @@ const goToDetail = (stadionId: number) => {
       </section>
     </div>
 
-    <ClientFooter />
-  </main>
+  </div>
 </template>
 
 <style scoped>

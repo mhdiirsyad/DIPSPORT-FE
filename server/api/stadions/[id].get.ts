@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
-        query: print(QUERY_GET_STADION_BY_ID),
+        query: QUERY_GET_STADION_BY_ID,
         variables: { stadionId },
       },
     })

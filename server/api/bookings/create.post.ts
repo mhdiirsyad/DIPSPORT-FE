@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
-        query: print(MUTATION_CREATE_BOOKING),
+        query: MUTATION_CREATE_BOOKING,
         variables: {
           name: body.name,
           contact: body.contact,

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { useConfirmation } from '~/composables/useConfirmation'
+import { parseBackendError } from '~/utils/errorParser'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -60,6 +61,14 @@ const { data: field, error: fetchError, pending: pagePending } = await useAsyncD
   `field-${fieldId}`,
   () => $fetch<FieldData>(`/api/fields/${fieldId}`)
 )
+
+if (fetchError.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Lapangan tidak ditemukan',
+    fatal: true
+  })
+}
 
 if (field.value) {
   form.value.stadionId = field.value.stadionId
@@ -196,7 +205,8 @@ async function handleSubmit() {
 
     await router.push('/admin/fields')
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || err.message
+    const parsed = parseBackendError(err)
+    errorMsg.value = parsed.message
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } finally {
     loading.value = false
@@ -221,7 +231,8 @@ async function handleDelete() {
     })
     router.push('/admin/fields')
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || 'Gagal menghapus lapangan.'
+    const parsed = parseBackendError(err)
+    errorMsg.value = parsed.message
     loadingDelete.value = false
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -229,7 +240,7 @@ async function handleDelete() {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-12 relative">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-12 relative">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">
@@ -408,20 +419,6 @@ async function handleDelete() {
           </div>
         </div>
         
-        <div v-if="errorMsg" id="error-alert" class="bg-white rounded-2xl border border-red-300 shadow-sm overflow-hidden">
-          <div class="p-4 bg-red-50 border-l-4 border-red-500">
-            <div class="flex items-start gap-3">
-              <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-red-800 mb-1">Terjadi Kesalahan</p>
-                <p class="text-sm text-red-700 break-words">{{ errorMsg }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
           <div class="p-5 border-b border-gray-200 bg-gray-50/50 flex justify-between items-center">
             <div>
@@ -519,9 +516,34 @@ async function handleDelete() {
               </div>
 
             </div>
+
+            <!-- Inline Error untuk Upload Images -->
+            <p v-if="errorMsg && (errorMsg.includes('gambar') || errorMsg.includes('foto') || errorMsg.includes('5'))" class="mt-3 text-xs text-red-600 font-medium flex items-start gap-1.5 p-3 bg-red-50 rounded-lg border border-red-100">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <span>{{ errorMsg }}</span>
+            </p>
           </div>
         </div>
 
+      </div>
+
+      <!-- ERROR MESSAGE (Sebelum tombol submit) -->
+      <div v-if="errorMsg && !(errorMsg.includes('gambar') || errorMsg.includes('foto') || errorMsg.includes('5'))" class="lg:col-span-3 p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-start gap-3 shadow-sm animate-shake">
+        <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div class="flex-1">
+          <p class="font-bold text-sm">Terjadi Kesalahan</p>
+          <p class="text-sm">{{ errorMsg }}</p>
+        </div>
+        <button 
+          type="button" 
+          @click="errorMsg = null" 
+          class="text-red-700 hover:text-red-900 transition-colors"
+          aria-label="Tutup pesan error"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
       </div>
 
       <div class="lg:col-span-3 sm:hidden flex flex-col gap-3 mt-4">

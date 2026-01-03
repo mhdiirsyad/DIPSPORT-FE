@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
+import { computed } from 'vue'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -25,56 +24,36 @@ const { data: stadions, pending, error, refresh } = await useAsyncData(
   () => $fetch<StadionRow[]>('/api/stadions')
 )
 
-const searchQuery = ref('')
-const debouncedSearch = ref('')
-
-const applyDebounce = useDebounceFn(() => {
-  debouncedSearch.value = searchQuery.value.trim().toLowerCase()
-  currentPage.value = 1
-}, 300)
-
-watch(searchQuery, applyDebounce)
-
-const filteredStadions = computed(() => {
-  if (!stadions.value) return []
-  
-  let result = stadions.value
-
-  if (debouncedSearch.value) {
-    result = result.filter(stadion =>
-      stadion.name.toLowerCase().includes(debouncedSearch.value)
-    )
-  }
-  
-  return result
+// Use search composable with sorting by fields count
+const stadionsRef = computed(() => {
+  const list = stadions.value || []
+  // Sort by jumlah fields (descending) - sama seperti di client
+  return [...list].sort((a, b) => {
+    const aCount = a._count?.fields ?? a.fields?.length ?? 0
+    const bCount = b._count?.fields ?? b.fields?.length ?? 0
+    return bCount - aCount
+  })
 })
+const { searchQuery, filteredItems: filteredStadions } = useSearch(
+  stadionsRef,
+  (stadion) => [stadion.name]
+)
 
-const currentPage = ref(1)
-const itemsPerPage = 6
-
-const totalItems = computed(() => filteredStadions.value.length)
-const totalPages = computed(() => Math.max(Math.ceil(totalItems.value / itemsPerPage), 1))
-
-const paginatedStadions = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  return filteredStadions.value.slice(start, start + itemsPerPage)
-})
-
-const paginationSummary = computed(() => {
-  if (totalItems.value === 0) return 'Tidak ada data'
-  const start = (currentPage.value - 1) * itemsPerPage + 1
-  const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}-${end} dari ${totalItems.value} Venue`
-})
-
-const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
-const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+// Use pagination composable with 6 items per page for bookings
+const { 
+  currentPage, 
+  paginatedItems: paginatedStadions, 
+  summary: paginationSummary, 
+  nextPage, 
+  prevPage,
+  totalPages
+} = usePagination(filteredStadions, { itemsPerPage: 6 })
 
 const fallbackImage = 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb253?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-16">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">

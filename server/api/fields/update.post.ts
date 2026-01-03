@@ -10,9 +10,6 @@ export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'admin_token')
   if (!token) throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
 
-  // DEBUG: Log body yang diterima dari frontend
-  console.log('🔍 UPDATE FIELD - Body received:', JSON.stringify(body, null, 2))
-
   try {
     const variables = {
       fieldId: String(body.fieldId),
@@ -26,9 +23,6 @@ export default defineEventHandler(async (event) => {
       images: body.images,
     }
 
-    // DEBUG: Log variables yang akan dikirim ke GraphQL
-    console.log('📤 UPDATE FIELD - Variables sent to GraphQL:', JSON.stringify(variables, null, 2))
-
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
@@ -38,19 +32,12 @@ export default defineEventHandler(async (event) => {
       headers: { 'Authorization': `Bearer ${token}` }
     })
 
-    // DEBUG: Log response dari GraphQL
-    console.log('📥 UPDATE FIELD - GraphQL response:', JSON.stringify(response, null, 2))
-
     if (response.errors) {
       const msg = response.errors[0].message
-      // DEBUG: Log error detail
-      console.error('❌ UPDATE FIELD - GraphQL errors:', JSON.stringify(response.errors, null, 2))
       throw createError({ statusCode: 400, statusMessage: msg })
     }
     return response.data.updateField
   } catch (err: any) {
-    // DEBUG: Log error yang tertangkap
-    console.error('❌ UPDATE FIELD - Catch error:', err)
     if (err.statusCode) throw err
     throw createError({ statusCode: 502, statusMessage: err.message })
   }

@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
         Authorization: `Bearer ${token}`,
       },
       body: {
-        query: print(QUERY_GET_BOOKINGS),
+        query: QUERY_GET_BOOKINGS,
         variables: {stadionId, date}
       },
     })

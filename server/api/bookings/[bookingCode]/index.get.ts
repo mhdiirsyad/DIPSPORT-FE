@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
       'Content-Type': 'application/json',
     },
     body: {
-      query: print(QUERY_GET_BOOKING),
+      query: QUERY_GET_BOOKING,
       variables: { bookingCode },
     },
   })

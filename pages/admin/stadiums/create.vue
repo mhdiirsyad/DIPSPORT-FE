@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
+import { parseBackendError } from '~/utils/errorParser'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -134,7 +135,8 @@ async function handleSubmit() {
     }
     await router.push('/admin/stadiums')
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || err.message || 'Gagal menyimpan stadion.'
+    const parsed = parseBackendError(err)
+    errorMsg.value = parsed.message
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } finally {
     loading.value = false
@@ -143,7 +145,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-12 relative">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-12 relative">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">
@@ -252,7 +254,7 @@ async function handleSubmit() {
                 </label>
               </div>
               <p v-if="errorMsg && errorMsg.includes('fasilitas')" class="text-xs text-red-600 font-medium flex items-start gap-1.5 p-3 bg-red-50 rounded-lg border border-red-100">
-                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 <span>{{ errorMsg }}</span>
               </p>
             </div>
@@ -350,6 +352,12 @@ async function handleSubmit() {
                 </div>
               </div>
             </div>
+
+            <!-- Inline Error untuk Upload Images -->
+            <p v-if="errorMsg && (errorMsg.includes('foto') || errorMsg.includes('gambar') || errorMsg.includes('5'))" class="mt-3 text-xs text-red-600 font-medium flex items-start gap-1.5 p-3 bg-red-50 rounded-lg border border-red-100">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <span>{{ errorMsg }}</span>
+            </p>
 
           </div>
         </div>

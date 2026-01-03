@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag'
-
-export const QUERY_GET_BOOKINGS = gql`
+export const QUERY_GET_BOOKINGS = `
   query Bookings($stadionId: ID, $date: DateTime, $startDate: DateTime, $endDate: DateTime) {
     bookings(stadionId: $stadionId, date: $date, startDate: $startDate, endDate: $endDate) {
       id

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 
 definePageMeta({
@@ -18,45 +18,26 @@ const { data: facilities, pending, error, refresh } = await useAsyncData(
   () => $fetch<FacilityRow[]>('/api/facilities')
 )
 
-const searchQuery = ref('')
+// Use search composable
+const facilitiesRef = computed(() => facilities.value || [])
+const { searchQuery, filteredItems: filteredFacilities } = useSearch(
+  facilitiesRef,
+  (facility) => [facility.name, String(facility.id)]
+)
 
-const filteredFacilities = computed(() => {
-  if (!facilities.value) return []
-  if (!searchQuery.value.trim()) return facilities.value
-
-  const query = searchQuery.value.toLowerCase().trim()
-  return facilities.value.filter(
-    f => f.name.toLowerCase().includes(query) || String(f.id).includes(query)
-  )
-})
-
-const currentPage = ref(1)
-const itemsPerPage = 10
-
-watch(searchQuery, () => { currentPage.value = 1 })
-
-const totalItems = computed(() => filteredFacilities.value.length)
-const totalPages = computed(() => Math.max(Math.ceil(totalItems.value / itemsPerPage), 1))
-
-const paginatedFacilities = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredFacilities.value.slice(start, end)
-})
-
-const paginationSummary = computed(() => {
-  if (totalItems.value === 0) return 'Tidak ada data'
-  const start = (currentPage.value - 1) * itemsPerPage + 1
-  const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}-${end} dari ${totalItems.value} data`
-})
-
-const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
-const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+// Use pagination composable
+const { 
+  currentPage, 
+  paginatedItems: paginatedFacilities, 
+  summary: paginationSummary, 
+  nextPage, 
+  prevPage,
+  totalPages
+} = usePagination(filteredFacilities)
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-16">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">

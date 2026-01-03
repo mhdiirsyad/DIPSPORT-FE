@@ -62,7 +62,7 @@
                 :class="[
                   !item.date ? 'invisible' : '',
                   isDatePast(item.date) 
-                  ? 'text-gray-300 cursor-not-allowed' 
+                  ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50' 
                   : isDateSelected(item.date)
                   ? 'bg-[#1f2a56] text-white shadow-md scale-105'
                   : 'text-gray-700 hover:bg-gray-100 hover:scale-105 active:scale-95'
@@ -153,7 +153,7 @@ function isDatePast(date: Date | null) {
   if (!date) return false
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  return date < today
+  return date <= today
 }
 
 function isDateSelected(date: Date | null) {
@@ -214,17 +214,14 @@ function updatePopoverPosition() {
   const viewportHeight = window.innerHeight
   const padding = 16
   
-  // Check if popover goes beyond right edge
   if (left + popoverRect.width > viewportWidth - padding) {
     left = viewportWidth - popoverRect.width - padding
   }
   
-  // Check if popover goes beyond left edge
   if (left < padding) {
     left = padding
   }
   
-  // Check if popover goes beyond bottom edge
   if (top + popoverRect.height > viewportHeight - padding) {
     // Try to position above the button instead
     top = triggerRect.top - popoverRect.height - 8

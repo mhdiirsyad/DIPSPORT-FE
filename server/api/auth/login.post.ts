@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, setCookie, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { MUTATION_LOGIN } from '~/graphql/mutations/login'
+import { AUTH, API } from '~/utils/constants'
 
 export default defineEventHandler(async (event) => {
   const { email, password } = await readBody<{ email: string; password: string }>(event)
@@ -16,8 +17,8 @@ export default defineEventHandler(async (event) => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: { query: MUTATION_LOGIN, variables: { email, password } },
-      timeout: 8000,
-      retry: 0
+      timeout: API.TIMEOUT,
+      retry: API.RETRY_COUNT
     })
 
     if (resp?.errors?.length) {
@@ -31,12 +32,12 @@ export default defineEventHandler(async (event) => {
     if (!data?.token)
       throw createError({ statusCode: 401, statusMessage: 'Invalid credentials' })
 
-    setCookie(event, 'admin_token', data.token, {
+    setCookie(event, AUTH.TOKEN_COOKIE_NAME, data.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7
+      maxAge: AUTH.TOKEN_MAX_AGE
     })
 
     return { ok: true, admin: data.admin }

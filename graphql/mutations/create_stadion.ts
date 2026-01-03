@@ -1,4 +1,3 @@
-// ~/graphql/mutations/create_stadion.ts
 export const MUTATION_CREATE_STADION = `
   mutation CreateStadion(
     $name: String!

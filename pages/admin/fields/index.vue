@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
+import { getStadiumName, normalizeFieldsArray } from '~/utils/normalizers'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -26,43 +27,29 @@ const { data: rawFields, pending, error, refresh } = await useAsyncData(
   () => $fetch<FieldRow[]>('/api/fields')
 )
 
-const searchQuery = ref('')
+// Normalize fields untuk ensure consistent structure
+const normalizedFields = computed(() => normalizeFieldsArray(rawFields.value || []))
 
-const filteredFields = computed(() => {
-  if (!rawFields.value) return []
-  if (!searchQuery.value.trim()) return rawFields.value
+// Use search composable with custom search keys
+const { searchQuery, filteredItems: filteredFields } = useSearch(
+  normalizedFields,
+  (field) => [
+    field.name,
+    String(field.id),
+    getStadiumName(field)
+  ]
+)
 
-  const query = searchQuery.value.toLowerCase().trim()
-  return rawFields.value.filter((field) => {
-    const stadionName = field.Stadion?.name?.toLowerCase() || field.stadion?.name?.toLowerCase() || ''
-    return (
-      field.name.toLowerCase().includes(query) ||
-      stadionName.includes(query) ||
-      String(field.id).includes(query)
-    )
-  })
-})
+// Use pagination composable
+const { 
+  currentPage, 
+  paginatedItems: paginatedFields, 
+  summary: paginationSummary, 
+  nextPage, 
+  prevPage,
+  totalPages
+} = usePagination(filteredFields)
 
-const currentPage = ref(1)
-const itemsPerPage = 10
-
-watch(searchQuery, () => { currentPage.value = 1 })
-
-const totalItems = computed(() => filteredFields.value.length)
-const totalPages = computed(() => Math.max(Math.ceil(totalItems.value / itemsPerPage), 1))
-const paginatedFields = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredFields.value.slice(start, end)
-})
-const paginationSummary = computed(() => {
-  if (totalItems.value === 0) return 'Tidak ada data'
-  const start = (currentPage.value - 1) * itemsPerPage + 1
-  const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}-${end} dari ${totalItems.value} data`
-})
-const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
-const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
 const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
   return status === 'ACTIVE'
@@ -72,7 +59,7 @@ const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-16">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">
@@ -171,7 +158,7 @@ const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
                     <span class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{{ field.name }}</span>
                     <div class="flex items-center gap-1.5 mt-1">
                       <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      <span class="text-xs text-gray-500 font-medium">{{ field.Stadion?.name || field.stadion?.name || 'Stadion Tidak Diketahui' }}</span>
+                      <span class="text-xs text-gray-500 font-medium">{{ getStadiumName(field) }}</span>
                     </div>
                   </div>
                 </td>
@@ -217,7 +204,7 @@ const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
                 <h3 class="text-sm font-bold text-gray-900 leading-tight line-clamp-2">{{ field.name }}</h3>
                 <div class="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500">
                   <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  <span class="truncate">{{ field.Stadion?.name || field.stadion?.name || 'N/A' }}</span>
+                  <span class="truncate">{{ getStadiumName(field) }}</span>
                 </div>
               </div>
               <span
@@ -230,17 +217,7 @@ const getStatusClasses = (status?: 'ACTIVE' | 'INACTIVE') => {
 
             <div class="border-t border-gray-300 my-3"></div>
 
-            <div class="flex items-center justify-between">
-              <!-- HARGA DISEMBUNYIKAN: Tampilan harga dikomentari -->
-              <!-- <div class="flex flex-col">
-                <div class="flex items-baseline gap-1">
-                  <span class="text-sm font-bold text-gray-900">
-                    Rp {{ field.pricePerHour.toLocaleString('id-ID') }}
-                  </span>
-                  <span class="text-xs font-normal text-gray-500">/ jam</span>
-                </div>
-              </div> -->
-
+            <div class="flex items-center justify-end">
               <NuxtLink
                 :to="`/admin/fields/${field.id}`"
                 class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"

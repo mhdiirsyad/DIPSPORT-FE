@@ -1,6 +1,4 @@
-import gql from "graphql-tag";
-
-export const QUERY_GET_STADIONS = gql`
+export const QUERY_GET_STADIONS = `
   query StadionsWithDetails {
     stadions {
       id

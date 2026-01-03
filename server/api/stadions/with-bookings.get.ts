@@ -1,9 +1,7 @@
-import { print } from 'graphql'
 import { defineEventHandler, createError } from 'h3'
 import { $fetch } from 'ofetch'
-import gql from 'graphql-tag'
 
-const QUERY_STADIONS_DATA = gql`
+const QUERY_STADIONS_DATA = `
   query StadionsData {
     stadions {
       id
@@ -41,7 +39,7 @@ const QUERY_STADIONS_DATA = gql`
   }
 `
 
-const QUERY_BOOKINGS_WITH_DETAILS = gql`
+const QUERY_BOOKINGS_WITH_DETAILS = `
   query BookingsWithDetails($startDate: DateTime, $endDate: DateTime) {
     bookings(startDate: $startDate, endDate: $endDate) {
       id
@@ -66,13 +64,13 @@ export default defineEventHandler(async (event) => {
       $fetch<{ data?: any; errors?: any[] }>(endpoint, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
-        body: { query: print(QUERY_STADIONS_DATA) },
+        body: { query: QUERY_STADIONS_DATA },
       }),
       $fetch<{ data?: any; errors?: any[] }>(endpoint, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
         body: { 
-          query: print(QUERY_BOOKINGS_WITH_DETAILS),
+          query: QUERY_BOOKINGS_WITH_DETAILS,
           variables: {
             startDate: "2024-01-01T00:00:00Z",
             endDate: "2026-12-31T23:59:59Z"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -19,40 +19,22 @@ const { data: rawStadions, pending, error, refresh } = await useAsyncData(
   () => $fetch<StadionRow[]>('/api/stadions')
 )
 
-const searchQuery = ref('')
+// Use search composable
+const stadionsRef = computed(() => rawStadions.value || [])
+const { searchQuery, filteredItems: filteredStadions } = useSearch(
+  stadionsRef,
+  (stadion) => [stadion.name, String(stadion.id)]
+)
 
-const filteredStadions = computed(() => {
-  if (!rawStadions.value) return []
-  
-  if (!searchQuery.value.trim()) return rawStadions.value
-  
-  const query = searchQuery.value.toLowerCase().trim()
-  return rawStadions.value.filter((stadion) =>
-    stadion.name.toLowerCase().includes(query) ||
-    String(stadion.id).includes(query)
-  )
-})
-
-const currentPage = ref(1)
-const itemsPerPage = 10
-
-watch(searchQuery, () => { currentPage.value = 1 })
-
-const totalItems = computed(() => filteredStadions.value.length)
-const totalPages = computed(() => Math.max(Math.ceil(totalItems.value / itemsPerPage), 1))
-const paginatedStadions = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredStadions.value.slice(start, end)
-})
-const paginationSummary = computed(() => {
-  if (totalItems.value === 0) return 'Tidak ada data'
-  const start = (currentPage.value - 1) * itemsPerPage + 1
-  const end = Math.min(currentPage.value * itemsPerPage, totalItems.value)
-  return `Menampilkan ${start}-${end} dari ${totalItems.value} data`
-})
-const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
-const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+// Use pagination composable
+const { 
+  currentPage, 
+  paginatedItems: paginatedStadions, 
+  summary: paginationSummary, 
+  nextPage, 
+  prevPage,
+  totalPages
+} = usePagination(filteredStadions)
 
 const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
   return status === 'ACTIVE'
@@ -62,7 +44,7 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-16">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">
@@ -213,10 +195,10 @@ const getStatusClasses = (status: 'ACTIVE' | 'INACTIVE') => {
               </span>
             </div>
 
-            <div class="flex items-center justify-end pt-2 border-t border-gray-300 mt-2">
+            <div class="flex items-center justify-end pt-2 border-t border-gray-300 mt-3">
               <NuxtLink
                 :to="`/admin/stadiums/${stadion.id}`"
-                class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline decoration-2 underline-offset-2 py-1"
+                class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
               >
                 Edit
               </NuxtLink>

@@ -1,7 +1,6 @@
 import dayjs from 'dayjs'
 import isBetween from 'dayjs/plugin/isBetween'
 import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
 
 export interface Field {
   id: string
@@ -38,9 +37,6 @@ export interface OperationalField {
 
 dayjs.extend(isBetween)
 dayjs.extend(utc)
-dayjs.extend(timezone)
-
-dayjs.tz.setDefault("Asia/Jakarta")
 
 export interface DashboardCardItem {
   id: string
@@ -78,7 +74,8 @@ export const useDashboardLogic = () => {
         if (b.status === 'CANCELLED') return 
 
         b.details.forEach(d => {
-            const dbDate = dayjs(d.bookingDate).tz("Asia/Jakarta").format('YYYY-MM-DD')
+            // Gunakan UTC untuk konsistensi dengan admin & client
+            const dbDate = dayjs(d.bookingDate).utc().format('YYYY-MM-DD')
 
             if (String(d.fieldId) === String(field.id) && dbDate === targetDate) {
                 bookedCount++
@@ -137,7 +134,8 @@ export const useDashboardLogic = () => {
         if (b.status === 'CANCELLED') return 
 
         b.details.forEach(d => {
-            const dDate = dayjs(d.bookingDate).tz("Asia/Jakarta")
+            // Gunakan UTC untuk konsistensi dengan admin & client
+            const dDate = dayjs(d.bookingDate).utc()
             
             if (String(d.fieldId) === String(field.id) && 
                (dDate.isSame(start, 'day') || dDate.isSame(end, 'day') || dDate.isBetween(start, end, 'day', '[]'))) {

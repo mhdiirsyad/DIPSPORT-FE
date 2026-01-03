@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       body: {
-        query: print(QUERY_GET_BOOKINGS),
+        query: QUERY_GET_BOOKINGS,
         variables: { stadionId, date },
       },
       headers: {

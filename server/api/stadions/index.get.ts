@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
     const response = await $fetch<{ data?: any; errors?: any[] }>(endpoint, {
       method: 'POST',
       headers: {"Content-Type": "application/json"},
-      body: { 
-        query: print(QUERY_GET_STADIONS)
+      body: {
+        query: QUERY_GET_STADIONS
       },
     })
     

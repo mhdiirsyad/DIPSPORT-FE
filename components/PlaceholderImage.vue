@@ -16,7 +16,7 @@
     </defs>
     <rect width="100%" height="100%" fill="url(#grid)" />
 
-    <g transform="translate(50%, 35%)">
+    <g transform="translate(150, 70)">
       <rect x="-30" y="-25" width="60" height="50" fill="none" stroke="#9ca3af" stroke-width="2" rx="4" />
 
       <path d="M -20 5 L -10 -8 L 0 2 L 10 -5 L 20 8" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />

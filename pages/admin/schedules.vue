@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { parseBackendError } from '~/utils/errorParser'
 
 defineOptions({ name: 'AdminSchedules' })
 definePageMeta({
@@ -132,7 +133,8 @@ const handleSubmit = async () => {
     operatingHours.value = updated
     editing.value = false
   } catch (err: any) {
-    submitError.value = err?.data?.statusMessage || err?.message || 'Gagal menyimpan jam operasional.'
+    const parsed = parseBackendError(err)
+    submitError.value = parsed.message
   } finally {
     submitting.value = false
   }
@@ -140,7 +142,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-16">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-16">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">

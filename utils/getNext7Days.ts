@@ -1,27 +1,19 @@
 export function getNext7Days() {
-  const today = new Date()
-  // Get the current hour
-  const currentHour = today.getHours();
-
-  // Create a new Date object for today, setting only the hour and zeroing out minutes, seconds, and milliseconds
-  const todayAtCurrentHour = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-    currentHour,
-    0, // minutes
-    0, // seconds
-    0  // milliseconds
-  );
   const days = []
 
-  const date = new Date(todayAtCurrentHour)
-  for(let i = 1; i<=7; i++) {
-    date.setDate(date.getDate() + 1)
+  const today = new Date()
+  const currentYear = today.getUTCFullYear()
+  const currentMonth = today.getUTCMonth()
+  const currentDate = today.getUTCDate()
+
+  for (let i = 1; i <= 7; i++) {
+    const futureDate = new Date(Date.UTC(currentYear, currentMonth, currentDate + i, 0, 0, 0, 0))
+    
     days.push({
-      label: date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }),
-      value: date.toISOString(),
+      label: futureDate.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }),
+      value: futureDate.toISOString(), // Format: YYYY-MM-DDT00:00:00.000Z
     })
   }
+  
   return days
 }

@@ -1,6 +1,4 @@
-import gql from "graphql-tag";
-
-export const QUERY_GET_STADION_BY_ID = gql`
+export const QUERY_GET_STADION_BY_ID = `
   query GetStadionById($stadionId: ID!) {
     stadion(stadionId: $stadionId) {
       id

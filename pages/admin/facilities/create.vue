@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { availableIcons, VALID_FACILITY_ICONS } from '~/utils/validIconList'
+import { parseBackendError } from '~/utils/errorParser'
 
 definePageMeta({
   middleware: 'auth-admin',
@@ -18,6 +19,16 @@ const form = ref({
 
 const loading = ref(false)
 const errorMsg = ref<string | null>(null)
+const searchQuery = ref('')
+
+const filteredIcons = computed(() => {
+  if (!searchQuery.value.trim()) return availableIcons
+  
+  const query = searchQuery.value.toLowerCase().trim()
+  return availableIcons.filter(icon => 
+    icon.name.toLowerCase().includes(query)
+  )
+})
 
 async function handleSubmit() {
   loading.value = true
@@ -37,7 +48,8 @@ async function handleSubmit() {
     })
     await router.push('/admin/facilities')
   } catch (err: any) {
-    errorMsg.value = err.data?.statusMessage || err.message || 'Gagal menyimpan fasilitas'
+    const parsed = parseBackendError(err)
+    errorMsg.value = parsed.message
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } finally {
     loading.value = false
@@ -46,7 +58,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <section class="flex w-full flex-col gap-6 sm:gap-8 px-4 sm:px-6 pb-12 relative">
+  <section class="flex w-full flex-col gap-6 sm:gap-8 pb-12 relative">
     
     <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
       <div class="flex items-start gap-4">
@@ -119,9 +131,62 @@ async function handleSubmit() {
             <p class="text-xs text-gray-500 mt-0.5">Pilih simbol yang paling merepresentasikan fasilitas ini.</p>
           </div>
           <div class="p-6">
-            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            <!-- Search Box -->
+            <div class="mb-6">
+              <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                  <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Cari ikon... (mis: toilet, wifi, parkir)"
+                  class="block w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                />
+                <button
+                  v-if="searchQuery"
+                  @click="searchQuery = ''"
+                  type="button"
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p class="mt-2 text-xs text-gray-500 flex items-center gap-1.5">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">{{ filteredIcons.length }}</span>
+                {{ filteredIcons.length === availableIcons.length ? 'Semua ikon tersedia' : `ikon ditemukan dari ${availableIcons.length} total` }}
+              </p>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="filteredIcons.length === 0" class="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h4 class="text-sm font-semibold text-gray-900 mb-1">Tidak ada ikon ditemukan</h4>
+              <p class="text-xs text-gray-500 mb-4">Coba gunakan kata kunci lain seperti "toilet", "wifi", atau "parkir"</p>
+              <button
+                @click="searchQuery = ''"
+                type="button"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Tampilkan semua ikon
+              </button>
+            </div>
+
+            <!-- Icon Grid -->
+            <div v-if="filteredIcons.length > 0" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               <label
-                v-for="icon in availableIcons"
+                v-for="icon in filteredIcons"
                 :key="icon.value"
                 class="group relative flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all duration-200"
                 :class="[form.icon === icon.value ? 'border-blue-500 bg-blue-50/50 shadow-md ring-1 ring-blue-500/20' : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 hover:shadow-sm']"
