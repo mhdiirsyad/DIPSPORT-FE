@@ -13,6 +13,14 @@ import { QUERY_GET_STADIONS } from '~/graphql/queries/get_stadions'
 import { OPERATING_HOURS } from '~/utils/constants'
 
 definePageMeta({ middleware: 'auth-admin', layout: 'admin' })
+
+useHead({
+  title: 'Dashboard Admin - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Dashboard admin untuk mengelola venue dan booking lapangan olahraga VENUE UNDIP' }
+  ]
+})
+
 dayjs.locale('id')
 
 const getQueryString = (query: any) => typeof query === 'string' ? query : print(query)

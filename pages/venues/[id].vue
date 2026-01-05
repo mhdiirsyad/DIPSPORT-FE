@@ -255,15 +255,15 @@ const venue = computed(() => buildVenueFromGraphQL(stadionData.value))
 
 // SEO Meta Tags
 useHead({
-  title: computed(() => `${venue.value.name} - DIPSPORT`),
+  title: computed(() => `${venue.value.name} - VENUE UNDIP`),
   meta: [
     { name: 'description', content: computed(() => venue.value.description || `Booking lapangan di ${venue.value.name}`) },
-    { property: 'og:title', content: computed(() => `${venue.value.name} - DIPSPORT`) },
+    { property: 'og:title', content: computed(() => `${venue.value.name} - VENUE UNDIP`) },
     { property: 'og:description', content: computed(() => venue.value.description || `Booking lapangan di ${venue.value.name}`) },
     { property: 'og:image', content: computed(() => venue.value.gallery[0] || '') },
     { property: 'og:type', content: 'website' },
     { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: computed(() => `${venue.value.name} - DIPSPORT`) },
+    { name: 'twitter:title', content: computed(() => `${venue.value.name} - VENUE UNDIP`) },
     { name: 'twitter:description', content: computed(() => venue.value.description || `Booking lapangan di ${venue.value.name}`) },
     { name: 'twitter:image', content: computed(() => venue.value.gallery[0] || '') },
   ]
@@ -1084,7 +1084,7 @@ watch(selectedDate, () => {
               <div class="text-center space-y-3">
                 <h3 class="text-2xl font-bold text-gray-900">Informasi</h3>
                 <p class="text-gray-600 leading-relaxed">
-                  Maaf, untuk saat ini Anda hanya bisa melihat sisa kuota booking lapangan. Untuk booking, silahkan datang langsung ke venue terkait.
+                  Maaf, untuk saat ini Anda hanya bisa melihat sisa kuota booking lapangan. Untuk booking, silahkan untuk datang langsung ke venue terkait.
                 </p>
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg">
                   <svg class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">

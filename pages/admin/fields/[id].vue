@@ -10,6 +10,13 @@ definePageMeta({
   layout: 'admin',
 })
 
+useHead({
+  title: 'Edit Lapangan - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Edit detail lapangan di VENUE UNDIP' }
+  ]
+})
+
 interface StadionSelect {
   id: number
   name: string
@@ -336,7 +343,7 @@ async function handleDelete() {
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Lapangan <span class="text-red-500">*</span></label>
-              <input v-model="form.name" type="text" required placeholder="Contoh: Lapangan Badminton A" class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" />
+              <input v-model="form.name" type="text" required placeholder="Contoh: Lapangan Futsal A" class="block w-full rounded-xl border border-gray-300 pl-4 pr-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-blue-500 shadow-sm transition-all" />
             </div>
             
             <div class="space-y-1.5">

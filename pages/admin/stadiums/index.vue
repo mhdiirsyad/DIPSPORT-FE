@@ -6,6 +6,13 @@ definePageMeta({
   layout: 'admin',
 })
 
+useHead({
+  title: 'Kelola Stadion - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Kelola daftar stadion dan venue olahraga di VENUE UNDIP' }
+  ]
+})
+
 interface StadionRow {
   id: number
   name: string

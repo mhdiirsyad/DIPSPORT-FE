@@ -8,6 +8,13 @@ definePageMeta({
   layout: 'auth'
 })
 
+useHead({
+  title: 'Login Admin - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Halaman login untuk administrator VENUE UNDIP' }
+  ]
+})
+
 const email = ref('')
 const password = ref('')
 const loading = ref(false)

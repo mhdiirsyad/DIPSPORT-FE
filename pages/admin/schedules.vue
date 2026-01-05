@@ -10,6 +10,13 @@ definePageMeta({
   ssr: false,
 })
 
+useHead({
+  title: 'Jadwal Operasional - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Kelola jadwal operasional venue di VENUE UNDIP' }
+  ]
+})
+
 type OperatingHoursRecord = {
   id: number
   openHour: number

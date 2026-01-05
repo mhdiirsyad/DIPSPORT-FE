@@ -17,14 +17,20 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      title: 'VENUE UNDIP - Sewa Venue & Lapangan Olahraga',
+      titleTemplate: '%s',
       htmlAttrs: {
         lang: 'id'
       },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Platform booking lapangan olahraga online - DIPSPORT' },
-        { name: 'author', content: 'DIPSPORT' }
+        { name: 'description', content: 'Platform sewa dan booking venue serta lapangan olahraga Universitas Diponegoro - VENUE UNDIP' },
+        { name: 'author', content: 'VENUE UNDIP - Universitas Diponegoro' },
+        { property: 'og:title', content: 'VENUE UNDIP - Sewa Venue & Lapangan Olahraga' },
+        { property: 'og:description', content: 'Platform sewa dan booking venue serta lapangan olahraga Universitas Diponegoro' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'VENUE UNDIP' }
       ],
       link: []
     },

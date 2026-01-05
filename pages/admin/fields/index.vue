@@ -7,6 +7,13 @@ definePageMeta({
   layout: 'admin',
 })
 
+useHead({
+  title: 'Kelola Lapangan - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Kelola daftar lapangan olahraga di VENUE UNDIP' }
+  ]
+})
+
 interface FieldRow {
   id: number
   name: string

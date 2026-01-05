@@ -2,6 +2,13 @@
 import { computed, watch } from 'vue'
 import { ref } from 'vue'
 
+useHead({
+  title: 'VENUE UNDIP - Sewa Venue & Lapangan Olahraga',
+  meta: [
+    { name: 'description', content: 'Temukan dan sewa venue serta lapangan olahraga terbaik di Universitas Diponegoro. Booking mudah, cepat, dan terpercaya.' }
+  ]
+})
+
 type StadiumCard = {
   id: number
   name: string
@@ -217,7 +224,7 @@ const goToDetail = (stadionId: number) => {
             </div>
             
             <p class="text-sm leading-relaxed text-blue-100/90 max-w-md">
-              Temukan stadion pilihanmu. Lihat lapangan yang tersedia dan siap untuk dijadwalkan kapan saja kamu butuhkan.
+              Temukan stadion pilihan Anda. Lihat lapangan yang tersedia dan siap untuk dijadwalkan kapan saja Anda butuhkan.
             </p>
           </div>
           

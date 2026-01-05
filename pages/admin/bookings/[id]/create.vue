@@ -8,6 +8,13 @@ definePageMeta({
   middleware: 'auth-admin'
 })
 
+useHead({
+  title: 'Buat Booking Baru - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Buat booking baru untuk lapangan di VENUE UNDIP' }
+  ]
+})
+
 const route = useRoute()
 const stadionId = Number(route.params.id)
 const selectedSlots = ref<any[]>([])

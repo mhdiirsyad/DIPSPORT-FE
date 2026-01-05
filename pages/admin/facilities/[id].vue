@@ -11,6 +11,13 @@ definePageMeta({
   layout: 'admin',
 })
 
+useHead({
+  title: 'Edit Fasilitas - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Edit detail fasilitas di VENUE UNDIP' }
+  ]
+})
+
 const router = useRouter()
 const route = useRoute()
 const facilityId = Number(route.params.id)

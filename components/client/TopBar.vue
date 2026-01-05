@@ -7,7 +7,7 @@
   >
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5">
       <div class="flex items-center justify-between gap-3 lg:gap-6">
-        <button @click="scrollToTop" class="group flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 text-left transition-all duration-300 cursor-pointer">
+        <button @click="scrollToTop" class="group flex items-center gap-2.5 sm:gap-3 flex-shrink-0 text-left transition-all duration-300 cursor-pointer">
           <img 
             src="~/assets/images/VENUE-UNDIP-LOGO.png" 
             alt="Venue UNDIP Logo" 
@@ -18,6 +18,72 @@
             <div class="hidden sm:block text-xs text-gray-500 font-medium truncate group-hover:text-gray-700 transition-colors duration-300">Booking Lapangan Olahraga Universitas Diponegoro</div>
           </div>
         </button>
+        
+        <div class="hidden lg:flex items-center gap-3 xl:gap-14 flex-1 justify-center px-6">
+          
+          <div class="relative group">
+            <img 
+              src="~/assets/images/icon/icon-badminton.png"
+              alt="Badminton"
+              class="h-7 w-7 xl:h-8 xl:w-8 object-contain opacity-40 grayscale group-hover:opacity-70 group-hover:grayscale-0 group-hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            />
+            <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Smash!</span>
+          </div>
+          
+          <div class="relative group">
+            <img 
+              src="~/assets/images/icon/icon-football.png"
+              alt="Football"
+              class="h-7 w-7 xl:h-8 xl:w-8 object-contain opacity-40 grayscale group-hover:opacity-70 group-hover:grayscale-0 group-hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            />
+            <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Siuu!</span>
+          </div>
+          
+          <div class="relative group">
+            <img 
+              src="~/assets/images/icon/icon-basket.png"
+              alt="Basketball"
+              class="h-7 w-7 xl:h-8 xl:w-8 object-contain opacity-40 grayscale group-hover:opacity-70 group-hover:grayscale-0 group-hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            />
+            <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Dunk!</span>
+          </div>
+          
+          <div class="relative group">
+            <img 
+              src="~/assets/images/icon/icon-futsal.png"
+              alt="Futsal"
+              class="h-7 w-7 xl:h-8 xl:w-8 object-contain opacity-40 grayscale group-hover:opacity-70 group-hover:grayscale-0 group-hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            />
+            <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Shoot!</span>
+          </div>
+          
+          <div class="relative group">
+            <img 
+              src="~/assets/images/icon/icon-tenis.png"
+              alt="Tennis"
+              class="h-7 w-7 xl:h-8 xl:w-8 object-contain opacity-40 grayscale group-hover:opacity-70 group-hover:grayscale-0 group-hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            />
+            <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Ace!</span>
+          </div>
+          
+          <div class="relative group">
+            <img 
+              src="~/assets/images/icon/icon-voli.png"
+              alt="Volleyball"
+              class="h-7 w-7 xl:h-8 xl:w-8 object-contain opacity-40 grayscale group-hover:opacity-70 group-hover:grayscale-0 group-hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            />
+            <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Spike!</span>
+          </div>
+          
+          <div class="relative group">
+            <img 
+              src="~/assets/images/icon/icon-karate.png"
+              alt="Karate"
+              class="h-7 w-7 xl:h-8 xl:w-8 object-contain opacity-40 -scale-x-100 grayscale group-hover:opacity-70 group-hover:grayscale-0 group-hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            />
+            <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Shaah!</span>
+          </div>
+        </div>
         
         <NuxtLink
           to="/admin/login"

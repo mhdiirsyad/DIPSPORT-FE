@@ -9,6 +9,13 @@ definePageMeta({
   layout: 'admin'
 })
 
+useHead({
+  title: 'Booking Lapangan - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Kelola booking lapangan per stadion di VENUE UNDIP' }
+  ]
+})
+
 interface Images {
   imageUrl: string
 }

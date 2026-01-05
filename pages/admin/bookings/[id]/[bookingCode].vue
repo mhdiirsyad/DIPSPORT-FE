@@ -4,6 +4,13 @@ definePageMeta({
   layout: 'admin'
 })
 
+useHead({
+  title: 'Detail Booking - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Detail dan status booking lapangan di VENUE UNDIP' }
+  ]
+})
+
 const confirmationModal = ref<any>(null)
 
 const formatDate = (dateString: string) => {

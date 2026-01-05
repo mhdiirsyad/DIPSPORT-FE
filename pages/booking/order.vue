@@ -2,6 +2,13 @@
 import { computed, ref } from 'vue'
 import { parseBackendError } from '~/utils/errorParser'
 
+useHead({
+  title: 'Booking Lapangan - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Selesaikan booking lapangan olahraga Anda di VENUE UNDIP' }
+  ]
+})
+
 interface StadionDetail {
   id: number
   name: string

@@ -7,6 +7,13 @@ definePageMeta({
   layout: 'admin',
 })
 
+useHead({
+  title: 'Kelola Fasilitas - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Kelola daftar fasilitas venue di VENUE UNDIP' }
+  ]
+})
+
 interface FacilityRow {
   id: number
   name: string

@@ -10,6 +10,13 @@ definePageMeta({
   layout: 'admin',
 })
 
+useHead({
+  title: 'Tambah Fasilitas - VENUE UNDIP',
+  meta: [
+    { name: 'description', content: 'Tambah fasilitas baru ke VENUE UNDIP' }
+  ]
+})
+
 const router = useRouter()
 
 const form = ref({
