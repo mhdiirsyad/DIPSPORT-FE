@@ -1,59 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import { $fetch } from 'ofetch'
-
-const QUERY_STADIONS_DATA = `
-  query StadionsData {
-    stadions {
-      id
-      name
-      description
-      mapUrl
-      status
-      operatingHours {
-        openHour
-        closeHour
-      }
-      facilities {
-        Facility {
-          id
-          name
-        }
-      }
-      images {
-        id
-        imageUrl
-      }
-      fields {
-        id
-        name
-        pricePerHour
-        images {
-          id
-          imageUrl
-        }
-        bookingDetails {
-          bookingId
-        }
-      }
-    }
-  }
-`
-
-const QUERY_BOOKINGS_WITH_DETAILS = `
-  query BookingsWithDetails($startDate: DateTime, $endDate: DateTime) {
-    bookings(startDate: $startDate, endDate: $endDate) {
-      id
-      bookingCode
-      status
-      details {
-        id
-        fieldId
-        bookingDate
-        startHour
-      }
-    }
-  }
-`
+import { QUERY_STADIONS_DATA } from "~/graphql/queries/get_stadions_data"
+import { QUERY_BOOKINGS_WITH_DETAILS } from "~/graphql/queries/get_bookings_with_details"
 
 export default defineEventHandler(async (event) => {
   const endpoint = process.env.GQL_HTTP_ENDPOINT

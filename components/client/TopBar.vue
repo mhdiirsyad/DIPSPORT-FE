@@ -7,7 +7,7 @@
   >
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5">
       <div class="flex items-center justify-between gap-3 lg:gap-6">
-        <button @click="scrollToTop" class="group flex items-center gap-2.5 sm:gap-3 flex-shrink-0 text-left transition-all duration-300 cursor-pointer">
+        <button @click="handleHomeClick" class="group flex items-center gap-2.5 sm:gap-3 flex-shrink-0 text-left transition-all duration-300 cursor-pointer">
           <img 
             src="~/assets/images/VENUE-UNDIP-LOGO.png" 
             alt="Venue UNDIP Logo" 
@@ -112,6 +112,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
+const route = useRoute()
+const router = useRouter()
+
 const isScrolled = ref(false)
 
 const handleScroll = () => {
@@ -120,6 +123,17 @@ const handleScroll = () => {
 
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Handle click on home button/logo
+const handleHomeClick = () => {
+  // If we're on the homepage, scroll to top
+  if (route.path === '/') {
+    scrollToTop()
+  } else {
+    // Otherwise, navigate to homepage
+    router.push('/')
+  }
 }
 
 onMounted(() => {

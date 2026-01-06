@@ -16,7 +16,6 @@ const {
 const confirmModal = ref(null)
 const showSessionWarning = ref(false)
 
-// Format time remaining (convert seconds to readable format)
 const formattedTimeRemaining = computed(() => {
   const seconds = timeRemaining.value
   const minutes = Math.floor(seconds / 60)
@@ -24,7 +23,6 @@ const formattedTimeRemaining = computed(() => {
   return `${minutes} menit ${secs} detik`
 })
 
-// Monitor session expiry warning
 watch(isExpiringSoon, (expiring) => {
   if (expiring) {
     showSessionWarning.value = true
@@ -47,14 +45,12 @@ onMounted(() => {
   <div class="flex min-h-screen overflow-x-clip">
     <ConfirmationModal ref="confirmModal" />
     
-    <!-- Session Expiry Warning Modal -->
     <Teleport to="body">
       <div
         v-if="showSessionWarning"
         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       >
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-[scale-in_0.2s_ease-out]">
-          <!-- Warning Icon -->
           <div class="flex items-center gap-3">
             <div class="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
               <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,7 +68,6 @@ onMounted(() => {
             Sesi Anda akan berakhir dalam waktu singkat. Klik tombol di bawah untuk memperpanjang sesi atau Anda akan otomatis logout.
           </p>
 
-          <!-- Actions -->
           <div class="flex gap-3">
             <button
               @click="handleRefreshSession"

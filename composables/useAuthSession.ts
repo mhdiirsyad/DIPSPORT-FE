@@ -44,11 +44,9 @@ export const useAuthSession = (): UseAuthSessionReturn => {
 
       isAuthenticated.value = true
       
-      // Use server-provided expiry time if available
       if (data.expiresAt) {
         sessionExpiry.value = data.expiresAt
       } else {
-        // Fallback: calculate from current time
         sessionExpiry.value = Date.now() + (AUTH.TOKEN_MAX_AGE * 1000)
       }
       
@@ -81,7 +79,6 @@ export const useAuthSession = (): UseAuthSessionReturn => {
         credentials: 'include'
       })
     } catch {
-      // Ignore logout errors
     } finally {
       isAuthenticated.value = false
       sessionExpiry.value = null
@@ -98,13 +95,11 @@ export const useAuthSession = (): UseAuthSessionReturn => {
     const remaining = Math.max(0, Math.floor((sessionExpiry.value - Date.now()) / 1000))
     timeRemaining.value = remaining
 
-    // Show warning jika akan expired dalam 5 menit
     if (isExpiringSoon.value && !warningShown) {
       warningShown = true
       showExpiryWarning()
     }
 
-    // Auto logout jika sudah expired
     if (remaining === 0 && isAuthenticated.value) {
       handleSessionExpired()
     }
@@ -148,14 +143,12 @@ export const useAuthSession = (): UseAuthSessionReturn => {
     }
   }
 
-  // Auto start monitoring when component mounted
   onMounted(() => {
     if (process.client) {
       startMonitoring()
     }
   })
 
-  // Cleanup on unmount
   onUnmounted(() => {
     stopMonitoring()
   })

@@ -743,7 +743,7 @@ watch(selectedDate, () => {
             <h3 class="text-base sm:text-lg font-bold text-gray-900 uppercase tracking-tight">Pilih Lapangan & Jadwal</h3>
           </div>
 
-          <SmartDatePicker v-model="selectedDate" />
+          <SmartDatePicker v-model="selectedDate" :allow-past-dates="false" />
         </div>
 
         <!-- Informasi Tanggal Terpilih -->

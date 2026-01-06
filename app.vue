@@ -13,7 +13,7 @@ onMounted(() => {
       class="loading-screen"
     >
       <div class="loading-content">
-        <!-- Elegant Spinner -->
+        <!-- Spinner -->
         <div class="spinner-wrapper">
           <div class="spinner">
             <div class="spinner-ring"></div>
@@ -38,7 +38,6 @@ onMounted(() => {
   min-height: 100vh;
 }
 
-/* Loading Screen Styles */
 .loading-screen {
   position: fixed;
   inset: 0;
@@ -103,7 +102,6 @@ onMounted(() => {
   animation: pulse 2s ease-in-out infinite;
 }
 
-/* Animations */
 @keyframes spin {
   0% {
     transform: rotate(0deg);

@@ -112,12 +112,10 @@ export const useBookingCart = (): UseBookingCartReturn => {
     if (!cart.value.createdAt) return 0
     const expiryTime = BOOKING.CART_EXPIRY_MINUTES * 60 * 1000
     const remaining = expiryTime - (Date.now() - cart.value.createdAt)
-    return Math.max(0, Math.floor(remaining / 1000)) // in seconds
+    return Math.max(0, Math.floor(remaining / 1000))
   })
 
-  // Methods
   const setStadion = (id: number, name: string) => {
-    // If changing stadion, clear existing slots
     if (cart.value.stadionId && cart.value.stadionId !== id) {
       cart.value.slots = []
     }
@@ -177,7 +175,6 @@ export const useBookingCart = (): UseBookingCartReturn => {
     }
   }
 
-  // Auto-clear expired cart on mount
   if (isExpired.value) {
     clearCart()
   }

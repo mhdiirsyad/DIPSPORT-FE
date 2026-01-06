@@ -1,4 +1,3 @@
-import { print } from "graphql"
 import { QUERY_GET_BOOKING } from "~/graphql/queries/get_booking_bookingCode"
 
 export default defineEventHandler(async (event) => {

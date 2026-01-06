@@ -3,6 +3,8 @@ export const QUERY_GET_BOOKINGS = `
     bookings(stadionId: $stadionId, date: $date, startDate: $startDate, endDate: $endDate) {
       id
       bookingCode
+      name
+      isAcademic
       status
       paymentStatus
       details {

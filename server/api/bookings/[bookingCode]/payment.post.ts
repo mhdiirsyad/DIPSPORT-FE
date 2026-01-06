@@ -1,4 +1,3 @@
-import { print } from "graphql"
 import { UPDATE_PAYMENT } from "~/graphql/mutations/update_payment"
 
 export default defineEventHandler(async (event) => {

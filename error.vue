@@ -18,7 +18,6 @@ const errorMessage = computed(() => {
   if (props.error?.statusMessage) return props.error.statusMessage
   if (props.error?.message) return props.error.message
   
-  // Default messages based on status code
   switch (errorCode.value) {
     case 404:
       return 'Halaman yang Anda cari tidak ditemukan'
@@ -89,9 +88,7 @@ const handleReload = () => {
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 flex items-center justify-center px-4 py-12">
     <div class="max-w-2xl w-full">
-      <!-- Error Card -->
       <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-        <!-- Header with gradient -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8 text-center">
           <div class="text-6xl mb-4">{{ errorIcon }}</div>
           <h1 class="text-3xl font-bold text-white mb-2">{{ errorTitle }}</h1>
@@ -100,20 +97,17 @@ const handleReload = () => {
           </div>
         </div>
 
-        <!-- Content -->
         <div class="px-6 py-8 sm:px-10 sm:py-10">
           <p class="text-center text-gray-600 text-lg mb-8">
             {{ errorMessage }}
           </p>
 
-          <!-- Error Details (for development) -->
           <div v-if="props.error?.url" class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <p class="text-xs font-mono text-gray-500 break-all">
               <span class="font-semibold">URL:</span> {{ props.error.url }}
             </p>
           </div>
 
-          <!-- Action Buttons -->
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               @click="handleGoHome"
@@ -149,7 +143,6 @@ const handleReload = () => {
           </div>
         </div>
 
-        <!-- Footer -->
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-100">
           <p class="text-center text-sm text-gray-500">
             Jika masalah berlanjut, silakan hubungi administrator sistem.
@@ -157,7 +150,6 @@ const handleReload = () => {
         </div>
       </div>
 
-      <!-- Additional Help -->
       <div class="mt-8 text-center">
         <p class="text-sm text-gray-600">
           Butuh bantuan? 

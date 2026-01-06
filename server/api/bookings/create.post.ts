@@ -1,4 +1,3 @@
-import { print } from 'graphql'
 import { defineEventHandler, readBody, createError, getCookie } from 'h3'
 import { $fetch } from 'ofetch'
 import { MUTATION_CREATE_BOOKING } from '~/graphql/mutations/create_booking'
@@ -26,7 +25,6 @@ export default defineEventHandler(async (event) => {
 
   const contentType = (event.node.req.headers['content-type'] || '') as string
 
-  // If the request is multipart (file upload from client), proxy the raw stream to the GraphQL endpoint
   if (contentType.includes('multipart/form-data')) {
     const token = getCookie(event, 'admin_token')
     const headers: Record<string, string> = {
@@ -37,8 +35,6 @@ export default defineEventHandler(async (event) => {
     if (token) headers['Authorization'] = `Bearer ${token}`
 
     try {
-      // Node's fetch requires `duplex: 'half'` when forwarding a request stream
-      // cast to any to avoid TypeScript issues with the extra option
       const res = await (fetch as any)(endpoint, { method: 'POST', headers, body: event.node.req, duplex: 'half' })
       const json = await res.json()
       if (json.errors?.length) {
@@ -51,7 +47,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Otherwise expect JSON body
   const body = await readBody<BookingPayload>(event)
   if (!body?.name || !body?.contact || !body?.email || !Array.isArray(body.details) || body.details.length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'Incomplete booking payload' })

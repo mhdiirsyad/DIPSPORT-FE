@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, createError, getCookie } from 'h3'
 import jwt from 'jsonwebtoken'
 import { AUTH, API } from '~/utils/constants'
+import { query } from '~/graphql/queries/cek_booking_availability'
 
 interface CheckAvailabilityRequest {
   fieldId: string
@@ -33,7 +34,6 @@ export default defineEventHandler(async (event): Promise<CheckAvailabilityRespon
     throw createError({ statusCode: 401, statusMessage: 'Invalid token' })
   }
 
-  // Read request body
   const body = await readBody<CheckAvailabilityRequest>(event)
   
   if (!body.fieldId || !body.date || !body.timeSlots || body.timeSlots.length === 0) {
@@ -42,19 +42,6 @@ export default defineEventHandler(async (event): Promise<CheckAvailabilityRespon
       statusMessage: 'Missing required fields: fieldId, date, timeSlots' 
     })
   }
-
-  const query = `
-    query CheckBookingAvailability($fieldId: ID!, $date: String!) {
-      bookings(where: {
-        fieldId: { equals: $fieldId }
-        bookDate: { equals: $date }
-        bookStatus: { notIn: ["CANCEL", "FAILED"] }
-      }) {
-        id
-        timeSlot
-      }
-    }
-  `
 
   try {
     const graphqlUrl = process.env.GRAPHQL_ENDPOINT || 'http://localhost:3001/graphql'

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { print } from 'graphql'
 import { $fetch } from 'ofetch'
 import { MUTATION_CREATE_BOOKING } from '~/graphql/mutations/create_booking'
 import { parseBackendError } from '~/utils/errorParser'
@@ -37,6 +36,7 @@ const bookingForm = reactive({
 const errorMsg = ref<string | null>(null)
 const uploadProgress = ref<number | null>(null)
 const checkingAvailability = ref(false)
+const confirmationModal = ref<any>(null)
 
 // Field-specific validation errors
 const fieldErrors = ref({
@@ -289,7 +289,15 @@ async function handleSubmit(){
 
         xhr.onerror = () => reject(new Error('Network error saat mengirim request'))
         xhr.send(fd)
-      }).then((bookingCode) => {
+      }).then(async (bookingCode) => {
+        // Show success notification with email info
+        await confirmationModal.value?.open({
+          title: '✅ Booking Berhasil Dibuat!',
+          message: `Kode Booking: ${bookingCode}\n\n📧 Email konfirmasi telah dikirim ke:\n${bookingForm.email}\n\n💡 Pastikan client check inbox atau spam folder untuk detail booking.`,
+          confirmText: 'OK',
+          type: 'success',
+          mode: 'alert'
+        })
         navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
       })
     } else {
@@ -310,6 +318,15 @@ async function handleSubmit(){
 
       const bookingCode = resp?.bookingCode || resp?.createBooking?.bookingCode
       if (!bookingCode) throw new Error('Server tidak mengembalikan booking code')
+      
+      // Show success notification with email info
+      await confirmationModal.value?.open({
+        title: '✅ Booking Berhasil Dibuat!',
+        message: `Kode Booking: ${bookingCode}\n\n📧 Email konfirmasi telah dikirim ke:\n${bookingForm.email}\n\n💡 Pastikan client check inbox atau spam folder untuk detail booking.`,
+        confirmText: 'OK',
+        type: 'success',
+        mode: 'alert'
+      })
       navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
     }
   } catch (e) {
@@ -491,7 +508,7 @@ watch(() => bookingForm.isAcademic, (val) => {
         <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
           <div class="p-5 border-b border-gray-200 bg-gray-50/50">
             <h3 class="text-base font-bold text-gray-900">Kategori Booking</h3>
-            <p class="text-xs text-gray-500 mt-0.5">Pilih jenis booking untuk keperluan akademik atau umum.</p>
+            <p class="text-xs text-gray-500 mt-0.5">Pilih jenis booking untuk keperluan akademik.</p>
           </div>
           <div class="p-6 space-y-6">
             <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
@@ -506,7 +523,7 @@ watch(() => bookingForm.isAcademic, (val) => {
                   Booking untuk Keperluan Akademik
                 </label>
                 <p class="text-xs text-gray-600 mt-1">
-                  Centang jika booking ini untuk kegiatan akademik (gratis biaya).
+                  Centang jika booking ini untuk kegiatan akademik.
                 </p>
               </div>
             </div>
@@ -609,5 +626,8 @@ watch(() => bookingForm.isAcademic, (val) => {
       </div>
 
     </form>
+
+    <!-- Confirmation Modal -->
+    <ConfirmationModal ref="confirmationModal" />
   </section>
 </template>

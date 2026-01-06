@@ -1,5 +1,5 @@
-import { print } from "graphql";
 import { UPDATE_BOOK_STATUS } from "~/graphql/mutations/update_book_status";
+import { UPDATE_PAYMENT } from "~/graphql/mutations/update_payment";
 
 export default defineEventHandler(async(event) => {
     const {bookingCode} = getRouterParams(event);
@@ -29,6 +29,20 @@ export default defineEventHandler(async(event) => {
 
     if (response.errors?.length) {
         throw createError({ statusCode: 400, message: response.errors[0]?.message || 'failed to update payment status' })
+    }
+
+    if (bookingStatus === 'CANCELLED') {
+        await $fetch<{
+            data?: { updatePaymentStatus?: any }
+            errors?: Array<{ message?: string }>
+        }>(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: {
+                query: UPDATE_PAYMENT,
+                variables: { bookingCode, paymentStatus: 'UNPAID' },
+            },
+        })
     }
 
     return response.data?.updateBookingStatus;

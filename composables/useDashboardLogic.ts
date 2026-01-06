@@ -134,7 +134,6 @@ export const useDashboardLogic = () => {
         if (b.status === 'CANCELLED') return 
 
         b.details.forEach(d => {
-            // Gunakan UTC untuk konsistensi dengan admin & client
             const dDate = dayjs(d.bookingDate).utc()
             
             if (String(d.fieldId) === String(field.id) && 

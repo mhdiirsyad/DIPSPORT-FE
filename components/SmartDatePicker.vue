@@ -65,6 +65,8 @@
                   ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50' 
                   : isDateSelected(item.date)
                   ? 'bg-[#1f2a56] text-white shadow-md scale-105'
+                  : isDatePastOrToday(item.date) && props.allowPastDates
+                  ? 'text-gray-500 bg-gray-50 border border-gray-300 hover:bg-gray-100 hover:border-gray-400 hover:scale-105 active:scale-95'
                   : 'text-gray-700 hover:bg-gray-100 hover:scale-105 active:scale-95'
                 ]"
               >
@@ -76,7 +78,6 @@
       </transition>
     </Teleport>
 
-    <!-- Backdrop untuk menutup popover saat klik di luar -->
     <div
       v-if="isOpen"
       class="fixed inset-0 z-40"
@@ -92,6 +93,7 @@ interface Props {
   modelValue: string
   minDate?: Date
   maxDate?: Date
+  allowPastDates?: boolean
 }
 
 interface Emits {
@@ -151,6 +153,15 @@ function toLocalDateKey(value?: string | Date | null) {
 
 function isDatePast(date: Date | null) {
   if (!date) return false
+  if (props.allowPastDates) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return date <= today
+}
+
+// Fungsi untuk styling tanggal masa lalu/hari ini yang masih bisa dipilih (untuk admin)
+function isDatePastOrToday(date: Date | null) {
+  if (!date) return false
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   return date <= today
@@ -176,9 +187,11 @@ function nextMonth() {
 function selectDate(date: Date | null) {
   if (!date) return
   
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  if (date <= today) return
+  if (!props.allowPastDates) {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (date <= today) return
+  }
   
   const safeDate = new Date(date)
   safeDate.setHours(12, 0, 0, 0)
@@ -223,7 +236,6 @@ function updatePopoverPosition() {
   }
   
   if (top + popoverRect.height > viewportHeight - padding) {
-    // Try to position above the button instead
     top = triggerRect.top - popoverRect.height - 8
   }
   

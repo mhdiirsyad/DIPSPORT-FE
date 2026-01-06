@@ -1,5 +1,3 @@
-// Jembatan untuk query 'stadion' (satu)
-import { print } from 'graphql'
 import { defineEventHandler, createError } from 'h3'
 import { $fetch } from 'ofetch'
 import { QUERY_GET_STADION_BY_ID } from '~/graphql/queries/get_stadion_by_id'

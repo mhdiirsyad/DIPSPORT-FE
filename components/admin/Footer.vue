@@ -5,7 +5,6 @@
     <div class="relative max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         
-        <!-- Left: Branding & Copyright -->
         <div class="flex items-center gap-3">
           <img
             src="~/assets/images/VENUE-UNDIP-LOGO.png"

@@ -1,6 +1,5 @@
 import { getQuery, createError } from 'h3'
 import { QUERY_GET_BOOKINGS } from '~/graphql/queries/get_bookings'
-import { print } from 'graphql'
 
 interface QueryParams {
   stadionId?: string | number

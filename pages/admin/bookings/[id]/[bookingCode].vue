@@ -102,7 +102,7 @@ async function cancelBooking() {
   
   const confirmed = await confirmationModal.value?.open({
     title: 'Batalkan Booking',
-    message: `Apakah Anda yakin ingin membatalkan booking dengan kode ${booking.value.bookingCode}? Tindakan ini tidak dapat dibatalkan.`,
+    message: `Apakah Anda yakin ingin membatalkan booking dengan kode ${booking.value.bookingCode}?\n\nEmail pembatalan akan dikirim ke: ${booking.value.email}\n\nTindakan ini tidak dapat dibatalkan.`,
     confirmText: 'Ya, Batalkan',
     cancelText: 'Tidak, Kembali',
     type: 'danger'
@@ -120,6 +120,15 @@ async function cancelBooking() {
 
     if (res?.errors) throw new Error(res.errors[0]?.message || 'Failed to update booking status')
     await refresh()
+    
+    // Show success notification with email info
+    await confirmationModal.value?.open({
+      title: '❌ Booking Berhasil Dibatalkan',
+      message: `Kode Booking: ${booking.value.bookingCode}\n\n📧 Email pembatalan telah dikirim ke:\n${booking.value.email}\n\nClient akan menerima notifikasi pembatalan.`,
+      confirmText: 'OK',
+      type: 'info',
+      mode: 'alert'
+    })
   } catch (e: any) {
     alert(e?.message || 'Gagal membatalkan booking')
   } finally {

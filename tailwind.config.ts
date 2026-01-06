@@ -1,7 +1,5 @@
 // tailwind.config.ts
 import type { Config } from 'tailwindcss'
-import { addDynamicIconSelectors } from '@iconify/tailwind'
-import { VALID_FACILITY_ICONS } from './utils/validIconList'
 
 export default <Config>{
   content: [

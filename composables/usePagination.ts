@@ -45,22 +45,18 @@ export const usePagination = <T = any>(
 
   const currentPage = ref(initialPage)
 
-  // Total items
   const totalItems = computed(() => items.value.length)
 
-  // Total pages
   const totalPages = computed(() => {
     return Math.max(Math.ceil(totalItems.value / itemsPerPage), 1)
   })
 
-  // Paginated items
   const paginatedItems = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage
     const end = start + itemsPerPage
     return items.value.slice(start, end)
   })
 
-  // Summary text
   const summary = computed(() => {
     if (totalItems.value === 0) return 'Tidak ada data'
     
@@ -69,13 +65,11 @@ export const usePagination = <T = any>(
     return `Menampilkan ${start}-${end} dari ${totalItems.value} data`
   })
 
-  // Navigation helpers
   const hasNextPage = computed(() => currentPage.value < totalPages.value)
   const hasPrevPage = computed(() => currentPage.value > 1)
   const isFirstPage = computed(() => currentPage.value === 1)
   const isLastPage = computed(() => currentPage.value === totalPages.value)
 
-  // Navigation methods
   const nextPage = () => {
     if (hasNextPage.value) {
       currentPage.value++
@@ -94,7 +88,6 @@ export const usePagination = <T = any>(
     }
   }
 
-  // Reset page when items change (optional)
   if (resetOnItemsChange) {
     watch(
       () => items.value.length,
@@ -106,7 +99,6 @@ export const usePagination = <T = any>(
     )
   }
 
-  // Auto-adjust current page if it exceeds total pages
   watch(totalPages, (newTotalPages) => {
     if (currentPage.value > newTotalPages) {
       currentPage.value = Math.max(newTotalPages, 1)

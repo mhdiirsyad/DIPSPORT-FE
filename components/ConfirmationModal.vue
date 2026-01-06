@@ -8,6 +8,7 @@ interface ConfirmationOptions {
   cancelText?: string
   type?: 'danger' | 'warning' | 'info' | 'success'
   icon?: string
+  mode?: 'confirm' | 'alert' // confirm = 2 buttons, alert = 1 button
 }
 
 const isOpen = ref(false)
@@ -16,7 +17,8 @@ const options = ref<ConfirmationOptions>({
   message: 'Apakah Anda yakin?',
   confirmText: 'Ya, Lanjutkan',
   cancelText: 'Batal',
-  type: 'info'
+  type: 'info',
+  mode: 'confirm'
 })
 
 let resolvePromise: ((value: boolean) => void) | null = null
@@ -26,6 +28,7 @@ const open = (opts: ConfirmationOptions): Promise<boolean> => {
     confirmText: 'Ya, Lanjutkan',
     cancelText: 'Batal',
     type: 'info',
+    mode: 'confirm',
     ...opts
   }
   isOpen.value = true
@@ -109,14 +112,14 @@ defineExpose({ open })
                       {{ options.title }}
                     </h3>
                     <div class="mt-2">
-                      <p class="text-sm text-gray-500">
+                      <p class="text-sm text-gray-500 whitespace-pre-line">
                         {{ options.message }}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
+              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex gap-2" :class="options.mode === 'alert' ? 'sm:justify-center' : 'sm:flex-row-reverse'">
                 <button
                   type="button"
                   class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 text-base font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-all active:scale-95"
@@ -131,6 +134,7 @@ defineExpose({ open })
                   {{ options.confirmText }}
                 </button>
                 <button
+                  v-if="options.mode === 'confirm'"
                   type="button"
                   class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all active:scale-95"
                   @click="cancel"

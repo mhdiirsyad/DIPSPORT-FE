@@ -44,7 +44,6 @@ export default defineEventHandler(async (event) => {
         fullError: firstError,
       })
 
-      // Map GraphQL error codes to HTTP status codes
       let statusCode = 400
       if (errorCode === 'UNAUTHENTICATED') {
         statusCode = 401

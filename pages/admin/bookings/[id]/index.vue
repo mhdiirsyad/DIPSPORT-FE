@@ -68,6 +68,8 @@ interface BookingDetails {
 
 interface BookingsResult {
   bookingCode: string
+  name?: string
+  isAcademic?: boolean
   details: BookingDetails[]
 }
 
@@ -349,6 +351,32 @@ function getBookingCode(fieldId: number, startHour: number) {
   return booking?.bookingCode
 }
 
+// Fungsi untuk mendapatkan info booking lengkap berdasarkan fieldId dan startHour
+function getBookingInfo(fieldId: number, startHour: number) {
+  const selectedKey = selectedDateKey.value
+  if (!selectedKey) return null
+  const booking = publicBookings.value?.find((b) =>
+    b.details.some(
+      (d) =>
+        d.fieldId === fieldId &&
+        toDateKey(d.bookingDate) === selectedKey &&
+        d.startHour === startHour
+    )
+  )
+  return booking ? {
+    name: booking.name,
+    isAcademic: booking.isAcademic,
+    bookingCode: booking.bookingCode
+  } : null
+}
+
+// Fungsi untuk format nama: ambil nama depan saja
+function getFirstName(fullName?: string) {
+  if (!fullName) return 'N/A'
+  const names = fullName.trim().split(' ')
+  return names[0] || 'N/A'
+}
+
 function handleSlotClick(fieldId: number, startHour: number, pricePerHour: number, fieldName: string) {
   if (isSlotBooked(fieldId, startHour)) {
     const bookingCode = getBookingCode(fieldId, startHour)
@@ -358,14 +386,18 @@ function handleSlotClick(fieldId: number, startHour: number, pricePerHour: numbe
     return
   }
   
-  // Cek apakah field sedang maintenance untuk slot yang available
-  const field = stadion.value?.fields?.find((f: any) => Number(f.id) === fieldId)
-  if (field && field.status !== 'ACTIVE') {
-    // Jangan lakukan apapun jika maintenance dan slot belum booked
+  // Cek apakah tanggal yang dipilih adalah hari ini atau sebelumnya
+  // Jika ya, tidak boleh booking baru (slot available tetap disabled)
+  if (isSelectedDatePastOrToday()) {
     return
   }
   
-  // Toggle selection untuk slot available
+  // Cek apakah field sedang maintenance untuk slot yang available
+  const field = stadion.value?.fields?.find((f: any) => Number(f.id) === fieldId)
+  if (field && field.status !== 'ACTIVE') {
+    return
+  }
+  
   toggleSlot(fieldId, startHour, pricePerHour, fieldName)
 }
 
@@ -410,6 +442,15 @@ function isDatePast(date: Date | null) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   return date <= today
+}
+
+function isSelectedDatePastOrToday() {
+  if (!selectedDate.value) return false
+  const selected = new Date(selectedDate.value)
+  selected.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return selected <= today
 }
 
 watch(() => selectedSlots.value.length, (newLength) => {
@@ -656,7 +697,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
               <h3 class="text-base sm:text-lg font-bold text-gray-900 uppercase tracking-tight">Pilih Lapangan & Jadwal</h3>
             </div>
 
-            <SmartDatePicker v-model="selectedDate" />
+            <SmartDatePicker v-model="selectedDate" :allow-past-dates="true" />
           </div>
 
           <!-- Informasi Tanggal Terpilih -->
@@ -887,9 +928,11 @@ watch(() => selectedSlots.value.length, (newLength) => {
                     class="group relative rounded-lg sm:rounded-xl border p-2 sm:p-3 text-left shadow-sm transition-all overflow-hidden"
                     :class="[
                       isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
-                        ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-pointer hover:bg-gray-200 hover:border-gray-300'
+                        ? 'bg-blue-50 text-blue-600 border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300'
                         : field.status !== 'ACTIVE'
                         ? 'bg-orange-50 text-orange-400 border-orange-100 cursor-not-allowed'
+                        : isSelectedDatePastOrToday()
+                        ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-70'
                         : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0]))
                         ? 'bg-[#1f2a56] text-white border-[#1f2a56] shadow-md ring-2 ring-[#1f2a56] ring-offset-2'
                         : 'bg-white text-gray-900 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-105 active:scale-100 cursor-pointer'
@@ -909,13 +952,39 @@ watch(() => selectedSlots.value.length, (newLength) => {
                       </span>
                     </div>
 
+                    <!-- Nama Booker & Label Akademik/Umum untuk slot yang booked -->
+                    <div
+                      v-if="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))"
+                      class="flex items-center justify-between mb-1 group-hover:opacity-0 transition-opacity"
+                    >
+                      <p class="text-[10px] sm:text-[0.65rem] font-bold text-blue-700 truncate flex-1 pr-1">
+                        {{ getFirstName(getBookingInfo(Number(field.id), Number(slot.start.split(':')[0]))?.name) }}
+                      </p>
+                      <span
+                        class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-semibold whitespace-nowrap"
+                        :class="getBookingInfo(Number(field.id), Number(slot.start.split(':')[0]))?.isAcademic 
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                          : 'bg-gray-100 text-gray-700 border border-gray-200'"
+                      >
+                        <svg v-if="getBookingInfo(Number(field.id), Number(slot.start.split(':')[0]))?.isAcademic" class="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                        </svg>
+                        <svg v-else class="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ getBookingInfo(Number(field.id), Number(slot.start.split(':')[0]))?.isAcademic ? 'Akademik' : 'Umum' }}
+                      </span>
+                    </div>
+
                     <p
                       class="text-[10px] sm:text-[0.65rem] uppercase tracking-wide font-semibold"
                       :class="[
                         isSlotBooked(Number(field.id), Number(slot.start.split(':')[0])) 
-                          ? 'text-gray-400 group-hover:opacity-0 transition-opacity' 
+                          ? 'text-blue-500 group-hover:opacity-0 transition-opacity' 
                           : field.status !== 'ACTIVE'
                           ? 'text-orange-400'
+                          : isSelectedDatePastOrToday()
+                          ? 'text-gray-400'
                           : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0]))
                           ? 'text-white/80'
                           : 'text-gray-500'
@@ -927,9 +996,11 @@ watch(() => selectedSlots.value.length, (newLength) => {
                       class="text-sm sm:text-base font-bold mt-0.5"
                       :class="[
                         isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))
-                          ? 'text-gray-500 group-hover:opacity-0 transition-opacity'
+                          ? 'text-blue-700 group-hover:opacity-0 transition-opacity'
                           : field.status !== 'ACTIVE'
                           ? 'text-orange-600'
+                          : isSelectedDatePastOrToday()
+                          ? 'text-gray-400'
                           : isSlotSelected(Number(field.id), Number(slot.start.split(':')[0]))
                           ? 'text-white'
                           : 'text-[#1f2a56]'
@@ -940,7 +1011,7 @@ watch(() => selectedSlots.value.length, (newLength) => {
                     <div class="flex items-center justify-between mt-1">
                       <p
                         v-if="isSlotBooked(Number(field.id), Number(slot.start.split(':')[0]))"
-                        class="text-[10px] sm:text-xs font-semibold text-gray-400 group-hover:opacity-0 transition-opacity"
+                        class="text-[10px] sm:text-xs font-semibold text-blue-600 group-hover:opacity-0 transition-opacity"
                       >
                         Booked
                       </p>
@@ -949,6 +1020,12 @@ watch(() => selectedSlots.value.length, (newLength) => {
                         class="text-[10px] sm:text-xs font-semibold text-orange-500"
                       >
                         Maintenance
+                      </p>
+                      <p
+                        v-else-if="isSelectedDatePastOrToday()"
+                        class="text-[10px] sm:text-xs font-semibold text-gray-400"
+                      >
+                        Tidak Tersedia
                       </p>
                       <p 
                         v-else 
