@@ -18,12 +18,12 @@ useHead({
           </svg>
         </div>
         <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Kebijakan Privasi</h1>
-        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Kami menghargai privasi Anda dan berkomitmen untuk melindungi data pribadi Anda</p>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">Kami menghargai privasi Anda dan berkomitmen untuk melindungi data pribadi Anda.</p>
         <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
           <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
           </svg>
-          <span class="text-sm font-semibold text-blue-800">Layanan Khusus Mahasiswa UNDIP</span>
+          <span class="text-sm font-semibold text-blue-800">Layanan Khusus Sivitas Akademika Universitas Diponegoro</span>
         </div>
         <p class="text-sm text-gray-500 mt-3">Terakhir diperbarui: 6 Januari 2026</p>
       </div>
@@ -41,13 +41,16 @@ useHead({
             <div class="flex-1">
               <h2 class="text-xl font-bold text-gray-900 mb-3">Pendahuluan</h2>
               <p class="text-gray-600 leading-relaxed mb-3">
-                VENUE UNDIP adalah platform booking lapangan olahraga yang dikelola oleh Universitas Diponegoro <span class="font-semibold text-[#1f2a56]">khusus untuk mahasiswa UNDIP</span>. Kebijakan privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan melindungi informasi pribadi Anda saat menggunakan layanan kami.
+                VENUE UNDIP adalah platform booking lapangan olahraga yang dikelola oleh Universitas Diponegoro <span class="font-semibold text-[#1f2a56]">khusus untuk Sivitas Akademika UNDIP</span>. Kebijakan privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan melindungi informasi pribadi Anda saat menggunakan layanan kami.
+              </p>
+              <p class="text-gray-600 leading-relaxed mb-3">
+                Platform ini digunakan untuk melihat ketersediaan lapangan. <span class="font-semibold text-[#1f2a56]">Booking dilakukan langsung di venue oleh admin/operator</span> yang akan menginput data Anda ke sistem.
               </p>
               <p class="text-gray-600 leading-relaxed mb-3">
                 Dengan menggunakan layanan VENUE UNDIP, Anda menyetujui pengumpulan dan penggunaan informasi sesuai dengan kebijakan ini.
               </p>
               <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg mt-4">
-                <p class="text-sm text-blue-900"><span class="font-bold">ℹ️ Penting:</span> Layanan ini <span class="font-semibold">hanya untuk mahasiswa aktif Universitas Diponegoro</span>. Bukti identitas mahasiswa (Kartu Mahasiswa) diperlukan saat booking di venue.</p>
+                <p class="text-sm text-blue-900"><span class="font-bold">ℹ️ Penting:</span> Layanan ini <span class="font-semibold">hanya untuk Sivitas Akademika Universitas Diponegoro</span>. Data Anda dikumpulkan oleh admin/operator saat booking di venue dan diinput ke sistem untuk keperluan pengelolaan fasilitas olahraga.</p>
               </div>
             </div>
           </div>
@@ -78,20 +81,20 @@ useHead({
                   </h3>
                   <ul class="space-y-1.5 text-sm text-gray-600">
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Nama lengkap</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Nama lengkap.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Nomor telepon/WhatsApp</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Nomor telepon/WhatsApp.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Alamat email</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Alamat email.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Nama instansi/unit akademik (jika ada)</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Nama instansi/unit akademik (jika ada).</span>
                     </li>
                   </ul>
                 </div>
@@ -105,20 +108,20 @@ useHead({
                   </h3>
                   <ul class="space-y-1.5 text-sm text-gray-600">
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Detail lapangan yang dibooking</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Detail lapangan yang dibooking.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Tanggal dan waktu booking</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Tanggal dan waktu booking.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Riwayat transaksi</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Riwayat transaksi.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Status pembayaran</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Status pembayaran.</span>
                     </li>
                   </ul>
                 </div>
@@ -132,16 +135,16 @@ useHead({
                   </h3>
                   <ul class="space-y-1.5 text-sm text-gray-600">
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Alamat IP</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Alamat IP.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Tipe browser dan perangkat</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Tipe browser dan perangkat.</span>
                     </li>
                     <li class="flex items-start gap-2">
-                      <span class="text-emerald-600 mt-1">•</span>
-                      <span>Waktu akses dan aktivitas di platform</span>
+                      <span class="text-emerald-600">•</span>
+                      <span>Waktu akses dan aktivitas di platform.</span>
                     </li>
                   </ul>
                 </div>
@@ -168,37 +171,37 @@ useHead({
                   <svg class="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span class="text-gray-600">Memproses dan mengelola booking lapangan olahraga</span>
+                  <span class="text-gray-600">Memproses dan mengelola booking lapangan olahraga.</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <svg class="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span class="text-gray-600">Mengirimkan konfirmasi booking dan notifikasi penting</span>
+                  <span class="text-gray-600">Mengirimkan konfirmasi booking dan notifikasi penting (email otomatis dari noreply@undip.ac.id).</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <svg class="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span class="text-gray-600">Meningkatkan kualitas layanan dan pengalaman pengguna</span>
+                  <span class="text-gray-600">Meningkatkan kualitas layanan dan pengalaman pengguna.</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <svg class="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span class="text-gray-600">Menyediakan dukungan pelanggan dan menangani pertanyaan</span>
+                  <span class="text-gray-600">Menyediakan dukungan pelanggan dan menangani pertanyaan.</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <svg class="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span class="text-gray-600">Melakukan analisis statistik untuk pengembangan platform</span>
+                  <span class="text-gray-600">Melakukan analisis statistik untuk pengembangan platform.</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <svg class="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span class="text-gray-600">Mematuhi kewajiban hukum dan peraturan yang berlaku</span>
+                  <span class="text-gray-600">Mematuhi kewajiban hukum dan peraturan yang berlaku.</span>
                 </li>
               </ul>
             </div>
@@ -226,7 +229,7 @@ useHead({
                     </svg>
                     <span class="font-semibold text-amber-900 text-sm">Enkripsi Data</span>
                   </div>
-                  <p class="text-xs text-amber-700">Data sensitif dienkripsi selama transmisi dan penyimpanan</p>
+                  <p class="text-xs text-amber-700">Data sensitif dienkripsi selama transmisi dan penyimpanan.</p>
                 </div>
                 <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
                   <div class="flex items-center gap-2 mb-2">
@@ -235,7 +238,7 @@ useHead({
                     </svg>
                     <span class="font-semibold text-amber-900 text-sm">Akses Terbatas</span>
                   </div>
-                  <p class="text-xs text-amber-700">Hanya personel yang berwenang yang dapat mengakses data</p>
+                  <p class="text-xs text-amber-700">Hanya personel yang berwenang yang dapat mengakses data.</p>
                 </div>
                 <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
                   <div class="flex items-center gap-2 mb-2">
@@ -244,7 +247,7 @@ useHead({
                     </svg>
                     <span class="font-semibold text-amber-900 text-sm">Monitoring Sistem</span>
                   </div>
-                  <p class="text-xs text-amber-700">Sistem kami dipantau secara berkala untuk keamanan</p>
+                  <p class="text-xs text-amber-700">Sistem kami dipantau secara berkala untuk keamanan.</p>
                 </div>
                 <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
                   <div class="flex items-center gap-2 mb-2">
@@ -253,7 +256,7 @@ useHead({
                     </svg>
                     <span class="font-semibold text-amber-900 text-sm">Backup Rutin</span>
                   </div>
-                  <p class="text-xs text-amber-700">Data di-backup secara berkala untuk mencegah kehilangan</p>
+                  <p class="text-xs text-amber-700">Data di-backup secara berkala untuk mencegah kehilangan.</p>
                 </div>
               </div>
             </div>
@@ -275,16 +278,16 @@ useHead({
               </p>
               <ul class="space-y-2 mb-4">
                 <li class="flex items-start gap-2 text-gray-600">
-                  <span class="text-red-600 font-bold mt-1">•</span>
-                  <span>Dengan penyedia layanan yang membantu operasional kami (dengan perjanjian kerahasiaan)</span>
+                  <span class="text-red-600 font-bold">•</span>
+                  <span>Dengan penyedia layanan yang membantu operasional kami (dengan perjanjian kerahasiaan).</span>
                 </li>
                 <li class="flex items-start gap-2 text-gray-600">
-                  <span class="text-red-600 font-bold mt-1">•</span>
-                  <span>Jika diwajibkan oleh hukum atau peraturan yang berlaku</span>
+                  <span class="text-red-600 font-bold">•</span>
+                  <span>Jika diwajibkan oleh hukum atau peraturan yang berlaku.</span>
                 </li>
                 <li class="flex items-start gap-2 text-gray-600">
-                  <span class="text-red-600 font-bold mt-1">•</span>
-                  <span>Untuk melindungi hak, properti, atau keselamatan VENUE UNDIP dan penggunanya</span>
+                  <span class="text-red-600 font-bold">•</span>
+                  <span>Untuk melindungi hak, properti, atau keselamatan VENUE UNDIP dan penggunanya.</span>
                 </li>
               </ul>
             </div>
@@ -313,7 +316,7 @@ useHead({
                     </svg>
                     <div>
                       <p class="font-semibold text-indigo-900 text-sm mb-1">Hak Akses</p>
-                      <p class="text-xs text-indigo-700">Meminta salinan data pribadi yang kami simpan</p>
+                      <p class="text-xs text-indigo-700">Meminta salinan data pribadi yang kami simpan.</p>
                     </div>
                   </div>
                 </div>
@@ -324,7 +327,7 @@ useHead({
                     </svg>
                     <div>
                       <p class="font-semibold text-indigo-900 text-sm mb-1">Hak Koreksi</p>
-                      <p class="text-xs text-indigo-700">Memperbarui atau memperbaiki data yang tidak akurat</p>
+                      <p class="text-xs text-indigo-700">Memperbarui atau memperbaiki data yang tidak akurat.</p>
                     </div>
                   </div>
                 </div>
@@ -335,7 +338,7 @@ useHead({
                     </svg>
                     <div>
                       <p class="font-semibold text-indigo-900 text-sm mb-1">Hak Penghapusan</p>
-                      <p class="text-xs text-indigo-700">Meminta penghapusan data pribadi (sesuai ketentuan yang berlaku)</p>
+                      <p class="text-xs text-indigo-700">Meminta penghapusan data pribadi (sesuai ketentuan yang berlaku).</p>
                     </div>
                   </div>
                 </div>
@@ -346,7 +349,7 @@ useHead({
                     </svg>
                     <div>
                       <p class="font-semibold text-indigo-900 text-sm mb-1">Hak Pembatasan</p>
-                      <p class="text-xs text-indigo-700">Membatasi pemrosesan data pribadi dalam kondisi tertentu</p>
+                      <p class="text-xs text-indigo-700">Membatasi pemrosesan data pribadi dalam kondisi tertentu.</p>
                     </div>
                   </div>
                 </div>
@@ -378,19 +381,19 @@ useHead({
                   <svg class="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span>Mengingat preferensi dan pengaturan Anda</span>
+                  <span>Mengingat preferensi dan pengaturan Anda.</span>
                 </li>
                 <li class="flex items-start gap-2 text-gray-600">
                   <svg class="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span>Memahami bagaimana Anda menggunakan layanan kami</span>
+                  <span>Memahami bagaimana Anda menggunakan layanan kami.</span>
                 </li>
                 <li class="flex items-start gap-2 text-gray-600">
                   <svg class="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span>Meningkatkan keamanan dan mencegah penipuan</span>
+                  <span>Meningkatkan keamanan dan mencegah penipuan.</span>
                 </li>
               </ul>
               <p class="text-gray-600 leading-relaxed mt-4">
@@ -418,23 +421,23 @@ useHead({
                   <svg class="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span><span class="font-semibold">Data booking</span> disimpan selama 3 tahun untuk keperluan administrasi dan audit internal universitas</span>
+                  <span><span class="font-semibold">Data booking</span> disimpan untuk keperluan administrasi dan audit internal universitas.</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <svg class="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span><span class="font-semibold">Data mahasiswa</span> disimpan sesuai dengan kebijakan universitas selama masa studi aktif</span>
+                  <span><span class="font-semibold">Data Sivitas</span> disimpan sesuai dengan kebijakan universitas selama masa studi aktif.</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <svg class="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  <span>Setelah periode retensi, data akan <span class="font-semibold">dihapus atau dianonimkan</span> secara aman</span>
+                  <span>Setelah periode retensi, data akan <span class="font-semibold">dihapus atau dianonimkan</span> secara aman.</span>
                 </li>
               </ul>
               <div class="bg-teal-50 border-l-4 border-teal-500 p-3 rounded-r-lg mt-4">
-                <p class="text-sm text-teal-900"><span class="font-bold">📅 Periode Retensi:</span> Kebijakan retensi 3 tahun sesuai dengan standar administrasi Universitas Diponegoro untuk keperluan audit dan pelaporan.</p>
+                <p class="text-sm text-teal-900"><span class="font-bold">📅 Periode Retensi:</span> Kebijakan retensi sesuai dengan standar administrasi Universitas Diponegoro untuk keperluan audit dan pelaporan.</p>
               </div>
             </div>
           </div>
@@ -470,17 +473,13 @@ useHead({
         </div>
         <h2 class="text-2xl lg:text-3xl font-bold text-white mb-4">Ada Pertanyaan tentang Privasi?</h2>
         <p class="text-blue-100 mb-6 max-w-xl mx-auto">Jika Anda memiliki pertanyaan atau kekhawatiran tentang bagaimana kami menangani data pribadi Anda, jangan ragu untuk menghubungi kami.</p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a
-            href="mailto:helpdesk@live.undip.ac.id"
-            class="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-[#1f2a56] shadow-lg shadow-white/20 transition-all duration-300 hover:shadow-xl hover:scale-105"
-          >
-            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
-            </svg>
-            Hubungi Kami
-          </a>
+        <div class="flex flex-col items-center justify-center gap-4">
+          <p class="text-white text-lg">
+            <span class="text-blue-200">Email:</span> 
+            <a href="mailto:helpdesk@live.undip.ac.id" class="text-white font-semibold hover:text-blue-200 transition-colors underline decoration-2 underline-offset-4">
+              helpdesk@live.undip.ac.id
+            </a>
+          </p>
           <NuxtLink
             to="/"
             class="inline-flex items-center gap-2 rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:bg-white/20 hover:border-white/50"
@@ -495,3 +494,4 @@ useHead({
     </div>
   </div>
 </template>
+

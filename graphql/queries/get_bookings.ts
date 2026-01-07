@@ -4,9 +4,13 @@ export const QUERY_GET_BOOKINGS = `
       id
       bookingCode
       name
+      contact
+      email
       isAcademic
       status
       paymentStatus
+      totalPrice
+      createdAt
       details {
         fieldId
         bookingDate

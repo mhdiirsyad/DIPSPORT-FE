@@ -17,7 +17,6 @@ interface CheckAvailabilityResponse {
 }
 
 export default defineEventHandler(async (event): Promise<CheckAvailabilityResponse> => {
-  // Verify authentication
   const token = getCookie(event, AUTH.TOKEN_COOKIE_NAME)
   if (!token) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })

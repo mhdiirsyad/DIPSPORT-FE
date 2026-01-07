@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { generateTimeSlots, type Slot } from '~/utils/generateTimeSlots'
+import { toDateKey, getNextNDays, toUtcMidnightIso } from '~/utils/dateHelpers'
 import { Icon } from '@iconify/vue'
 import { parseBackendError } from '~/utils/errorParser'
 
@@ -73,16 +74,8 @@ interface BookingsResult {
   details: BookingDetails[]
 }
 
-const days = getNext7Days()
+const days = getNextNDays(7, true)
 const selectedDate = ref<string>(days[0]!.value)
-
-// Gunakan UTC date key untuk konsistensi dengan client
-const toDateKey = (value?: string | Date | null) => {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toISOString().slice(0, 10)
-}
 
 const selectedDateKey = computed(() => toDateKey(selectedDate.value))
 
@@ -241,7 +234,7 @@ const loadPublicBookings = async () => {
   try {
     bookingError.value = null
     publicBookings.value = await $fetch<BookingsResult[]>('/api/bookings', {
-      query: { stadionId, date: `${selectedDateKey.value}T00:00:00.000Z` },
+      query: { stadionId, date: toUtcMidnightIso(selectedDateKey.value) },
     })
   } catch (error: any) {
     const parsed = parseBackendError(error)
@@ -351,7 +344,6 @@ function getBookingCode(fieldId: number, startHour: number) {
   return booking?.bookingCode
 }
 
-// Fungsi untuk mendapatkan info booking lengkap berdasarkan fieldId dan startHour
 function getBookingInfo(fieldId: number, startHour: number) {
   const selectedKey = selectedDateKey.value
   if (!selectedKey) return null
@@ -370,7 +362,6 @@ function getBookingInfo(fieldId: number, startHour: number) {
   } : null
 }
 
-// Fungsi untuk format nama: ambil nama depan saja
 function getFirstName(fullName?: string) {
   if (!fullName) return 'N/A'
   const names = fullName.trim().split(' ')
@@ -386,13 +377,10 @@ function handleSlotClick(fieldId: number, startHour: number, pricePerHour: numbe
     return
   }
   
-  // Cek apakah tanggal yang dipilih adalah hari ini atau sebelumnya
-  // Jika ya, tidak boleh booking baru (slot available tetap disabled)
   if (isSelectedDatePastOrToday()) {
     return
   }
   
-  // Cek apakah field sedang maintenance untuk slot yang available
   const field = stadion.value?.fields?.find((f: any) => Number(f.id) === fieldId)
   if (field && field.status !== 'ACTIVE') {
     return

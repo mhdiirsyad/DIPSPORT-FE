@@ -151,3 +151,10 @@ export const availableIcons: FacilityIconOption[] = [
 export const VALID_FACILITY_ICONS = availableIcons.map(
   (i) => i.value
 ) as readonly string[];
+
+export const availableIconsWithId = availableIcons.map((icon, idx) => ({
+  id: `icon-${String(idx + 1).padStart(3, '0')}`,
+  ...icon,
+}));
+
+export default availableIconsWithId;

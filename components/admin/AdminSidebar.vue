@@ -47,7 +47,7 @@ const handleNavClick = () => {
 }
 
 const handleAction = async (item: NavItem) => {
-  if (item.action === 'logout') {
+    if (item.action === 'logout') {
     const isConfirmed = await confirm({
       title: 'Konfirmasi Logout',
       message: 'Apakah Anda yakin ingin keluar dari aplikasi?',

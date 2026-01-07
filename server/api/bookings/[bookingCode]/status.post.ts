@@ -28,21 +28,25 @@ export default defineEventHandler(async(event) => {
     })
 
     if (response.errors?.length) {
-        throw createError({ statusCode: 400, message: response.errors[0]?.message || 'failed to update payment status' })
+        throw createError({ statusCode: 400, message: response.errors[0]?.message || 'failed to update booking status' })
     }
 
     if (bookingStatus === 'CANCELLED') {
-        await $fetch<{
-            data?: { updatePaymentStatus?: any }
-            errors?: Array<{ message?: string }>
-        }>(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: {
-                query: UPDATE_PAYMENT,
-                variables: { bookingCode, paymentStatus: 'UNPAID' },
-            },
-        })
+        try {
+            await $fetch<{
+                data?: { updatePaymentStatus?: any }
+                errors?: Array<{ message?: string }>
+            }>(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: {
+                    query: UPDATE_PAYMENT,
+                    variables: { bookingCode, paymentStatus: 'UNPAID' },
+                },
+            })
+        } catch (err) {
+            console.warn('Failed to update payment status on cancel:', err)
+        }
     }
 
     return response.data?.updateBookingStatus;

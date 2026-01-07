@@ -25,14 +25,12 @@ const { data: facilities, pending, error, refresh } = await useAsyncData(
   () => $fetch<FacilityRow[]>('/api/facilities')
 )
 
-// Use search composable
 const facilitiesRef = computed(() => facilities.value || [])
 const { searchQuery, filteredItems: filteredFacilities } = useSearch(
   facilitiesRef,
   (facility) => [facility.name, String(facility.id)]
 )
 
-// Use pagination composable
 const { 
   currentPage, 
   paginatedItems: paginatedFacilities, 

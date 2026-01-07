@@ -125,13 +125,10 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Handle click on home button/logo
 const handleHomeClick = () => {
-  // If we're on the homepage, scroll to top
   if (route.path === '/') {
     scrollToTop()
   } else {
-    // Otherwise, navigate to homepage
     router.push('/')
   }
 }

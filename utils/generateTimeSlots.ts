@@ -23,10 +23,7 @@ export function generateTimeSlots(
       start: start,
       end: end,
       hour,
-      // HARGA DISEMBUNYIKAN: price set ke 0
-      price: 0, // pricePerHour,
-      // HARGA DISEMBUNYIKAN: previousPrice dikomentari
-      // previousPrice: Math.random() > 0.7 ? pricePerHour + 20000 : null,
+      price: pricePerHour,
       previousPrice: null,
       highlight: Math.random() > 0.8,
       status: isBooked ? 'Booked' : 'Available'

@@ -48,7 +48,6 @@ export const useSearch = <T = any>(
 
   let debounceTimeout: ReturnType<typeof setTimeout> | null = null
 
-  // Debounced search watcher
   watch(searchQuery, (newValue) => {
     isSearching.value = true
 
@@ -95,7 +94,6 @@ export const useSearch = <T = any>(
     }
   }
 
-  // Cleanup on unmount
   onUnmounted(() => {
     if (debounceTimeout) {
       clearTimeout(debounceTimeout)

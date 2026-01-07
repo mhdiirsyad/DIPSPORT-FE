@@ -5,6 +5,7 @@ import { gql } from 'graphql-tag'
 import { print } from 'graphql'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id'
+import { toUtcMidnightIso } from '~/utils/dateHelpers'
 
 import { useDashboardLogic, type DashboardCardItem } from '~/composables/useDashboardLogic'
 import { QUERY_GET_FIELDS } from '~/graphql/queries/get_fields'
@@ -91,14 +92,7 @@ const stadionList = computed(() => (stadionsData.value as any)?.data?.stadions |
 const bookingPayload = computed(() => {
   const vars: any = { stadionId: selectedStadionId.value || undefined }
 
-  // Normalize ke UTC midnight untuk konsistensi
-  const toUTCMidnight = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const year = date.getUTCFullYear()
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(date.getUTCDate()).padStart(2, '0')
-    return `${year}-${month}-${day}T00:00:00.000Z`
-  }
+  const toUTCMidnight = (dateStr: string) => toUtcMidnightIso(dateStr) || ''
 
   if (filterMode.value === 'daily') {
     vars.date = toUTCMidnight(singleDate.value)

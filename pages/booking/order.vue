@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { toUtcMidnightIso } from '~/utils/dateHelpers'
 import { parseBackendError } from '~/utils/errorParser'
 
 useHead({
@@ -71,7 +72,6 @@ const bookingError = ref<string | null>(null)
 const bookingSuccess = ref<string | null>(null)
 const customerSuratUrl = ref('')
 
-// Validation errors per field
 const errors = ref({
   name: '',
   contact: '',
@@ -79,7 +79,6 @@ const errors = ref({
   suratUrl: ''
 })
 
-// Validation regex
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/
 const urlRegex = /^https?:\/\/.+/
@@ -193,7 +192,6 @@ const createBooking = async () => {
   bookingError.value = null
   bookingSuccess.value = null
   
-  // Trim all inputs before submit
   customerName.value = customerName.value.trim()
   customerContact.value = customerContact.value.trim()
   customerEmail.value = customerEmail.value.trim()
@@ -203,10 +201,9 @@ const createBooking = async () => {
     const [startText] = slot.range.split('-')
     const [hourText] = startText?.trim().split(':') ?? []
     const startHour = Number(hourText)
-    // UTC midnight format: YYYY-MM-DDT00:00:00.000Z
     return {
       fieldId: slot.courtId,
-      bookingDate: `${slot.dateKey}T00:00:00.000Z`, // Sudah UTC midnight
+      bookingDate: toUtcMidnightIso(slot.dateKey),
       startHour: Number.isNaN(startHour) ? 0 : startHour,
       pricePerHour: slot.price,
     }

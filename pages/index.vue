@@ -42,7 +42,6 @@ const { data: stadionsData, pending, error, refresh } = await useAsyncData<Stadi
 const filteredStadions = computed(() => {
   let list = stadionsData.value || []
   
-  // Filter: Hanya tampilkan stadion ACTIVE di public client
   list = list.filter((stadion) => stadion.status === 'ACTIVE')
   
   const query = debouncedSearchQuery.value.trim().toLowerCase()
@@ -87,7 +86,6 @@ const changePage = (page: number) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
     
-    // Scroll ke bagian atas stadium list dengan smooth animation
     const section = document.getElementById('stadium-list')
     if (section) {
       section.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -95,7 +93,6 @@ const changePage = (page: number) => {
   }
 }
 
-// Smooth scroll ke stadium list section
 const scrollToStadiumList = () => {
   const section = document.getElementById('stadium-list')
   if (section) {
@@ -103,7 +100,6 @@ const scrollToStadiumList = () => {
   }
 }
 
-// Debounced search: auto search setelah user berhenti mengetik 300ms
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null
 watch(searchQuery, (newValue) => {
   if (debounceTimeout) {
@@ -115,12 +111,10 @@ watch(searchQuery, (newValue) => {
   }, 300)
 })
 
-// Watch debouncedSearchQuery untuk reset halaman
 watch(debouncedSearchQuery, () => {
   currentPage.value = 1
 })
 
-// Manual search untuk tombol "Cari Sekarang" (instant, no debounce)
 const handleSearch = () => {
   if (debounceTimeout) {
     clearTimeout(debounceTimeout)

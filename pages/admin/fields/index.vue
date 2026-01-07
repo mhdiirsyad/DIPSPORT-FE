@@ -34,10 +34,8 @@ const { data: rawFields, pending, error, refresh } = await useAsyncData(
   () => $fetch<FieldRow[]>('/api/fields')
 )
 
-// Normalize fields untuk ensure consistent structure
 const normalizedFields = computed(() => normalizeFieldsArray(rawFields.value || []))
 
-// Use search composable with custom search keys
 const { searchQuery, filteredItems: filteredFields } = useSearch(
   normalizedFields,
   (field) => [
@@ -47,7 +45,6 @@ const { searchQuery, filteredItems: filteredFields } = useSearch(
   ]
 )
 
-// Use pagination composable
 const { 
   currentPage, 
   paginatedItems: paginatedFields, 

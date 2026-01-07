@@ -39,6 +39,8 @@ const handleRefreshSession = async () => {
 onMounted(() => {
   registerModal(confirmModal.value)
 })
+
+
 </script>
 
 <template>

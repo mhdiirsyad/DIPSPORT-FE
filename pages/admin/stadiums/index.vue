@@ -26,14 +26,12 @@ const { data: rawStadions, pending, error, refresh } = await useAsyncData(
   () => $fetch<StadionRow[]>('/api/stadions')
 )
 
-// Use search composable
 const stadionsRef = computed(() => rawStadions.value || [])
 const { searchQuery, filteredItems: filteredStadions } = useSearch(
   stadionsRef,
   (stadion) => [stadion.name, String(stadion.id)]
 )
 
-// Use pagination composable
 const { 
   currentPage, 
   paginatedItems: paginatedStadions, 

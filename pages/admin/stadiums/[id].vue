@@ -232,7 +232,7 @@ async function handleSubmit() {
 async function handleDelete() {
   const isConfirmed = await confirm({
     title: 'Hapus Stadion',
-    message: 'PERINGATAN: Menghapus stadion ini akan menghapus semua lapangan dan booking terkait. Anda yakin?',
+    message: 'PERINGATAN: Menghapus stadion ini akan menghapus semua lapangan dan data yang dihapus tidak dapat dikembalikan. Anda yakin?',
     confirmText: 'Hapus',
     cancelText: 'Batal',
     type: 'danger'

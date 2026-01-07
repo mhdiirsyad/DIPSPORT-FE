@@ -11,8 +11,8 @@ interface UseAuthSessionReturn {
   startMonitoring: () => void
 }
 
-const SESSION_CHECK_INTERVAL = 60 * 1000 // Check every minute
-const WARNING_THRESHOLD = 5 * 60 // 5 minutes before expiry
+const SESSION_CHECK_INTERVAL = 60 * 1000
+const WARNING_THRESHOLD = 5 * 60
 
 export const useAuthSession = (): UseAuthSessionReturn => {
   const isAuthenticated = ref(false)
@@ -76,7 +76,7 @@ export const useAuthSession = (): UseAuthSessionReturn => {
     try {
       await $fetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
       })
     } catch {
     } finally {
@@ -129,11 +129,10 @@ export const useAuthSession = (): UseAuthSessionReturn => {
     checkInterval = setInterval(() => {
       updateTimeRemaining()
       
-      // Re-check session every 5 minutes
       if (timeRemaining.value % 300 === 0) {
         checkSession()
       }
-    }, 1000) // Update every second for accurate countdown
+    }, 1000)
   }
 
   const stopMonitoring = () => {

@@ -31,10 +31,8 @@ const { data: stadions, pending, error, refresh } = await useAsyncData(
   () => $fetch<StadionRow[]>('/api/stadions')
 )
 
-// Use search composable with sorting by fields count
 const stadionsRef = computed(() => {
   const list = stadions.value || []
-  // Sort by jumlah fields (descending) - sama seperti di client
   return [...list].sort((a, b) => {
     const aCount = a._count?.fields ?? a.fields?.length ?? 0
     const bCount = b._count?.fields ?? b.fields?.length ?? 0
@@ -46,7 +44,6 @@ const { searchQuery, filteredItems: filteredStadions } = useSearch(
   (stadion) => [stadion.name]
 )
 
-// Use pagination composable with 6 items per page for bookings
 const { 
   currentPage, 
   paginatedItems: paginatedStadions, 
@@ -76,6 +73,16 @@ const fallbackImage = 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb
           </p>
         </div>
       </div>
+      
+      <NuxtLink 
+        to="/admin/bookings/history"
+        class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Riwayat Booking
+      </NuxtLink>
     </header>
 
     <div class="flex flex-col gap-6">

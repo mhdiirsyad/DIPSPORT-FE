@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { availableIcons, VALID_FACILITY_ICONS } from '~/utils/validIconList'
+import { availableIconsWithId as availableIcons, VALID_FACILITY_ICONS } from '~/utils/validIconList'
 import { Icon } from '@iconify/vue'
 import { useConfirmation } from '~/composables/useConfirmation'
 import { parseBackendError } from '~/utils/errorParser'
@@ -239,7 +239,7 @@ async function handleDelete() {
             <div v-if="filteredIcons.length > 0" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
               <label
                 v-for="icon in filteredIcons"
-                :key="icon.value"
+                :key="icon.id"
                 class="group relative flex flex-col items-center justify-center p-3 rounded-xl border cursor-pointer transition-all duration-200"
                 :class="[form.icon === icon.value ? 'border-blue-500 bg-blue-50/50 shadow-md ring-1 ring-blue-500/20' : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/30 hover:shadow-sm']"
               >

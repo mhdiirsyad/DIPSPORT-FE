@@ -159,7 +159,6 @@ function isDatePast(date: Date | null) {
   return date <= today
 }
 
-// Fungsi untuk styling tanggal masa lalu/hari ini yang masih bisa dipilih (untuk admin)
 function isDatePastOrToday(date: Date | null) {
   if (!date) return false
   const today = new Date()
@@ -220,8 +219,8 @@ function updatePopoverPosition() {
   const triggerRect = triggerButton.value.getBoundingClientRect()
   const popoverRect = popoverContent.value.getBoundingClientRect()
   
-  let top = triggerRect.bottom + 8 // 8px gap
-  let left = triggerRect.right - popoverRect.width // align to right
+  let top = triggerRect.bottom + 8
+  let left = triggerRect.right - popoverRect.width
   
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight

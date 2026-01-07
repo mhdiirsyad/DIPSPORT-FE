@@ -37,7 +37,6 @@ export default defineEventHandler(async (event) => {
       const firstError = response.errors[0]
       const errorCode = firstError?.extensions?.code || 'UNKNOWN'
 
-      // Log original error details for debugging
       console.error('GraphQL error fetching operating hours:', {
         code: firstError?.extensions?.code,
         message: firstError?.message,

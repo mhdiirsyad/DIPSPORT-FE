@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { $fetch } from 'ofetch'
+import { toUtcMidnightIso } from '~/utils/dateHelpers'
 import { MUTATION_CREATE_BOOKING } from '~/graphql/mutations/create_booking'
 import { parseBackendError } from '~/utils/errorParser'
 definePageMeta({
@@ -35,10 +36,10 @@ const bookingForm = reactive({
 
 const errorMsg = ref<string | null>(null)
 const uploadProgress = ref<number | null>(null)
+const submitting = ref(false)
 const checkingAvailability = ref(false)
 const confirmationModal = ref<any>(null)
 
-// Field-specific validation errors
 const fieldErrors = ref({
   name: '',
   contact: '',
@@ -46,12 +47,10 @@ const fieldErrors = ref({
   institution: ''
 })
 
-// Validation regex patterns
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const phoneRegex = /^(\+62|62|0)[0-9]{9,13}$/
 const nameRegex = /^[a-zA-Z\s.]+$/
 
-// Validation functions
 const validateName = () => {
   const trimmed = bookingForm.name.trim()
   if (!trimmed) {
@@ -136,7 +135,6 @@ async function checkSlotAvailability(): Promise<boolean> {
   checkingAvailability.value = true
   
   try {
-    // Group slots by field and date
     const slotsByFieldAndDate = new Map<string, { fieldId: string; date: string; timeSlots: string[] }>()
     
     for (const slot of selectedSlots.value) {
@@ -168,7 +166,7 @@ async function checkSlotAvailability(): Promise<boolean> {
         method: 'POST',
         body: {
           fieldId: group.fieldId,
-          date: group.date,
+          date: toUtcMidnightIso(group.date),
           timeSlots: group.timeSlots
         },
         credentials: 'include'
@@ -213,26 +211,20 @@ async function handleSubmit(){
     return
   }
 
-  // Trim all inputs before submit
   bookingForm.name = bookingForm.name.trim()
   bookingForm.contact = bookingForm.contact.trim()
   bookingForm.email = bookingForm.email.trim()
   if (bookingForm.institution) bookingForm.institution = bookingForm.institution.trim()
 
-  const details = selectedSlots.value.map((slot) => {
+    const details = selectedSlots.value.map((slot) => {
     const price = bookingForm.isAcademic ? 0 : (slot.pricePerHour || 0)
-    // Normalize to UTC midnight untuk konsistensi
     const normalizedDate = new Date(slot.date)
-    const year = normalizedDate.getUTCFullYear()
-    const month = String(normalizedDate.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(normalizedDate.getUTCDate()).padStart(2, '0')
-    const utcMidnight = `${year}-${month}-${day}T00:00:00.000Z`
-    
+    const utcMidnight = toUtcMidnightIso(normalizedDate)
+
     return {
       fieldId: Number(slot.fieldId),
       bookingDate: utcMidnight,
       startHour: Number(slot.startHour),
-      pricePerHour: price,
       subtotal: price,
     }
   })
@@ -290,7 +282,6 @@ async function handleSubmit(){
         xhr.onerror = () => reject(new Error('Network error saat mengirim request'))
         xhr.send(fd)
       }).then(async (bookingCode) => {
-        // Show success notification with email info
         await confirmationModal.value?.open({
           title: '✅ Booking Berhasil Dibuat!',
           message: `Kode Booking: ${bookingCode}\n\n📧 Email konfirmasi telah dikirim ke:\n${bookingForm.email}\n\n💡 Pastikan client check inbox atau spam folder untuk detail booking.`,
@@ -301,6 +292,7 @@ async function handleSubmit(){
         navigateTo(`/admin/bookings/${stadionId}/${bookingCode}`)
       })
     } else {
+      submitting.value = true
       const payload = {
         name: bookingForm.name,
         contact: bookingForm.contact,
@@ -319,7 +311,6 @@ async function handleSubmit(){
       const bookingCode = resp?.bookingCode || resp?.createBooking?.bookingCode
       if (!bookingCode) throw new Error('Server tidak mengembalikan booking code')
       
-      // Show success notification with email info
       await confirmationModal.value?.open({
         title: '✅ Booking Berhasil Dibuat!',
         message: `Kode Booking: ${bookingCode}\n\n📧 Email konfirmasi telah dikirim ke:\n${bookingForm.email}\n\n💡 Pastikan client check inbox atau spam folder untuk detail booking.`,
@@ -334,6 +325,7 @@ async function handleSubmit(){
     errorMsg.value = parsed.title ? `${parsed.title}: ${parsed.message}` : parsed.message
   } finally {
     uploadProgress.value = null
+    submitting.value = false
   }
 }
 
@@ -364,7 +356,6 @@ watch(() => bookingForm.isAcademic, (val) => {
 
     <form id="booking-form" @submit.prevent="handleSubmit" class="flex flex-col gap-8 max-w-5xl mx-auto w-full">
       
-      <!-- ===================== SELECTED SLOTS CARD ===================== -->
       <div class="w-full">
         <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
           <div class="p-5 border-b border-gray-200 bg-gray-50/50">
@@ -423,7 +414,6 @@ watch(() => bookingForm.isAcademic, (val) => {
         </div>
       </div>
 
-      <!-- ===================== INFORMASI PEMESAN CARD ===================== -->
       <div class="w-full">
         <div class="bg-white rounded-2xl border border-gray-300 shadow-sm overflow-hidden">
           <div class="p-5 border-b border-gray-200 bg-gray-50/50">
@@ -479,6 +469,7 @@ watch(() => bookingForm.isAcademic, (val) => {
 
             <div class="space-y-1.5">
               <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">Alamat Email <span class="text-red-500">*</span></label>
+                <p class="text-xs text-gray-500 mt-1">Harap masukkan email client yang valid untuk keperluan pengiriman kode booking dan informasi lainnya.</p>
               <input 
                 v-model="bookingForm.email" 
                 type="email" 
@@ -584,7 +575,6 @@ watch(() => bookingForm.isAcademic, (val) => {
         </div>
       </div>
 
-      <!-- ERROR MESSAGE (Sebelum tombol submit) -->
       <div v-if="errorMsg" class="p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-start gap-3 shadow-sm animate-shake">
         <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         <div class="flex-1">
@@ -615,12 +605,12 @@ watch(() => bookingForm.isAcademic, (val) => {
 
         <button
           type="submit"
-          :disabled="uploadProgress !== null || checkingAvailability"
+          :disabled="uploadProgress !== null || checkingAvailability || submitting"
           class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <svg v-if="uploadProgress !== null || checkingAvailability" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <svg v-if="uploadProgress !== null || checkingAvailability || submitting" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
           <span>
-            {{ checkingAvailability ? 'Memeriksa Ketersediaan...' : uploadProgress !== null ? 'Menyimpan...' : 'Buat Booking' }}
+            {{ checkingAvailability ? 'Memeriksa Ketersediaan...' : (uploadProgress !== null || submitting) ? 'Menyimpan...' : 'Buat Booking' }}
           </span>
         </button>
       </div>

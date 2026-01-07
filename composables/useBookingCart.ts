@@ -46,7 +46,6 @@ const STORAGE_KEY = 'dipsport_booking_cart'
  * const { cart, addSlot, totalPrice, clearCart } = useBookingCart()
  */
 export const useBookingCart = (): UseBookingCartReturn => {
-  // Initialize cart from localStorage or create new
   const loadCartFromStorage = (): BookingCartData => {
     if (process.client) {
       try {

@@ -26,11 +26,9 @@ const adminInitials = computed(() => {
 const profileMenu = ref<HTMLDetailsElement | null>(null)
 
 const onProfileToggle = () => {
-  // Logic toggle profile
 }
 
 const handleGlobalPointerDown = (e: Event) => {
-  // Logic click outside
 }
 */
 
@@ -42,6 +40,8 @@ const nameMapping: Record<string, string> = {
   'schedules': 'Jadwal',
   'create': 'Tambah Baru',
   'edit': 'Edit',
+  'detail': 'Riwayat',
+  'history': 'Riwayat',
 }
 
 const dynamicNames = ref<Record<string, string>>({})
@@ -110,9 +110,14 @@ const breadcrumbs = computed(() => {
       displayName = `Lapangan`
     }
     
+    let crumbTo = currentPath
+    if (part === 'detail') {
+      crumbTo = '/admin/bookings/history'
+    }
+    
     crumbs.push({
       name: displayName,
-      to: currentPath,
+      to: crumbTo,
       isLast: index === pathParts.length - 1
     })
   })

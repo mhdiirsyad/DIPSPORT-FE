@@ -14,7 +14,7 @@
               <p class="text-xs text-blue-200/70">Booking Lapangan</p>
             </div>
           </div>
-          <p class="text-sm text-blue-100/80 leading-relaxed">Platform booking lapangan olahraga terpercaya untuk civitas akademika Universitas Diponegoro.</p>
+          <p class="text-sm text-blue-100/80 leading-relaxed">Platform booking lapangan olahraga terpercaya untuk Sivitas Akademika Universitas Diponegoro.</p>
         </div>
 
         <div class="space-y-4">
@@ -59,7 +59,7 @@
               </a>
             </li>
             <li>
-              <NuxtLink to="/panduan-booking" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+              <NuxtLink to="/bantuan/panduan-booking" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
                 <span class="relative">
                   Panduan Booking
                   <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
@@ -67,7 +67,7 @@
               </NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/kebijakan-privasi" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+              <NuxtLink to="/bantuan/kebijakan-privasi" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
                 <span class="relative">
                   Kebijakan Privasi
                   <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
@@ -75,7 +75,7 @@
               </NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/syarat-ketentuan" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
+              <NuxtLink to="/bantuan/syarat-ketentuan" class="group inline-flex items-center gap-2 text-sm text-blue-100/80 hover:text-white transition-all duration-200">
                 <span class="relative">
                   Syarat & Ketentuan
                   <span class="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
@@ -115,7 +115,7 @@
 
       <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p class="text-sm text-blue-100/70 text-center sm:text-left">
-          &copy; {{ new Date().getFullYear() }} VENUE UNDIP. Semua hak cipta dilindungi. Dikembangkan dengan <span class="text-red-400">❤</span> untuk civitas akademika Universitas Diponegoro.
+          &copy; {{ new Date().getFullYear() }} VENUE UNDIP. Semua hak cipta dilindungi. Dikembangkan dengan <span class="text-red-400">❤</span> untuk Sivitas Akademika Universitas Diponegoro.
         </p>
         
         <div class="flex items-center gap-3">

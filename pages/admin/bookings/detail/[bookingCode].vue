@@ -5,7 +5,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Riwayat Booking - VENUE UNDIP',
+  title: 'Detail Booking - VENUE UNDIP',
   meta: [
     { name: 'description', content: 'Detail dan status booking lapangan di VENUE UNDIP' }
   ]
@@ -219,15 +219,15 @@ const groupedDetails = computed(() => {
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl uppercase font-bold text-gray-900 tracking-tight">Riwayat Booking</h1>
+          <h1 class="text-2xl uppercase font-bold text-gray-900 tracking-tight">Detail Booking</h1>
           <p class="text-sm text-gray-500 mt-1">
             Informasi lengkap dan status reservasi booking.
           </p>
         </div>
       </div>
       
-      <NuxtLink
-        :to="`/admin/bookings/${route.params.id}`"
+      <NuxtLink 
+        to="/admin/bookings/history"
         class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-[#1f2a56] hover:border-[#1f2a56] hover:shadow-md active:scale-95"
       >
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +258,6 @@ const groupedDetails = computed(() => {
             <div>
               <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Kode Booking</p>
               <p class="text-2xl font-bold text-blue-600">{{ booking.bookingCode }}</p>
-              <p class="text-xs text-gray-500 mt-1">{{ formatDate(booking.createdAt) }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
               <span 
@@ -461,7 +460,7 @@ const groupedDetails = computed(() => {
             <button
               @click="handleStatusChange('CANCELLED')"
               :disabled="updating"
-              class="w-full px-4 py-2.5 bg-white hover:bg-red-50 border border-red-200 disabled:opacity-50 text-red-700 text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+              class="w-full px-4 py-2.5 bg-white hover:bg-red-50 border border-red-300 disabled:bg-gray-100 text-red-700 text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
